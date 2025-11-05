@@ -6,6 +6,50 @@
 
 ## 📋 PHASE 1 : PRÉPARATION ET VÉRIFICATION
 
+### 🚨 DIAGNOSTIC CRITIQUE : VÉRIFICATION DE BRANCHE
+
+```bash
+# COMMANDE OBLIGATOIRE AVANT TOUTE ACTION
+git branch
+```
+
+**✅ VOUS ÊTES SUR MAIN (PARFAIT) :**
+```
+  feature/autre-branche
+* main
+```
+
+**❌ VOUS ÊTES SUR UNE FEATURE (ATTENTION) :**
+```
+* feature/autre-branche
+  main
+```
+
+**🔧 SI VOUS N'ÊTES PAS SUR MAIN :**
+```bash
+git checkout main
+git branch  # Vérifier que * est maintenant sur main
+```
+
+### 🕵️ POURQUOI AVEZ-VOUS BASCULÉ DE BRANCHE ?
+
+**Causes fréquentes :**
+1. **Commande manuelle** : `git checkout feature/...`
+2. **VS Code** : Clic sur nom de branche (barre de statut)
+3. **Extensions Git** : Bascule automatique
+4. **Clone/Pull** : Branche par défaut différente
+5. **Session précédente** : Resté sur feature
+
+**Vérifier l'historique :**
+```bash
+# PowerShell : voir les dernières commandes
+Get-History | Select-Object -Last 10
+```
+
+---
+
+## 📋 PHASE 1 : PRÉPARATION ET VÉRIFICATION
+
 ### 1.1 Vérifier l'état actuel
 ```bash
 # Naviguer vers le projet (OBLIGATOIRE)
@@ -21,14 +65,20 @@ git branch
 git log --oneline -5
 ```
 
-### 1.2 S'assurer d'être sur la bonne branche
+### 1.2 S'assurer d'être sur la bonne branche (MAIN RECOMMANDÉ)
 ```bash
-# Si vous voulez travailler sur feature/react-router-implementation
-git checkout feature/react-router-implementation
-
-# OU si vous voulez travailler directement sur main
+# ✅ RECOMMANDÉ : Toujours travailler sur main pour éviter les complications
 git checkout main
+
+# ❌ ÉVITER : Travailler sur feature branches (galère de merge après)
+# git checkout feature/react-router-implementation
 ```
+
+**🚨 POURQUOI MAIN ET PAS FEATURE ?**
+- ✅ Push direct sans merge compliqué
+- ✅ Pas de conflits d'historiques
+- ✅ Déploiement automatique sur URL principale
+- ✅ Simplicité maximale
 
 ---
 
@@ -194,17 +244,20 @@ git reset --hard HEAD~1
 
 ---
 
-## 🎯 SÉQUENCE COMPLÈTE RÉSUMÉE
+## 🎯 SÉQUENCE COMPLÈTE RÉSUMÉE (AVEC VÉRIFICATION BRANCHE)
 
 ```bash
+# 0. DIAGNOSTIC OBLIGATOIRE
+git branch
+# Si pas sur main : git checkout main
+
 # 1. Navigation et état
-cd "c:\Users\ayesh\Desktop\projets_Orif\menu_cafet31-10\orif-menu"
+cd "VOTRE_REPERTOIRE_PROJET"
 git status
-git checkout VOTRE_BRANCHE
 
 # 2. Synchronisation
 git fetch origin
-git pull origin VOTRE_BRANCHE
+git pull origin main
 
 # 3. Ajout des fichiers
 git add FICHIERS_SPECIFIQUES
@@ -214,7 +267,7 @@ git status
 git commit -m "type: Description claire"
 
 # 5. Push
-git push origin VOTRE_BRANCHE
+git push origin main
 
 # 6. Vérification
 git status
@@ -224,13 +277,15 @@ git status
 
 ## ✅ CHECKLIST AVANT CHAQUE COMMIT
 
-- [ ] Je suis dans le bon répertoire
-- [ ] Je suis sur la bonne branche
+- [ ] **CRITIQUE** : Je suis dans le bon répertoire
+- [ ] **CRITIQUE** : `git branch` montre `* main` (pas feature!)
 - [ ] J'ai fait `git fetch origin`
 - [ ] J'ai vérifié `git status`
 - [ ] J'ai ajouté uniquement les fichiers nécessaires
 - [ ] Mon message de commit est clair et descriptif
 - [ ] J'ai vérifié le push avec `git status`
+
+**🚨 Si `git branch` ne montre pas `* main`, faire `git checkout main` !**
 
 ---
 

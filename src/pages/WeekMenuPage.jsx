@@ -1,60 +1,62 @@
-// Page pour une semaine spécifique
+// Page qui affiche le menu d'une semaine spécifique
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getWeekLabel, getCurrentYear } from '../utils/dateUtils';
+import PageLayout from '../components/PageLayout';
 import MenuTable from '../components/MenuTable';
-import HeaderPage from '../components/HeaderPage';
+import WeekPicker from '../components/WeekPicker';
+import DailyMenu from './DailyMenu';
 import Footer from '../components/Footer';
 import defaultMenu from '../data/defaultMenu';
 
+/**
+ * WeekMenuPage - Page autonome pour afficher le menu d'une semaine
+ */
 export default function WeekMenuPage() {
+  const [showDailyMenu, setShowDailyMenu] = useState(false);
   const { weekNumber } = useParams();
   const navigate = useNavigate();
   const currentYear = getCurrentYear();
   const weekNum = parseInt(weekNumber, 10);
 
-  // Validation du numéro de semaine
   if (isNaN(weekNum) || weekNum < 1 || weekNum > 53) {
     return (
       <main className="container">
-        <HeaderPage weekLabel="Erreur" />
-        <div style={{ textAlign: 'center', padding: '2rem' }}>
-          <h2>❌ Numéro de semaine invalide</h2>
-          <p>Le numéro de semaine doit être entre 1 et 53.</p>
-          <button onClick={() => navigate('/')}>🏠 Retour à l'accueil</button>
-        </div>
-        <Footer />
+        <PageLayout title="Erreur">
+          <div style={{ textAlign: 'center', padding: '2rem' }}>
+            <h2>❌ Numéro de semaine invalide</h2>
+            <p>Le numéro de semaine doit être entre 1 et 53.</p>
+            <button onClick={() => navigate('/')}>🏠 Retour à l'accueil</button>
+          </div>
+          <Footer />
+        </PageLayout>
       </main>
     );
   }
 
   const weekLabel = getWeekLabel(currentYear, weekNum);
-  
-  // Menu avec le bon label de semaine
-  const weekMenu = {
-    ...defaultMenu,
-    weekLabel: weekLabel
-  };
+  const weekMenu = { ...defaultMenu, weekLabel };
 
   return (
     <main className="container">
-      <HeaderPage weekLabel={weekLabel} />
-      
-      <div style={{ marginBottom: "20px", textAlign: "center" }}>
-        <button onClick={() => navigate('/')}>🏠 Accueil</button>
-        <button 
-          onClick={() => navigate(`/date/${new Date().toISOString().split('T')[0]}`)}
-          style={{ marginLeft: '10px' }}
-        >
-          📆 Voir menu du jour
-        </button>
-        <button onClick={() => navigate('/admin')} style={{ marginLeft: '10px' }}>
-          ⚙️ Administration
-        </button>
-      </div>
-
-      <MenuTable menu={weekMenu} />
-      
-      <Footer />
+      <PageLayout 
+        title="Cafétéria ORIF"
+        actions={
+          <button 
+            className="toggle-view-btn"
+            onClick={() => setShowDailyMenu(!showDailyMenu)}
+            title={showDailyMenu ? "Voir le menu de la semaine" : "Voir le menu du jour"}
+          >
+            {showDailyMenu ? "📅 Menu semaine" : "📆 Menu du jour"}
+          </button>
+        }
+      >
+        <div style={{ maxWidth: '400px', margin: '0 auto 20px' }}>
+          <WeekPicker />
+        </div>
+        {showDailyMenu ? <DailyMenu /> : <MenuTable menu={weekMenu} />}
+        <Footer />
+      </PageLayout>
     </main>
   );
 }

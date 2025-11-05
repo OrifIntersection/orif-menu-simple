@@ -40,16 +40,132 @@ Untracked files:
 nothing added to commit but untracked files present (use "git add" to track)
 ```
 
-### 2️⃣ VÉRIFICATION DES BRANCHES
+### 2️⃣ DIAGNOSTIC COMPLET DE BRANCHE
 
 ```bash
 git branch
 ```
-**Réponse attendue :**
+**Réponse si vous êtes sur MAIN (✅ BIEN) :**
 ```
   feature/react-router-implementation
 * main
 ```
+
+**Réponse si vous êtes sur FEATURE (❌ PROBLÈME) :**
+```
+* feature/react-router-implementation
+  main
+```
+
+### 🔍 VÉRIFICATION DÉTAILLÉE DE LA BRANCHE ACTUELLE
+
+```bash
+git status
+```
+
+**Si vous êtes sur MAIN (✅ BIEN) :**
+```
+On branch main
+Your branch is up to date with 'origin/main'.
+```
+
+**Si vous êtes sur FEATURE (❌ ATTENTION) :**
+```
+On branch feature/react-router-implementation
+Your branch is up to date with 'origin/feature/react-router-implementation'.
+```
+
+### 🚨 POURQUOI AVEZ-VOUS BASCULÉ SUR FEATURE ?
+
+**Causes principales :**
+1. **Commande `git checkout feature/react-router-implementation`** tapée par erreur
+2. **VS Code** a switché automatiquement lors d'un clic sur la branche
+3. **Extension Git** a changé de branche automatiquement
+4. **Pull/clone** initial qui a mis sur la mauvaise branche
+5. **Ancienne session** où vous étiez resté sur feature
+
+### 🔧 CORRIGER IMMÉDIATEMENT SI SUR FEATURE
+
+```bash
+# Vérifier où vous êtes
+git branch
+
+# Si vous voyez * feature/react-router-implementation, corriger :
+git checkout main
+```
+
+**Réponse attendue :**
+```
+Switched to branch 'main'
+Your branch is up to date with 'origin/main'.
+```
+
+**🎯 VÉRIFICATION POST-CORRECTION :**
+```bash
+git branch
+```
+**Doit montrer :**
+```
+  feature/react-router-implementation
+* main
+```
+
+### 3️⃣ SYNCHRONISATION AVEC GITHUB
+
+## 🚨 SECTION DIAGNOSTIC : ÊTES-VOUS SUR LA BONNE BRANCHE ?
+
+### 🔍 TEST RAPIDE AVANT CHAQUE COMMIT
+
+```bash
+# COMMANDE OBLIGATOIRE AVANT TOUT TRAVAIL
+git branch
+```
+
+**✅ RÉPONSE CORRECTE (vous êtes sur main) :**
+```
+  feature/react-router-implementation
+* main
+```
+
+**❌ RÉPONSE PROBLÉMATIQUE (vous êtes sur feature) :**
+```
+* feature/react-router-implementation
+  main
+```
+
+### 🛠️ ACTIONS SELON LE RÉSULTAT
+
+**Si vous êtes sur MAIN (✅) :**
+- Continuez normalement
+- Vos commits iront directement sur main
+- Vercel se mettra à jour automatiquement
+
+**Si vous êtes sur FEATURE (❌) :**
+```bash
+# CORRECTION IMMÉDIATE
+git checkout main
+
+# Vérification
+git branch
+# Doit maintenant montrer * main
+```
+
+### 🕵️ COMPRENDRE POURQUOI VOUS AVEZ BASCULÉ
+
+**Vérifiez votre historique de commandes :**
+```bash
+# Dans PowerShell, voir les dernières commandes
+Get-History | Select-Object -Last 10
+```
+
+**Causes courantes de bascule :**
+1. **`git checkout feature/react-router-implementation`** dans l'historique
+2. **Clic sur branche dans VS Code** (barre de statut en bas)
+3. **Extension Git** qui a changé automatiquement
+4. **Ouverture d'un fichier** qui était sur feature
+5. **Commande `git pull`** qui a créé une nouvelle branche
+
+---
 
 ### 3️⃣ SYNCHRONISATION AVEC GITHUB
 
@@ -167,25 +283,43 @@ dbc5010 docs: Ajout documentation de l'implémentation
 
 ---
 
-## 🔄 TRAVAILLER SUR LA BRANCHE FEATURE
+## 🔄 ~~TRAVAILLER SUR LA BRANCHE FEATURE~~ ❌ ÉVITER !
 
-### Switcher vers la branche feature
+### ⚠️ POURQUOI NE PAS UTILISER LA BRANCHE FEATURE ?
+
+**Problèmes rencontrés :**
+1. **Merge compliqué** - Conflits, historiques divergents
+2. **Force push nécessaire** - Dangereux et complexe
+3. **URL Vercel séparée** - Faut merger pour avoir l'URL principale
+4. **Galère de synchronisation** - Entre feature et main
+
+### 🎯 SOLUTION SIMPLE : TOUJOURS MAIN
+
 ```bash
+# ✅ TOUJOURS faire ça
+git checkout main
+git add VOS_FICHIERS
+git commit -m "votre message"
+git push origin main
+
+# ❌ ÉVITER ça
 git checkout feature/react-router-implementation
-```
-**Réponse attendue :**
-```
-Switched to branch 'feature/react-router-implementation'
-Your branch is up to date with 'origin/feature/react-router-implementation'.
+# ... puis galère de merge après
 ```
 
-### Pusher vers la branche feature
+---
+
+## 🆘 SI VOUS ÊTES SUR FEATURE PAR ERREUR
+
 ```bash
-git push origin feature/react-router-implementation
-```
-**Réponse attendue :**
-```
-Everything up-to-date
+# Revenir sur main
+git checkout main
+
+# Récupérer vos changements de feature (si nécessaire)
+git cherry-pick HASH_DU_COMMIT_FEATURE
+
+# Pusher sur main
+git push origin main
 ```
 
 ---
@@ -216,14 +350,15 @@ git push origin main
 
 ---
 
-## 📋 EXEMPLE COMPLET POUR AJOUTER UN NOUVEAU FICHIER
+## 📋 EXEMPLE COMPLET POUR AJOUTER UN NOUVEAU FICHIER (MAIN UNIQUEMENT)
 
 ```bash
 # 1. Navigation
 cd "c:\Users\ayesh\Desktop\projets_Orif\menu_cafet31-10\orif-menu"
 
-# 2. Vérification
+# 2. Vérification et s'assurer d'être sur main
 git status
+git checkout main
 git fetch origin
 
 # 3. Ajout du fichier
@@ -232,28 +367,33 @@ git add NOUVEAU_FICHIER.md
 # 4. Vérification avant commit
 git status
 
-# 5. Commit
+# 5. Commit sur MAIN (pas feature !)
 git commit -m "docs: Ajout de NOUVEAU_FICHIER"
 
-# 6. Push
+# 6. Push sur MAIN (pas feature !)
 git push origin main
 
 # 7. Vérification finale
 git status
 ```
 
+**🎯 RÉSULTAT : Déploiement automatique sur Vercel URL principale !**
+
 ---
 
-## ✅ CHECKLIST AVEC RÉPONSES ATTENDUES
+## ✅ CHECKLIST AVEC RÉPONSES ATTENDUES (MAIN UNIQUEMENT)
 
 - [ ] `cd` → Prompt change vers le bon répertoire
+- [ ] `git checkout main` → "Already on 'main'" ou "Switched to branch 'main'"
 - [ ] `git status` → "working tree clean" ou liste des fichiers modifiés
 - [ ] `git fetch` → Pas de message ou infos de récupération
 - [ ] `git add` → Pas de message (succès silencieux)
 - [ ] `git status` → "Changes to be committed" avec vos fichiers
 - [ ] `git commit` → Message avec hash et détails du commit
-- [ ] `git push` → Messages "Enumerating objects" et "Writing objects"
+- [ ] `git push origin main` → Messages "Enumerating objects" et "Writing objects"
 - [ ] `git status` → "working tree clean"
+
+**🚨 RÈGLE D'OR : Si vous n'êtes pas sur main, faites `git checkout main` !**
 
 ---
 
