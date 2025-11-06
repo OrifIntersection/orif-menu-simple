@@ -12,8 +12,6 @@ import DateMenuPage from "./pages/DateMenuPage";
 import AdminPage from "./pages/AdminPage";
 import WeekEditor from "./pages/CookEditor";
 import DateEditor from "./pages/DateEditor";
-// Composant de test Supabase (TEMPORAIRE)
-import SupabaseTest from "./components/SupabaseTest";
 import "./styles.css";
 
 /**
@@ -60,8 +58,6 @@ export default function App() {
       <Routes>
         {/* Route pour la page d'accueil (/) */}
         <Route path="/" element={<HomePage />} />
-        {/* Route TEMPORAIRE pour tester Supabase */}
-        <Route path="/test-supabase" element={<SupabaseTest />} />
         {/* Route pour afficher le menu d'une semaine spécifique */}
         {/* :weekNumber est un paramètre dynamique (ex: /week/44) */}
         <Route path="/week/:weekNumber" element={<WeekMenuPage />} />

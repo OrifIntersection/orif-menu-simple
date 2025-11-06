@@ -93,15 +93,15 @@ CREATE TABLE dishes (
   PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 8. Allergènes
+-- 8. Allergenes
 CREATE TABLE allergens (
   id INT NOT NULL AUTO_INCREMENT,
-  code VARCHAR(64) NOT NULL UNIQUE,
-  label VARCHAR(128) NOT NULL,
+  code VARCHAR(32) NOT NULL UNIQUE,
+  label VARCHAR(64) NOT NULL,
   PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 9. Allergènes par plat (N:N)
+-- 9. Allergenes par plat (N:N)
 CREATE TABLE dish_allergens (
   dish_id BIGINT NOT NULL,
   allergen_id INT NOT NULL,
@@ -149,57 +149,57 @@ INSERT IGNORE INTO categories (code, label) VALUES
   ('SALADE',   'Salade'),
   ('VIANDE',   'Viande'),
   ('FECULENT', 'Féculent'),
-  ('LEGUMES',  'Légumes'),
+  ('LEGUMES',  'Legumes'),
   ('DESSERT',  'Dessert');
 
--- Allergènes
-INSERT IGNORE INTO allergens (code, label) VALUES
+-- Allergenes
+INSERT INTO allergens (code, label) VALUES
   ('GLUTEN','Gluten'),
   ('LACTOSE','Lactose'),
   ('ARACHIDES','Arachides'),
   ('OEUFS','Oeufs'),
   ('POISSON','Poisson'),
   ('SOJA','Soja'),
-  ('FRUITS_A_COQUE','Fruits à coque'),
-  ('CELERI','Céleri'),
+  ('FRUITS_A_COQUE','Fruits a coque'),
+  ('CELERI','Celeri'),
   ('MOUTARDE','Moutarde'),
-  ('SESAME','Sésame');
+  ('SESAME','Sesame');
 
 -- =====================================================
 -- ÉTAPE 4 : PLATS (25 plats : 5 par catégorie)
 -- =====================================================
 
 -- Salades
-INSERT IGNORE INTO dishes (name, description) VALUES
-  ('Salade verte', 'Salade verte fraîche de saison'),
-  ('Salade César', 'Salade romaine, croûtons, parmesan, sauce César'),
-  ('Carottes râpées', 'Carottes râpées vinaigrette'),
-  ('Taboulé', 'Taboulé libanais à la menthe'),
+INSERT INTO dishes (name, description) VALUES
+  ('Salade verte', 'Salade verte fraiche de saison'),
+  ('Salade Cesar', 'Salade romaine, croutons, parmesan, sauce Cesar'),
+  ('Carottes rapees', 'Carottes rapees vinaigrette'),
+  ('Taboule', 'Taboule libanais a la menthe'),
   ('Betteraves', 'Betteraves rouges vinaigrette');
 
 -- Viandes
-INSERT IGNORE INTO dishes (name, description) VALUES
-  ('Poulet rôti', 'Poulet fermier rôti au four avec herbes'),
-  ('Steak haché', 'Steak haché pur boeuf'),
-  ('Poisson pané', 'Filet de poisson pané croustillant'),
+INSERT INTO dishes (name, description) VALUES
+  ('Poulet roti', 'Poulet fermier roti au four avec herbes'),
+  ('Steak hache', 'Steak hache pur boeuf'),
+  ('Poisson pane', 'Filet de poisson pane croustillant'),
   ('Saucisse de Strasbourg', 'Saucisse traditionnelle'),
-  ('Escalope de dinde', 'Escalope de dinde grillée');
+  ('Escalope de dinde', 'Escalope de dinde grillee');
 
--- Féculents
-INSERT IGNORE INTO dishes (name, description) VALUES
-  ('Pâtes', 'Pâtes italiennes al dente'),
-  ('Riz', 'Riz blanc parfumé'),
+-- Feculents
+INSERT INTO dishes (name, description) VALUES
+  ('Pates', 'Pates italiennes al dente'),
+  ('Riz', 'Riz blanc parfume'),
   ('Pommes de terre', 'Pommes de terre vapeur'),
   ('Frites', 'Frites maison croustillantes'),
-  ('Purée', 'Purée de pommes de terre maison');
+  ('Puree', 'Puree de pommes de terre maison');
 
--- Légumes
-INSERT IGNORE INTO dishes (name, description) VALUES
+-- Legumes
+INSERT INTO dishes (name, description) VALUES
   ('Haricots verts', 'Haricots verts frais vapeur'),
-  ('Courgettes', 'Courgettes sautées à l''ail'),
+  ('Courgettes', 'Courgettes sautees a l''ail'),
   ('Brocolis', 'Brocolis vapeur'),
-  ('Carottes', 'Carottes glacées au miel'),
-  ('Ratatouille', 'Ratatouille provençale');
+  ('Carottes', 'Carottes glacees au miel'),
+  ('Ratatouille', 'Ratatouille provencale');
 
 -- Desserts
 INSERT IGNORE INTO dishes (name, description) VALUES
@@ -243,8 +243,8 @@ CROSS JOIN categories c
 CROSS JOIN dishes d
 WHERE md.day_name='Lundi' AND md.day_date='2025-11-04' AND mt.code='MIDI' AND (
   (c.code='SALADE'   AND d.name='Salade verte') OR
-  (c.code='VIANDE'   AND d.name='Poulet rôti') OR
-  (c.code='FECULENT' AND d.name='Pâtes') OR
+  (c.code='VIANDE'   AND d.name='Poulet roti') OR
+  (c.code='FECULENT' AND d.name='Pates') OR
   (c.code='LEGUMES'  AND d.name='Haricots verts') OR
   (c.code='DESSERT'  AND d.name='Yaourt')
 );
@@ -257,8 +257,8 @@ CROSS JOIN meal_types mt
 CROSS JOIN categories c
 CROSS JOIN dishes d
 WHERE md.day_name='Lundi' AND md.day_date='2025-11-04' AND mt.code='SOIR' AND (
-  (c.code='SALADE'   AND d.name='Carottes râpées') OR
-  (c.code='VIANDE'   AND d.name='Steak haché') OR
+  (c.code='SALADE'   AND d.name='Carottes rapees') OR
+  (c.code='VIANDE'   AND d.name='Steak hache') OR
   (c.code='FECULENT' AND d.name='Riz') OR
   (c.code='LEGUMES'  AND d.name='Courgettes') OR
   (c.code='DESSERT'  AND d.name='Compote')
@@ -334,7 +334,7 @@ CROSS JOIN dishes d
 WHERE md.day_name='Jeudi' AND md.day_date='2025-11-07' AND mt.code='MIDI' AND (
   (c.code='SALADE'   AND d.name='Carottes râpées') OR
   (c.code='VIANDE'   AND d.name='Steak haché') OR
-  (c.code='FECULENT' AND d.name='Pâtes') OR
+  (c.code='FECULENT' AND d.name='Pates') OR
   (c.code='LEGUMES'  AND d.name='Courgettes') OR
   (c.code='DESSERT'  AND d.name='Compote')
 );
@@ -389,3 +389,4 @@ WHERE md.day_name='Vendredi' AND md.day_date='2025-11-08' AND mt.code='SOIR' AND
 -- - 10 tables
 -- - Données de base + menu semaine 45/2025
 -- =====================================================
+

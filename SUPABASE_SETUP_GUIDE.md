@@ -140,5 +140,4 @@ const menu = await MenuService.getMenuByWeek(2024, 45)
 - [ ] Déployement Vercel réussi avec Supabase
 
 ---
-
 🎯 **Votre base de données Supabase est maintenant prête !**

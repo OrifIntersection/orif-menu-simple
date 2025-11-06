@@ -35,7 +35,7 @@ export const useMenus = (initialYear = null, initialWeek = null) => {
     try {
       setLoading(true)
       setError(null)
-      const data = await MenuService.getMenuByWeek(year, week)
+      const data = await MenuService.getCompleteMenuByWeek(year, week)
       setCurrentMenu(data)
       return data
     } catch (err) {

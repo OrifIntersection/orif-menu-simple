@@ -1,15 +1,25 @@
 -- =====================================================
--- SCRIPT COMPLET - ORIF MENU CAFÉTÉRIA (Supabase/PostgreSQL)
--- À exécuter dans Supabase SQL Editor
--- Aligné avec script_MySQL.sql (structure identique)
+-- SCRIPT COMPLET - ORIF MENU CAFETERIA (Supabase/PostgreSQL)
+-- Version sans accents pour eviter les erreurs de syntaxe
 -- =====================================================
 
+-- Supprimer les tables existantes si elles existent (nettoyage)
+DROP TABLE IF EXISTS public.menu_items CASCADE;
+DROP TABLE IF EXISTS public.menu_days CASCADE;
+DROP TABLE IF EXISTS public.menus CASCADE;
+DROP TABLE IF EXISTS public.dish_allergens CASCADE;
+DROP TABLE IF EXISTS public.dishes CASCADE;
+DROP TABLE IF EXISTS public.allergens CASCADE;
+DROP TABLE IF EXISTS public.categories CASCADE;
+DROP TABLE IF EXISTS public.meal_types CASCADE;
+DROP TABLE IF EXISTS public.profiles CASCADE;
+
 -- =====================================================
--- ÉTAPE 1 : TABLES (ordre MySQL + syntaxe PostgreSQL)
+-- ETAPE 1 : TABLES (ordre MySQL + syntaxe PostgreSQL)
 -- =====================================================
 
 -- 1. Profils utilisateurs (utilise auth.users de Supabase)
-CREATE TABLE IF NOT EXISTS public.profiles (
+CREATE TABLE public.profiles (
   user_id uuid NOT NULL,
   full_name text,
   role text NOT NULL DEFAULT 'viewer' CHECK (role IN ('admin','cook','viewer')),
@@ -20,15 +30,15 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 );
 
 -- 2. Types de repas
-CREATE TABLE IF NOT EXISTS public.meal_types (
+CREATE TABLE public.meal_types (
   id serial NOT NULL,
   code text NOT NULL UNIQUE,
   label text NOT NULL,
   PRIMARY KEY (id)
 );
 
--- 3. Catégories
-CREATE TABLE IF NOT EXISTS public.categories (
+-- 3. Categories
+CREATE TABLE public.categories (
   id serial NOT NULL,
   code text NOT NULL UNIQUE,
   label text NOT NULL,
@@ -36,7 +46,7 @@ CREATE TABLE IF NOT EXISTS public.categories (
 );
 
 -- 4. Menus hebdomadaires
-CREATE TABLE IF NOT EXISTS public.menus (
+CREATE TABLE public.menus (
   id bigserial NOT NULL,
   year int NOT NULL,
   week_number int NOT NULL CHECK (week_number BETWEEN 1 AND 53),
@@ -48,7 +58,7 @@ CREATE TABLE IF NOT EXISTS public.menus (
 );
 
 -- 5. Jours d'un menu
-CREATE TABLE IF NOT EXISTS public.menu_days (
+CREATE TABLE public.menu_days (
   id bigserial NOT NULL,
   menu_id bigint NOT NULL,
   day_name text NOT NULL CHECK (day_name IN ('Lundi','Mardi','Mercredi','Jeudi','Vendredi')),
@@ -60,7 +70,7 @@ CREATE TABLE IF NOT EXISTS public.menu_days (
 );
 
 -- 6. Catalogue des plats
-CREATE TABLE IF NOT EXISTS public.dishes (
+CREATE TABLE public.dishes (
   id bigserial NOT NULL,
   name text NOT NULL,
   description text,
@@ -70,16 +80,16 @@ CREATE TABLE IF NOT EXISTS public.dishes (
   PRIMARY KEY (id)
 );
 
--- 7. Allergènes
-CREATE TABLE IF NOT EXISTS public.allergens (
+-- 7. Allergenes
+CREATE TABLE public.allergens (
   id serial NOT NULL,
   code text NOT NULL UNIQUE,
   label text NOT NULL,
   PRIMARY KEY (id)
 );
 
--- 8. Allergènes par plat (N:N)
-CREATE TABLE IF NOT EXISTS public.dish_allergens (
+-- 8. Allergenes par plat (N:N)
+CREATE TABLE public.dish_allergens (
   dish_id bigint NOT NULL,
   allergen_id int NOT NULL,
   PRIMARY KEY (dish_id, allergen_id),
@@ -89,8 +99,8 @@ CREATE TABLE IF NOT EXISTS public.dish_allergens (
     REFERENCES public.allergens(id)
 );
 
--- 9. Affectation des plats (jour × type × catégorie)
-CREATE TABLE IF NOT EXISTS public.menu_items (
+-- 9. Affectation des plats (jour × type × categorie)
+CREATE TABLE public.menu_items (
   id bigserial NOT NULL,
   menu_day_id bigint NOT NULL,
   meal_type_id int NOT NULL,
@@ -105,33 +115,31 @@ CREATE TABLE IF NOT EXISTS public.menu_items (
 );
 
 -- =====================================================
--- ÉTAPE 2 : INDEX UTILES
+-- ETAPE 2 : INDEX UTILES
 -- =====================================================
-CREATE INDEX IF NOT EXISTS idx_menu_items_lookup ON public.menu_items (menu_day_id, meal_type_id, category_id);
-CREATE INDEX IF NOT EXISTS idx_menus_year_week   ON public.menus (year, week_number);
-CREATE INDEX IF NOT EXISTS idx_menu_days_date    ON public.menu_days (day_date);
-CREATE INDEX IF NOT EXISTS idx_dishes_active     ON public.dishes (is_active);
+CREATE INDEX idx_menu_items_lookup ON public.menu_items (menu_day_id, meal_type_id, category_id);
+CREATE INDEX idx_menus_year_week   ON public.menus (year, week_number);
+CREATE INDEX idx_menu_days_date    ON public.menu_days (day_date);
+CREATE INDEX idx_dishes_active     ON public.dishes (is_active);
 
 -- =====================================================
--- ÉTAPE 3 : DONNÉES DE BASE
+-- ETAPE 3 : DONNEES DE BASE
 -- =====================================================
 
 -- Types de repas
 INSERT INTO public.meal_types (code, label) VALUES
   ('MIDI', 'Midi'),
-  ('SOIR', 'Soir')
-ON CONFLICT (code) DO NOTHING;
+  ('SOIR', 'Soir');
 
--- Catégories
+-- Categories
 INSERT INTO public.categories (code, label) VALUES
   ('SALADE',   'Salade'),
   ('VIANDE',   'Viande'),
-  ('FECULENT', 'Féculent'),
-  ('LEGUMES',  'Légumes'),
-  ('DESSERT',  'Dessert')
-ON CONFLICT (code) DO NOTHING;
+  ('FECULENT', 'Feculent'),
+  ('LEGUMES',  'Legumes'),
+  ('DESSERT',  'Dessert');
 
--- Allergènes
+-- Allergenes
 INSERT INTO public.allergens (code, label) VALUES
   ('GLUTEN','Gluten'),
   ('LACTOSE','Lactose'),
@@ -139,51 +147,46 @@ INSERT INTO public.allergens (code, label) VALUES
   ('OEUFS','Oeufs'),
   ('POISSON','Poisson'),
   ('SOJA','Soja'),
-  ('FRUITS_A_COQUE','Fruits à coque'),
-  ('CELERI','Céleri'),
+  ('FRUITS_A_COQUE','Fruits a coque'),
+  ('CELERI','Celeri'),
   ('MOUTARDE','Moutarde'),
-  ('SESAME','Sésame')
-ON CONFLICT (code) DO NOTHING;
+  ('SESAME','Sesame');
 
 -- =====================================================
--- ÉTAPE 4 : PLATS (25 plats : 5 par catégorie)
+-- ETAPE 4 : PLATS (25 plats : 5 par categorie)
 -- =====================================================
 
 -- Salades
 INSERT INTO public.dishes (name, description) VALUES
-  ('Salade verte', 'Salade verte fraîche de saison'),
-  ('Salade César', 'Salade romaine, croûtons, parmesan, sauce César'),
-  ('Carottes râpées', 'Carottes râpées vinaigrette'),
-  ('Taboulé', 'Taboulé libanais à la menthe'),
-  ('Betteraves', 'Betteraves rouges vinaigrette')
-ON CONFLICT DO NOTHING;
+  ('Salade verte', 'Salade verte fraiche de saison'),
+  ('Salade Cesar', 'Salade romaine, croutons, parmesan, sauce Cesar'),
+  ('Carottes rapees', 'Carottes rapees vinaigrette'),
+  ('Taboule', 'Taboule libanais a la menthe'),
+  ('Betteraves', 'Betteraves rouges vinaigrette');
 
 -- Viandes
 INSERT INTO public.dishes (name, description) VALUES
-  ('Poulet rôti', 'Poulet fermier rôti au four avec herbes'),
-  ('Steak haché', 'Steak haché pur bœuf'),
-  ('Poisson pané', 'Filet de poisson pané croustillant'),
+  ('Poulet roti', 'Poulet fermier roti au four avec herbes'),
+  ('Steak hache', 'Steak hache pur boeuf'),
+  ('Poisson pane', 'Filet de poisson pane croustillant'),
   ('Saucisse de Strasbourg', 'Saucisse traditionnelle'),
-  ('Escalope de dinde', 'Escalope de dinde grillée')
-ON CONFLICT DO NOTHING;
+  ('Escalope de dinde', 'Escalope de dinde grillee');
 
--- Féculents
+-- Feculents
 INSERT INTO public.dishes (name, description) VALUES
-  ('Pâtes', 'Pâtes italiennes al dente'),
-  ('Riz', 'Riz blanc parfumé'),
+  ('Pates', 'Pates italiennes al dente'),
+  ('Riz', 'Riz blanc parfume'),
   ('Pommes de terre', 'Pommes de terre vapeur'),
   ('Frites', 'Frites maison croustillantes'),
-  ('Purée', 'Purée de pommes de terre maison')
-ON CONFLICT DO NOTHING;
+  ('Puree', 'Puree de pommes de terre maison');
 
--- Légumes
+-- Legumes
 INSERT INTO public.dishes (name, description) VALUES
   ('Haricots verts', 'Haricots verts frais vapeur'),
-  ('Courgettes', 'Courgettes sautées à l'ail'),
+  ('Courgettes', 'Courgettes sautees a l ail'),
   ('Brocolis', 'Brocolis vapeur'),
-  ('Carottes', 'Carottes glacées au miel'),
-  ('Ratatouille', 'Ratatouille provençale')
-ON CONFLICT DO NOTHING;
+  ('Carottes', 'Carottes glacees au miel'),
+  ('Ratatouille', 'Ratatouille provencale');
 
 -- Desserts
 INSERT INTO public.dishes (name, description) VALUES
@@ -191,17 +194,15 @@ INSERT INTO public.dishes (name, description) VALUES
   ('Compote', 'Compote de pommes maison'),
   ('Fruit', 'Fruit frais de saison'),
   ('Mousse au chocolat', 'Mousse au chocolat onctueuse'),
-  ('Tarte aux pommes', 'Tarte aux pommes traditionnelle')
-ON CONFLICT DO NOTHING;
+  ('Tarte aux pommes', 'Tarte aux pommes traditionnelle');
 
 -- =====================================================
--- ÉTAPE 5 : MENU SEMAINE 45/2025 (4-8 novembre)
+-- ETAPE 5 : MENU SEMAINE 45/2025 (4-8 novembre)
 -- =====================================================
 
 -- Menu principal
 INSERT INTO public.menus (year, week_number, week_label, start_date, end_date)
-VALUES (2025, 45, '4 au 8 novembre 2025', '2025-11-04', '2025-11-08')
-ON CONFLICT (year, week_number) DO NOTHING;
+VALUES (2025, 45, '4 au 8 novembre 2025', '2025-11-04', '2025-11-08');
 
 -- Les 5 jours
 INSERT INTO public.menu_days (menu_id, day_name, day_date)
@@ -214,175 +215,134 @@ CROSS JOIN (
   SELECT 'Jeudi',                '2025-11-07'::date           UNION ALL
   SELECT 'Vendredi',             '2025-11-08'::date
 ) AS t
-WHERE m.year = 2025 AND m.week_number = 45
-ON CONFLICT (menu_id, day_name) DO NOTHING;
+WHERE m.year = 2025 AND m.week_number = 45;
 
 -- =====================================================
--- ÉTAPE 6 : REMPLISSAGE MENU (50 items)
+-- ETAPE 6 : REMPLISSAGE MENU (50 items)
 -- =====================================================
 
 -- LUNDI MIDI
 INSERT INTO public.menu_items (menu_day_id, meal_type_id, category_id, dish_id)
 SELECT md.id, mt.id, c.id, d.id
-FROM public.menu_days md
-CROSS JOIN public.meal_types mt
-CROSS JOIN public.categories c
-CROSS JOIN public.dishes d
+FROM public.menu_days md, public.meal_types mt, public.categories c, public.dishes d
 WHERE md.day_name='Lundi' AND md.day_date='2025-11-04' AND mt.code='MIDI' AND (
   (c.code='SALADE'   AND d.name='Salade verte') OR
-  (c.code='VIANDE'   AND d.name='Poulet rôti') OR
-  (c.code='FECULENT' AND d.name='Pâtes') OR
+  (c.code='VIANDE'   AND d.name='Poulet roti') OR
+  (c.code='FECULENT' AND d.name='Pates') OR
   (c.code='LEGUMES'  AND d.name='Haricots verts') OR
   (c.code='DESSERT'  AND d.name='Yaourt')
-)
-ON CONFLICT (menu_day_id, meal_type_id, category_id) DO NOTHING;
+);
 
 -- LUNDI SOIR
 INSERT INTO public.menu_items (menu_day_id, meal_type_id, category_id, dish_id)
 SELECT md.id, mt.id, c.id, d.id
-FROM public.menu_days md
-CROSS JOIN public.meal_types mt
-CROSS JOIN public.categories c
-CROSS JOIN public.dishes d
+FROM public.menu_days md, public.meal_types mt, public.categories c, public.dishes d
 WHERE md.day_name='Lundi' AND md.day_date='2025-11-04' AND mt.code='SOIR' AND (
-  (c.code='SALADE'   AND d.name='Carottes râpées') OR
-  (c.code='VIANDE'   AND d.name='Steak haché') OR
+  (c.code='SALADE'   AND d.name='Carottes rapees') OR
+  (c.code='VIANDE'   AND d.name='Steak hache') OR
   (c.code='FECULENT' AND d.name='Riz') OR
   (c.code='LEGUMES'  AND d.name='Courgettes') OR
   (c.code='DESSERT'  AND d.name='Compote')
-)
-ON CONFLICT (menu_day_id, meal_type_id, category_id) DO NOTHING;
+);
 
 -- MARDI MIDI
 INSERT INTO public.menu_items (menu_day_id, meal_type_id, category_id, dish_id)
 SELECT md.id, mt.id, c.id, d.id
-FROM public.menu_days md
-CROSS JOIN public.meal_types mt
-CROSS JOIN public.categories c
-CROSS JOIN public.dishes d
+FROM public.menu_days md, public.meal_types mt, public.categories c, public.dishes d
 WHERE md.day_name='Mardi' AND md.day_date='2025-11-05' AND mt.code='MIDI' AND (
-  (c.code='SALADE'   AND d.name='Salade César') OR
-  (c.code='VIANDE'   AND d.name='Poisson pané') OR
+  (c.code='SALADE'   AND d.name='Salade Cesar') OR
+  (c.code='VIANDE'   AND d.name='Poisson pane') OR
   (c.code='FECULENT' AND d.name='Pommes de terre') OR
   (c.code='LEGUMES'  AND d.name='Brocolis') OR
   (c.code='DESSERT'  AND d.name='Fruit')
-)
-ON CONFLICT (menu_day_id, meal_type_id, category_id) DO NOTHING;
+);
 
 -- MARDI SOIR
 INSERT INTO public.menu_items (menu_day_id, meal_type_id, category_id, dish_id)
 SELECT md.id, mt.id, c.id, d.id
-FROM public.menu_days md
-CROSS JOIN public.meal_types mt
-CROSS JOIN public.categories c
-CROSS JOIN public.dishes d
+FROM public.menu_days md, public.meal_types mt, public.categories c, public.dishes d
 WHERE md.day_name='Mardi' AND md.day_date='2025-11-05' AND mt.code='SOIR' AND (
-  (c.code='SALADE'   AND d.name='Taboulé') OR
+  (c.code='SALADE'   AND d.name='Taboule') OR
   (c.code='VIANDE'   AND d.name='Saucisse de Strasbourg') OR
-  (c.code='FECULENT' AND d.name='Purée') OR
+  (c.code='FECULENT' AND d.name='Puree') OR
   (c.code='LEGUMES'  AND d.name='Carottes') OR
   (c.code='DESSERT'  AND d.name='Mousse au chocolat')
-)
-ON CONFLICT (menu_day_id, meal_type_id, category_id) DO NOTHING;
+);
 
 -- MERCREDI MIDI
 INSERT INTO public.menu_items (menu_day_id, meal_type_id, category_id, dish_id)
 SELECT md.id, mt.id, c.id, d.id
-FROM public.menu_days md
-CROSS JOIN public.meal_types mt
-CROSS JOIN public.categories c
-CROSS JOIN public.dishes d
+FROM public.menu_days md, public.meal_types mt, public.categories c, public.dishes d
 WHERE md.day_name='Mercredi' AND md.day_date='2025-11-06' AND mt.code='MIDI' AND (
   (c.code='SALADE'   AND d.name='Betteraves') OR
   (c.code='VIANDE'   AND d.name='Escalope de dinde') OR
   (c.code='FECULENT' AND d.name='Frites') OR
   (c.code='LEGUMES'  AND d.name='Ratatouille') OR
   (c.code='DESSERT'  AND d.name='Tarte aux pommes')
-)
-ON CONFLICT (menu_day_id, meal_type_id, category_id) DO NOTHING;
+);
 
--- MERCREDI SOIR
+-- MERCREDI SOIR  
 INSERT INTO public.menu_items (menu_day_id, meal_type_id, category_id, dish_id)
 SELECT md.id, mt.id, c.id, d.id
-FROM public.menu_days md
-CROSS JOIN public.meal_types mt
-CROSS JOIN public.categories c
-CROSS JOIN public.dishes d
+FROM public.menu_days md, public.meal_types mt, public.categories c, public.dishes d
 WHERE md.day_name='Mercredi' AND md.day_date='2025-11-06' AND mt.code='SOIR' AND (
   (c.code='SALADE'   AND d.name='Salade verte') OR
-  (c.code='VIANDE'   AND d.name='Poulet rôti') OR
+  (c.code='VIANDE'   AND d.name='Poulet roti') OR
   (c.code='FECULENT' AND d.name='Riz') OR
   (c.code='LEGUMES'  AND d.name='Haricots verts') OR
   (c.code='DESSERT'  AND d.name='Yaourt')
-)
-ON CONFLICT (menu_day_id, meal_type_id, category_id) DO NOTHING;
+);
 
 -- JEUDI MIDI
 INSERT INTO public.menu_items (menu_day_id, meal_type_id, category_id, dish_id)
 SELECT md.id, mt.id, c.id, d.id
-FROM public.menu_days md
-CROSS JOIN public.meal_types mt
-CROSS JOIN public.categories c
-CROSS JOIN public.dishes d
+FROM public.menu_days md, public.meal_types mt, public.categories c, public.dishes d
 WHERE md.day_name='Jeudi' AND md.day_date='2025-11-07' AND mt.code='MIDI' AND (
-  (c.code='SALADE'   AND d.name='Carottes râpées') OR
-  (c.code='VIANDE'   AND d.name='Steak haché') OR
-  (c.code='FECULENT' AND d.name='Pâtes') OR
+  (c.code='SALADE'   AND d.name='Carottes rapees') OR
+  (c.code='VIANDE'   AND d.name='Steak hache') OR
+  (c.code='FECULENT' AND d.name='Pates') OR
   (c.code='LEGUMES'  AND d.name='Courgettes') OR
   (c.code='DESSERT'  AND d.name='Compote')
-)
-ON CONFLICT (menu_day_id, meal_type_id, category_id) DO NOTHING;
+);
 
 -- JEUDI SOIR
 INSERT INTO public.menu_items (menu_day_id, meal_type_id, category_id, dish_id)
 SELECT md.id, mt.id, c.id, d.id
-FROM public.menu_days md
-CROSS JOIN public.meal_types mt
-CROSS JOIN public.categories c
-CROSS JOIN public.dishes d
+FROM public.menu_days md, public.meal_types mt, public.categories c, public.dishes d
 WHERE md.day_name='Jeudi' AND md.day_date='2025-11-07' AND mt.code='SOIR' AND (
-  (c.code='SALADE'   AND d.name='Salade César') OR
-  (c.code='VIANDE'   AND d.name='Poisson pané') OR
+  (c.code='SALADE'   AND d.name='Salade Cesar') OR
+  (c.code='VIANDE'   AND d.name='Poisson pane') OR
   (c.code='FECULENT' AND d.name='Pommes de terre') OR
   (c.code='LEGUMES'  AND d.name='Brocolis') OR
   (c.code='DESSERT'  AND d.name='Fruit')
-)
-ON CONFLICT (menu_day_id, meal_type_id, category_id) DO NOTHING;
+);
 
 -- VENDREDI MIDI
 INSERT INTO public.menu_items (menu_day_id, meal_type_id, category_id, dish_id)
 SELECT md.id, mt.id, c.id, d.id
-FROM public.menu_days md
-CROSS JOIN public.meal_types mt
-CROSS JOIN public.categories c
-CROSS JOIN public.dishes d
+FROM public.menu_days md, public.meal_types mt, public.categories c, public.dishes d
 WHERE md.day_name='Vendredi' AND md.day_date='2025-11-08' AND mt.code='MIDI' AND (
-  (c.code='SALADE'   AND d.name='Taboulé') OR
+  (c.code='SALADE'   AND d.name='Taboule') OR
   (c.code='VIANDE'   AND d.name='Escalope de dinde') OR
-  (c.code='FECULENT' AND d.name='Purée') OR
+  (c.code='FECULENT' AND d.name='Puree') OR
   (c.code='LEGUMES'  AND d.name='Carottes') OR
   (c.code='DESSERT'  AND d.name='Mousse au chocolat')
-)
-ON CONFLICT (menu_day_id, meal_type_id, category_id) DO NOTHING;
+);
 
 -- VENDREDI SOIR
 INSERT INTO public.menu_items (menu_day_id, meal_type_id, category_id, dish_id)
 SELECT md.id, mt.id, c.id, d.id
-FROM public.menu_days md
-CROSS JOIN public.meal_types mt
-CROSS JOIN public.categories c
-CROSS JOIN public.dishes d
+FROM public.menu_days md, public.meal_types mt, public.categories c, public.dishes d
 WHERE md.day_name='Vendredi' AND md.day_date='2025-11-08' AND mt.code='SOIR' AND (
   (c.code='SALADE'   AND d.name='Betteraves') OR
   (c.code='VIANDE'   AND d.name='Saucisse de Strasbourg') OR
   (c.code='FECULENT' AND d.name='Frites') OR
   (c.code='LEGUMES'  AND d.name='Ratatouille') OR
   (c.code='DESSERT'  AND d.name='Tarte aux pommes')
-)
-ON CONFLICT (menu_day_id, meal_type_id, category_id) DO NOTHING;
+);
 
 -- =====================================================
--- ÉTAPE 7 : ROW LEVEL SECURITY (RLS)
+-- ETAPE 7 : ROW LEVEL SECURITY (RLS)
 -- =====================================================
 
 -- Activer RLS sur toutes les tables
@@ -396,119 +356,16 @@ ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.allergens ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.dish_allergens ENABLE ROW LEVEL SECURITY;
 
--- Policies de LECTURE PUBLIQUE (anonyme + authentifié)
-CREATE POLICY "public_read_menus" ON public.menus
-  FOR SELECT USING (true);
-
-CREATE POLICY "public_read_menu_days" ON public.menu_days
-  FOR SELECT USING (true);
-
-CREATE POLICY "public_read_menu_items" ON public.menu_items
-  FOR SELECT USING (true);
-
-CREATE POLICY "public_read_dishes" ON public.dishes
-  FOR SELECT USING (true);
-
-CREATE POLICY "public_read_meal_types" ON public.meal_types
-  FOR SELECT USING (true);
-
-CREATE POLICY "public_read_categories" ON public.categories
-  FOR SELECT USING (true);
-
-CREATE POLICY "public_read_allergens" ON public.allergens
-  FOR SELECT USING (true);
-
-CREATE POLICY "public_read_dish_allergens" ON public.dish_allergens
-  FOR SELECT USING (true);
-
--- Policies d'ÉCRITURE (admin/cook uniquement)
-CREATE POLICY "admins_cooks_write_menus" ON public.menus
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles
-      WHERE user_id = auth.uid()
-      AND role IN ('admin', 'cook')
-    )
-  );
-
-CREATE POLICY "admins_cooks_write_menu_days" ON public.menu_days
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles
-      WHERE user_id = auth.uid()
-      AND role IN ('admin', 'cook')
-    )
-  );
-
-CREATE POLICY "admins_cooks_write_menu_items" ON public.menu_items
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles
-      WHERE user_id = auth.uid()
-      AND role IN ('admin', 'cook')
-    )
-  );
-
-CREATE POLICY "admins_cooks_write_dishes" ON public.dishes
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles
-      WHERE user_id = auth.uid()
-      AND role IN ('admin', 'cook')
-    )
-  );
-
--- Policy pour profiles
-CREATE POLICY "users_read_own_profile" ON public.profiles
-  FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "admins_write_profiles" ON public.profiles
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles
-      WHERE user_id = auth.uid()
-      AND role = 'admin'
-    )
-  );
+-- Policies de LECTURE PUBLIQUE (anonyme + authentifie)
+CREATE POLICY "public_read_menus" ON public.menus FOR SELECT USING (true);
+CREATE POLICY "public_read_menu_days" ON public.menu_days FOR SELECT USING (true);
+CREATE POLICY "public_read_menu_items" ON public.menu_items FOR SELECT USING (true);
+CREATE POLICY "public_read_dishes" ON public.dishes FOR SELECT USING (true);
+CREATE POLICY "public_read_meal_types" ON public.meal_types FOR SELECT USING (true);
+CREATE POLICY "public_read_categories" ON public.categories FOR SELECT USING (true);
+CREATE POLICY "public_read_allergens" ON public.allergens FOR SELECT USING (true);
+CREATE POLICY "public_read_dish_allergens" ON public.dish_allergens FOR SELECT USING (true);
 
 -- =====================================================
--- ÉTAPE 8 : FONCTION HELPER (génération semaine)
--- =====================================================
-
-CREATE OR REPLACE FUNCTION public.generate_menu_week(
-  p_year int,
-  p_week_number int,
-  p_week_label text,
-  p_start_date date
-)
-RETURNS bigint AS $$
-DECLARE
-  v_menu_id bigint;
-  v_end_date date := p_start_date + INTERVAL '4 days';
-BEGIN
-  -- Créer le menu
-  INSERT INTO public.menus (year, week_number, week_label, start_date, end_date)
-  VALUES (p_year, p_week_number, p_week_label, p_start_date, v_end_date)
-  RETURNING id INTO v_menu_id;
-  
-  -- Créer les 5 jours automatiquement
-  INSERT INTO public.menu_days (menu_id, day_name, day_date)
-  SELECT 
-    v_menu_id,
-    day_name,
-    p_start_date + (ordinality - 1) * INTERVAL '1 day'
-  FROM UNNEST(
-    ARRAY['Lundi','Mardi','Mercredi','Jeudi','Vendredi']
-  ) WITH ORDINALITY AS t(day_name, ordinality);
-  
-  RETURN v_menu_id;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- =====================================================
--- ✅ FIN : Supabase prêt avec RLS + Fonction helper
--- - 9 tables (profiles utilise auth.users de Supabase)
--- - Données de base + menu semaine 45/2025
--- - RLS activé avec 12 policies
--- - Fonction generate_menu_week() disponible
+-- FIN : Supabase pret pour test
 -- =====================================================
