@@ -398,3 +398,16 @@ git status
 ---
 
 *🎯 Ce guide contient les VRAIES réponses de VOTRE projet spécifique !*
+
+resumé :
+git status
+
+git add .
+
+git status
+
+git commit -m "refactor: Architecture V2.0 - Composants autonomes avec PageLayout et MenuDrawer (0 props)"
+
+git push origin main
+
+git status

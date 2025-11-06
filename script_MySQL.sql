@@ -1,0 +1,391 @@
+/* =====================================================
+   SCRIPT COMPLET - ORIF MENU CAFÉTÉRIA (compat. Workbench)
+   Tout en un : Base + Tables + Données + Index
+   ===================================================== */
+
+-- =====================================================
+-- ÉTAPE 0 : CRÉATION DE LA BASE
+-- =====================================================
+DROP DATABASE IF EXISTS cafet;
+CREATE DATABASE cafet CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE cafet;
+
+-- Encodage session
+SET NAMES utf8mb4;
+SET CHARACTER SET utf8mb4;
+
+-- =====================================================
+-- ÉTAPE 1 : TABLES (format "classique" pour ERD Workbench)
+--    - Pas de IF NOT EXISTS
+--    - Pas de CHECK constraints
+--    - ENUM à la place des CHECK
+--    - Identifiants sensibles entre backticks
+--    - InnoDB + utf8mb4_unicode_ci
+-- =====================================================
+
+-- 1. Table auth (stub)
+CREATE TABLE auth_users (
+  id CHAR(36) NOT NULL,
+  email VARCHAR(255) UNIQUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 2. Profils (1:1 avec auth_users)
+CREATE TABLE profiles (
+  user_id CHAR(36) NOT NULL,
+  full_name VARCHAR(255),
+  role ENUM('admin','cook','viewer') NOT NULL DEFAULT 'viewer',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (user_id),
+  CONSTRAINT fk_profiles_user FOREIGN KEY (user_id)
+    REFERENCES auth_users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 3. Types de repas
+CREATE TABLE meal_types (
+  id INT NOT NULL AUTO_INCREMENT,
+  code VARCHAR(16) NOT NULL UNIQUE,
+  label VARCHAR(32) NOT NULL,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 4. Catégories
+CREATE TABLE categories (
+  id INT NOT NULL AUTO_INCREMENT,
+  code VARCHAR(32) NOT NULL UNIQUE,
+  label VARCHAR(64) NOT NULL,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 5. Menus hebdomadaires
+CREATE TABLE menus (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  `year` INT NOT NULL,
+  week_number INT NOT NULL,
+  week_label VARCHAR(255),
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_menus_year_week (`year`, week_number)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 6. Jours d'un menu
+CREATE TABLE menu_days (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  menu_id BIGINT NOT NULL,
+  day_name ENUM('Lundi','Mardi','Mercredi','Jeudi','Vendredi') NOT NULL,
+  day_date DATE NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_menu_day (menu_id, day_name),
+  CONSTRAINT fk_menu_days_menu FOREIGN KEY (menu_id)
+    REFERENCES menus(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 7. Catalogue des plats
+CREATE TABLE dishes (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  image_path VARCHAR(500),
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 8. Allergènes
+CREATE TABLE allergens (
+  id INT NOT NULL AUTO_INCREMENT,
+  code VARCHAR(64) NOT NULL UNIQUE,
+  label VARCHAR(128) NOT NULL,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 9. Allergènes par plat (N:N)
+CREATE TABLE dish_allergens (
+  dish_id BIGINT NOT NULL,
+  allergen_id INT NOT NULL,
+  PRIMARY KEY (dish_id, allergen_id),
+  CONSTRAINT fk_da_dish FOREIGN KEY (dish_id)
+    REFERENCES dishes(id) ON DELETE CASCADE,
+  CONSTRAINT fk_da_allergen FOREIGN KEY (allergen_id)
+    REFERENCES allergens(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 10. Affectation des plats (jour x type x catégorie)
+CREATE TABLE menu_items (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  menu_day_id BIGINT NOT NULL,
+  meal_type_id INT NOT NULL,
+  category_id INT NOT NULL,
+  dish_id BIGINT NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_menu_items (menu_day_id, meal_type_id, category_id),
+  CONSTRAINT fk_menu_items_day  FOREIGN KEY (menu_day_id) REFERENCES menu_days(id) ON DELETE CASCADE,
+  CONSTRAINT fk_menu_items_meal FOREIGN KEY (meal_type_id) REFERENCES meal_types(id),
+  CONSTRAINT fk_menu_items_cat  FOREIGN KEY (category_id)  REFERENCES categories(id),
+  CONSTRAINT fk_menu_items_dish FOREIGN KEY (dish_id)      REFERENCES dishes(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================
+-- ÉTAPE 2 : INDEXS UTILES
+-- =====================================================
+CREATE INDEX idx_menu_items_lookup ON menu_items (menu_day_id, meal_type_id, category_id);
+CREATE INDEX idx_menus_year_week   ON menus (`year`, week_number);
+CREATE INDEX idx_menu_days_date    ON menu_days (day_date);
+CREATE INDEX idx_dishes_active     ON dishes (is_active);
+
+-- =====================================================
+-- ÉTAPE 3 : DONNÉES DE BASE
+-- =====================================================
+
+-- Types de repas
+INSERT IGNORE INTO meal_types (code, label) VALUES
+  ('MIDI', 'Midi'),
+  ('SOIR', 'Soir');
+
+-- Catégories
+INSERT IGNORE INTO categories (code, label) VALUES
+  ('SALADE',   'Salade'),
+  ('VIANDE',   'Viande'),
+  ('FECULENT', 'Féculent'),
+  ('LEGUMES',  'Légumes'),
+  ('DESSERT',  'Dessert');
+
+-- Allergènes
+INSERT IGNORE INTO allergens (code, label) VALUES
+  ('GLUTEN','Gluten'),
+  ('LACTOSE','Lactose'),
+  ('ARACHIDES','Arachides'),
+  ('OEUFS','Oeufs'),
+  ('POISSON','Poisson'),
+  ('SOJA','Soja'),
+  ('FRUITS_A_COQUE','Fruits à coque'),
+  ('CELERI','Céleri'),
+  ('MOUTARDE','Moutarde'),
+  ('SESAME','Sésame');
+
+-- =====================================================
+-- ÉTAPE 4 : PLATS (25 plats : 5 par catégorie)
+-- =====================================================
+
+-- Salades
+INSERT IGNORE INTO dishes (name, description) VALUES
+  ('Salade verte', 'Salade verte fraîche de saison'),
+  ('Salade César', 'Salade romaine, croûtons, parmesan, sauce César'),
+  ('Carottes râpées', 'Carottes râpées vinaigrette'),
+  ('Taboulé', 'Taboulé libanais à la menthe'),
+  ('Betteraves', 'Betteraves rouges vinaigrette');
+
+-- Viandes
+INSERT IGNORE INTO dishes (name, description) VALUES
+  ('Poulet rôti', 'Poulet fermier rôti au four avec herbes'),
+  ('Steak haché', 'Steak haché pur boeuf'),
+  ('Poisson pané', 'Filet de poisson pané croustillant'),
+  ('Saucisse de Strasbourg', 'Saucisse traditionnelle'),
+  ('Escalope de dinde', 'Escalope de dinde grillée');
+
+-- Féculents
+INSERT IGNORE INTO dishes (name, description) VALUES
+  ('Pâtes', 'Pâtes italiennes al dente'),
+  ('Riz', 'Riz blanc parfumé'),
+  ('Pommes de terre', 'Pommes de terre vapeur'),
+  ('Frites', 'Frites maison croustillantes'),
+  ('Purée', 'Purée de pommes de terre maison');
+
+-- Légumes
+INSERT IGNORE INTO dishes (name, description) VALUES
+  ('Haricots verts', 'Haricots verts frais vapeur'),
+  ('Courgettes', 'Courgettes sautées à l''ail'),
+  ('Brocolis', 'Brocolis vapeur'),
+  ('Carottes', 'Carottes glacées au miel'),
+  ('Ratatouille', 'Ratatouille provençale');
+
+-- Desserts
+INSERT IGNORE INTO dishes (name, description) VALUES
+  ('Yaourt', 'Yaourt nature ou aux fruits'),
+  ('Compote', 'Compote de pommes maison'),
+  ('Fruit', 'Fruit frais de saison'),
+  ('Mousse au chocolat', 'Mousse au chocolat onctueuse'),
+  ('Tarte aux pommes', 'Tarte aux pommes traditionnelle');
+
+-- =====================================================
+-- ÉTAPE 5 : MENU SEMAINE 45/2025 (4-8 novembre)
+-- =====================================================
+
+-- Menu principal
+INSERT IGNORE INTO menus (`year`, week_number, week_label, start_date, end_date)
+VALUES (2025, 45, '4 au 8 novembre 2025', '2025-11-04', '2025-11-08');
+
+-- Les 5 jours
+INSERT IGNORE INTO menu_days (menu_id, day_name, day_date)
+SELECT m.id, t.day_name, t.day_date
+FROM menus m
+JOIN (
+  SELECT 'Lundi' AS day_name,    '2025-11-04' AS day_date UNION ALL
+  SELECT 'Mardi',                '2025-11-05'           UNION ALL
+  SELECT 'Mercredi',             '2025-11-06'           UNION ALL
+  SELECT 'Jeudi',                '2025-11-07'           UNION ALL
+  SELECT 'Vendredi',             '2025-11-08'
+) AS t
+WHERE m.`year` = 2025 AND m.week_number = 45;
+
+-- =====================================================
+-- ÉTAPE 6 : REMPLISSAGE MENU (50 items)
+-- =====================================================
+
+-- LUNDI MIDI
+INSERT IGNORE INTO menu_items (menu_day_id, meal_type_id, category_id, dish_id)
+SELECT md.id, mt.id, c.id, d.id
+FROM menu_days md
+CROSS JOIN meal_types mt
+CROSS JOIN categories c
+CROSS JOIN dishes d
+WHERE md.day_name='Lundi' AND md.day_date='2025-11-04' AND mt.code='MIDI' AND (
+  (c.code='SALADE'   AND d.name='Salade verte') OR
+  (c.code='VIANDE'   AND d.name='Poulet rôti') OR
+  (c.code='FECULENT' AND d.name='Pâtes') OR
+  (c.code='LEGUMES'  AND d.name='Haricots verts') OR
+  (c.code='DESSERT'  AND d.name='Yaourt')
+);
+
+-- LUNDI SOIR
+INSERT IGNORE INTO menu_items (menu_day_id, meal_type_id, category_id, dish_id)
+SELECT md.id, mt.id, c.id, d.id
+FROM menu_days md
+CROSS JOIN meal_types mt
+CROSS JOIN categories c
+CROSS JOIN dishes d
+WHERE md.day_name='Lundi' AND md.day_date='2025-11-04' AND mt.code='SOIR' AND (
+  (c.code='SALADE'   AND d.name='Carottes râpées') OR
+  (c.code='VIANDE'   AND d.name='Steak haché') OR
+  (c.code='FECULENT' AND d.name='Riz') OR
+  (c.code='LEGUMES'  AND d.name='Courgettes') OR
+  (c.code='DESSERT'  AND d.name='Compote')
+);
+
+-- MARDI MIDI
+INSERT IGNORE INTO menu_items (menu_day_id, meal_type_id, category_id, dish_id)
+SELECT md.id, mt.id, c.id, d.id
+FROM menu_days md
+CROSS JOIN meal_types mt
+CROSS JOIN categories c
+CROSS JOIN dishes d
+WHERE md.day_name='Mardi' AND md.day_date='2025-11-05' AND mt.code='MIDI' AND (
+  (c.code='SALADE'   AND d.name='Salade César') OR
+  (c.code='VIANDE'   AND d.name='Poisson pané') OR
+  (c.code='FECULENT' AND d.name='Pommes de terre') OR
+  (c.code='LEGUMES'  AND d.name='Brocolis') OR
+  (c.code='DESSERT'  AND d.name='Fruit')
+);
+
+-- MARDI SOIR
+INSERT IGNORE INTO menu_items (menu_day_id, meal_type_id, category_id, dish_id)
+SELECT md.id, mt.id, c.id, d.id
+FROM menu_days md
+CROSS JOIN meal_types mt
+CROSS JOIN categories c
+CROSS JOIN dishes d
+WHERE md.day_name='Mardi' AND md.day_date='2025-11-05' AND mt.code='SOIR' AND (
+  (c.code='SALADE'   AND d.name='Taboulé') OR
+  (c.code='VIANDE'   AND d.name='Saucisse de Strasbourg') OR
+  (c.code='FECULENT' AND d.name='Purée') OR
+  (c.code='LEGUMES'  AND d.name='Carottes') OR
+  (c.code='DESSERT'  AND d.name='Mousse au chocolat')
+);
+
+-- MERCREDI MIDI
+INSERT IGNORE INTO menu_items (menu_day_id, meal_type_id, category_id, dish_id)
+SELECT md.id, mt.id, c.id, d.id
+FROM menu_days md
+CROSS JOIN meal_types mt
+CROSS JOIN categories c
+CROSS JOIN dishes d
+WHERE md.day_name='Mercredi' AND md.day_date='2025-11-06' AND mt.code='MIDI' AND (
+  (c.code='SALADE'   AND d.name='Betteraves') OR
+  (c.code='VIANDE'   AND d.name='Escalope de dinde') OR
+  (c.code='FECULENT' AND d.name='Frites') OR
+  (c.code='LEGUMES'  AND d.name='Ratatouille') OR
+  (c.code='DESSERT'  AND d.name='Tarte aux pommes')
+);
+
+-- MERCREDI SOIR
+INSERT IGNORE INTO menu_items (menu_day_id, meal_type_id, category_id, dish_id)
+SELECT md.id, mt.id, c.id, d.id
+FROM menu_days md
+CROSS JOIN meal_types mt
+CROSS JOIN categories c
+CROSS JOIN dishes d
+WHERE md.day_name='Mercredi' AND md.day_date='2025-11-06' AND mt.code='SOIR' AND (
+  (c.code='SALADE'   AND d.name='Salade verte') OR
+  (c.code='VIANDE'   AND d.name='Poulet rôti') OR
+  (c.code='FECULENT' AND d.name='Riz') OR
+  (c.code='LEGUMES'  AND d.name='Haricots verts') OR
+  (c.code='DESSERT'  AND d.name='Yaourt')
+);
+
+-- JEUDI MIDI
+INSERT IGNORE INTO menu_items (menu_day_id, meal_type_id, category_id, dish_id)
+SELECT md.id, mt.id, c.id, d.id
+FROM menu_days md
+CROSS JOIN meal_types mt
+CROSS JOIN categories c
+CROSS JOIN dishes d
+WHERE md.day_name='Jeudi' AND md.day_date='2025-11-07' AND mt.code='MIDI' AND (
+  (c.code='SALADE'   AND d.name='Carottes râpées') OR
+  (c.code='VIANDE'   AND d.name='Steak haché') OR
+  (c.code='FECULENT' AND d.name='Pâtes') OR
+  (c.code='LEGUMES'  AND d.name='Courgettes') OR
+  (c.code='DESSERT'  AND d.name='Compote')
+);
+
+-- JEUDI SOIR
+INSERT IGNORE INTO menu_items (menu_day_id, meal_type_id, category_id, dish_id)
+SELECT md.id, mt.id, c.id, d.id
+FROM menu_days md
+CROSS JOIN meal_types mt
+CROSS JOIN categories c
+CROSS JOIN dishes d
+WHERE md.day_name='Jeudi' AND md.day_date='2025-11-07' AND mt.code='SOIR' AND (
+  (c.code='SALADE'   AND d.name='Salade César') OR
+  (c.code='VIANDE'   AND d.name='Poisson pané') OR
+  (c.code='FECULENT' AND d.name='Pommes de terre') OR
+  (c.code='LEGUMES'  AND d.name='Brocolis') OR
+  (c.code='DESSERT'  AND d.name='Fruit')
+);
+
+-- VENDREDI MIDI
+INSERT IGNORE INTO menu_items (menu_day_id, meal_type_id, category_id, dish_id)
+SELECT md.id, mt.id, c.id, d.id
+FROM menu_days md
+CROSS JOIN meal_types mt
+CROSS JOIN categories c
+CROSS JOIN dishes d
+WHERE md.day_name='Vendredi' AND md.day_date='2025-11-08' AND mt.code='MIDI' AND (
+  (c.code='SALADE'   AND d.name='Taboulé') OR
+  (c.code='VIANDE'   AND d.name='Escalope de dinde') OR
+  (c.code='FECULENT' AND d.name='Purée') OR
+  (c.code='LEGUMES'  AND d.name='Carottes') OR
+  (c.code='DESSERT'  AND d.name='Mousse au chocolat')
+);
+
+-- VENDREDI SOIR
+INSERT IGNORE INTO menu_items (menu_day_id, meal_type_id, category_id, dish_id)
+SELECT md.id, mt.id, c.id, d.id
+FROM menu_days md
+CROSS JOIN meal_types mt
+CROSS JOIN categories c
+CROSS JOIN dishes d
+WHERE md.day_name='Vendredi' AND md.day_date='2025-11-08' AND mt.code='SOIR' AND (
+  (c.code='SALADE'   AND d.name='Betteraves') OR
+  (c.code='VIANDE'   AND d.name='Saucisse de Strasbourg') OR
+  (c.code='FECULENT' AND d.name='Frites') OR
+  (c.code='LEGUMES'  AND d.name='Ratatouille') OR
+  (c.code='DESSERT'  AND d.name='Tarte aux pommes')
+);
+
+-- =====================================================
+-- ✅ FIN : Base "cafet" prête pour reverse engineering Workbench
+-- - 10 tables
+-- - Données de base + menu semaine 45/2025
+-- =====================================================
