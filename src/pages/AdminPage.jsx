@@ -1,10 +1,9 @@
 // Page d'administration autonome
 import { useNavigate } from 'react-router-dom';
 import { getCurrentWeekNumber, formatDate } from '../utils/dateUtils';
-import PageLayout from '../components/PageLayout';
+import AdminLayout from '../components/AdminLayout';
 import DatePicker from '../components/DatePicker';
 import WeekPicker from '../components/WeekPicker';
-import Footer from '../components/Footer';
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -12,101 +11,292 @@ export default function AdminPage() {
   const today = formatDate(new Date());
 
   return (
-    <main className="container">
-      <PageLayout title="Administration du menu">
-        <div style={{ padding: '2rem', textAlign: 'center' }}>
-          <h2>⚙️ Administration du menu de la cafétéria</h2>
+    <AdminLayout title="Tableau de bord">
+      <div style={{ textAlign: 'center' }}>
+        <p style={{ color: '#666', marginBottom: '2rem' }}>
+          Gérez les menus de la cafétéria ORIF depuis cette interface centralisée
+        </p>
+        
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
+          gap: '2rem', 
+          marginTop: '2rem' 
+        }}>
           
+          {/* Section modification rapide */}
           <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
-            gap: '2rem', 
-            marginTop: '2rem' 
+            border: '2px solid #007bff', 
+            borderRadius: '12px', 
+            padding: '2rem',
+            backgroundColor: 'white',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
           }}>
-            
-            {/* Section modification rapide */}
-            <div style={{ 
-              border: '2px solid #007bff', 
-              borderRadius: '8px', 
-              padding: '1.5rem',
-              backgroundColor: '#f8f9fa'
-            }}>
-              <h3>🚀 Modification rapide</h3>
-              <div style={{ marginTop: '1rem' }}>
-                <button 
-                  onClick={() => navigate(`/admin/week/${currentWeekNumber}`)}
-                  style={{ 
-                    display: 'block', 
-                    width: '100%', 
-                    margin: '0.5rem 0', 
-                    padding: '0.75rem',
-                    fontSize: '1rem'
-                  }}
-                >
-                  📅 Modifier la semaine courante (S{currentWeekNumber})
-                </button>
-                <button 
-                  onClick={() => navigate(`/admin/date/${today}`)}
-                  style={{ 
-                    display: 'block', 
-                    width: '100%', 
-                    margin: '0.5rem 0', 
-                    padding: '0.75rem',
-                    fontSize: '1rem'
-                  }}
-                >
-                  📆 Modifier le menu d'aujourd'hui
-                </button>
-              </div>
-            </div>
-
-            {/* Section navigation par semaine */}
-            <div style={{ 
-              border: '2px solid #28a745', 
-              borderRadius: '8px', 
-              padding: '1.5rem',
-              backgroundColor: '#f8f9fa'
-            }}>
-              <h3>📅 Consulter un menu par semaine</h3>
-              <div style={{ marginTop: '1rem' }}>
-                <WeekPicker />
-              </div>
-            </div>
-
-            {/* Section navigation par date */}
-            <div style={{ 
-              border: '2px solid #ffc107', 
-              borderRadius: '8px', 
-              padding: '1.5rem',
-              backgroundColor: '#f8f9fa'
-            }}>
-              <h3>📆 Consulter un menu par date</h3>
-              <div style={{ marginTop: '1rem' }}>
-                <DatePicker />
-              </div>
+            <h3 style={{ marginTop: 0, color: '#007bff' }}>🚀 Modification rapide</h3>
+            <p style={{ color: '#666', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+              Accès direct aux menus les plus utilisés
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <button 
+                onClick={() => navigate(`/admin/week/${currentWeekNumber}`)}
+                style={{ 
+                  padding: '1rem',
+                  fontSize: '1rem',
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#0056b3'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#007bff'}
+              >
+                📅 Semaine courante (S{currentWeekNumber})
+              </button>
+              <button 
+                onClick={() => navigate(`/admin/date/${today}`)}
+                style={{ 
+                  padding: '1rem',
+                  fontSize: '1rem',
+                  backgroundColor: '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#1e7e34'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}
+              >
+                📆 Menu d'aujourd'hui
+              </button>
             </div>
           </div>
 
-          {/* Navigation */}
-          <div style={{ marginTop: '3rem' }}>
-            <button 
+          {/* Section navigation par semaine */}
+          <div style={{ 
+            border: '2px solid #28a745', 
+            borderRadius: '12px', 
+            padding: '2rem',
+            backgroundColor: 'white',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+          }}>
+            <h3 style={{ marginTop: 0, color: '#28a745' }}>📅 Navigation par semaine</h3>
+            <p style={{ color: '#666', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+              Consultez et modifiez les menus par semaine
+            </p>
+            <WeekPicker />
+          </div>
+
+          {/* Section navigation par date */}
+          <div style={{ 
+            border: '2px solid #ffc107', 
+            borderRadius: '12px', 
+            padding: '2rem',
+            backgroundColor: 'white',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+          }}>
+            <h3 style={{ marginTop: 0, color: '#e67e22' }}>📆 Navigation par date</h3>
+            <p style={{ color: '#666', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+              Accédez directement à une date spécifique
+            </p>
+            <DatePicker />
+          </div>
+
+          {/* Section statistiques */}
+          <div style={{ 
+            border: '2px solid #6f42c1', 
+            borderRadius: '12px', 
+            padding: '2rem',
+            backgroundColor: 'white',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+          }}>
+            <h3 style={{ marginTop: 0, color: '#6f42c1' }}>📊 Aperçu rapide</h3>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ padding: '0.5rem 0', borderBottom: '1px solid #eee' }}>
+                <span style={{ color: '#666' }}>Semaine actuelle :</span>
+                <strong style={{ marginLeft: '0.5rem' }}>S{currentWeekNumber}</strong>
+              </div>
+              <div style={{ padding: '0.5rem 0', borderBottom: '1px solid #eee' }}>
+                <span style={{ color: '#666' }}>Date du jour :</span>
+                <strong style={{ marginLeft: '0.5rem' }}>{new Date().toLocaleDateString('fr-FR')}</strong>
+              </div>
+              <div style={{ padding: '0.5rem 0' }}>
+                <span style={{ color: '#666' }}>Statut :</span>
+                <span style={{ 
+                  marginLeft: '0.5rem',
+                  padding: '0.25rem 0.5rem',
+                  backgroundColor: '#28a745',
+                  color: 'white',
+                  borderRadius: '4px',
+                  fontSize: '0.8rem'
+                }}>
+                  🟢 Système opérationnel
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Section actions rapides */}
+        <div style={{ 
+          marginTop: '3rem',
+          padding: '2rem',
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+        }}>
+          <h3>⚡ Actions rapides</h3>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            gap: '1rem', 
+            flexWrap: 'wrap',
+            marginTop: '1rem'
+          }}>
+            <button
               onClick={() => navigate('/')}
-              style={{ 
+              style={{
                 padding: '1rem 2rem',
-                fontSize: '1.1rem',
+                fontSize: '1rem',
                 backgroundColor: '#6c757d',
                 color: 'white',
                 border: 'none',
-                borderRadius: '5px',
-                cursor: 'pointer'
+                borderRadius: '8px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
               }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#545b62'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = '#6c757d'}
             >
               🏠 Retour à l'accueil
             </button>
+            <button
+              onClick={() => window.open('/week/' + currentWeekNumber, '_blank')}
+              style={{
+                padding: '1rem 2rem',
+                fontSize: '1rem',
+                backgroundColor: '#17a2b8',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#117a8b'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = '#17a2b8'}
+            >
+              👁️ Aperçu public
+            </button>
           </div>
         </div>
-        <Footer />
-      </PageLayout>
-    </main>
+
+        {/* Section outils d'administration */}
+        <div style={{ 
+          marginTop: '3rem',
+          padding: '2rem',
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+          borderTop: '3px solid #dc3545'
+        }}>
+          <h3 style={{ color: '#dc3545', marginTop: 0 }}>🔧 Outils d'administration</h3>
+          <p style={{ color: '#666', marginBottom: '1.5rem' }}>
+            Outils avancés pour la gestion des menus et des données
+          </p>
+          
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+            gap: '1rem'
+          }}>
+            <button
+              onClick={() => alert('Fonctionnalité en développement')}
+              style={{
+                padding: '1rem',
+                fontSize: '0.9rem',
+                backgroundColor: '#ffc107',
+                color: '#212529',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#e0a800'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = '#ffc107'}
+            >
+              📋 Gérer les plats
+            </button>
+            
+            <button
+              onClick={() => alert('Fonctionnalité en développement')}
+              style={{
+                padding: '1rem',
+                fontSize: '0.9rem',
+                backgroundColor: '#6f42c1',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#5a32a3'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = '#6f42c1'}
+            >
+              🏷️ Gérer les catégories
+            </button>
+            
+            <button
+              onClick={() => alert('Fonctionnalité en développement')}
+              style={{
+                padding: '1rem',
+                fontSize: '0.9rem',
+                backgroundColor: '#20c997',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#1aa179'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = '#20c997'}
+            >
+              📊 Statistiques
+            </button>
+            
+            <button
+              onClick={() => alert('Fonctionnalité en développement')}
+              style={{
+                padding: '1rem',
+                fontSize: '0.9rem',
+                backgroundColor: '#fd7e14',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#e8650e'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = '#fd7e14'}
+            >
+              📤 Exporter données
+            </button>
+          </div>
+          
+          <div style={{ 
+            marginTop: '1.5rem', 
+            padding: '1rem', 
+            backgroundColor: '#f8f9fa', 
+            borderRadius: '8px',
+            borderLeft: '4px solid #17a2b8'
+          }}>
+            <p style={{ margin: 0, fontSize: '0.9rem', color: '#666' }}>
+              💡 <strong>Astuce :</strong> Utilisez les raccourcis clavier pour naviguer plus rapidement dans l'interface d'administration.
+            </p>
+          </div>
+        </div>
+      </div>
+    </AdminLayout>
   );
 }

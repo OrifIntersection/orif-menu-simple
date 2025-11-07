@@ -3,6 +3,8 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { getCurrentWeekNumber, getCurrentYear, getWeekLabel } from "../utils/dateUtils";
 import defaultMenu from "../data/defaultMenu";
+import UserStatus from "./UserStatus";
+import { useAuth } from "../hooks/useAuth";
 
 /**
  * MenuDrawer - Composant complètement autonome sans aucune prop
@@ -12,6 +14,7 @@ export default function MenuDrawer() {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { isAuthenticated } = useAuth();
   const currentYear = getCurrentYear();
   const currentWeekNumber = getCurrentWeekNumber();
 
@@ -66,23 +69,22 @@ export default function MenuDrawer() {
       onClick: () => navigate('/'),
       hidden: location.pathname === '/'
     },
-    {
-      icon: "📆",
-      label: "Consulter une date",
-      onClick: () => navigate(`/date/${new Date().toISOString().split('T')[0]}`),
-      hidden: location.pathname.startsWith('/date/')
-    },
-    {
-      icon: "📅",
-      label: "Consulter une semaine",
-      onClick: () => navigate(`/week/${currentWeekNumber}`),
-      hidden: location.pathname.startsWith('/week/')
-    },
-    {
+    // Administration - visible seulement si connecté
+    ...(isAuthenticated ? [{
       icon: "⚙️",
       label: "Administration",
       onClick: () => navigate('/admin'),
-      hidden: location.pathname.startsWith('/admin')
+      hidden: false
+    }] : [])
+  ].filter(action => !action.hidden);
+
+  // Actions pour la section Menus - Suppression des doublons
+  const menuActions = [
+    {
+      icon: "📋",
+      label: "Calendrier des événements spéciaux",
+      onClick: () => navigate('/'), // Pour l'instant redirige vers l'accueil
+      hidden: false
     }
   ].filter(action => !action.hidden);
 
@@ -136,6 +138,89 @@ export default function MenuDrawer() {
               ))}
             </div>
           )}
+
+          {/* Section des menus */}
+          {menuActions.length > 0 && (
+            <div className="drawer-section">
+              <h4 className="drawer-section-title">Menus</h4>
+              {/* Boucle sur chaque action de menu pour créer un bouton */}
+              {menuActions.map((action, index) => (
+                <button
+                  key={index} // Clé unique pour chaque élément de la liste
+                  className="drawer-action-item"
+                  onClick={() => handleNavAction(action.onClick)} // Exécute l'action au clic
+                >
+                  {/* Icône emoji de l'action */}
+                  <span className="action-icon">{action.icon}</span>
+                  {/* Label textuel de l'action */}
+                  <span className="action-label">{action.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Section du statut utilisateur */}
+          <div className="drawer-section">
+            <h4 className="drawer-section-title">Statut</h4>
+            <UserStatus />
+          </div>
+
+          {/* Section de test des pages */}
+          <div className="drawer-section">
+            <h4 className="drawer-section-title">🧪 Test des pages</h4>
+            
+            {/* Pages principales */}
+            <div style={{ marginBottom: '8px', paddingLeft: '8px', fontSize: '0.85em', fontWeight: '600', color: '#9ca3af' }}>
+              Pages principales
+            </div>
+            <button className="drawer-action-item" onClick={() => handleNavAction(() => navigate('/login'))}>
+              <span className="action-icon">🔐</span>
+              <span className="action-label">Connexion</span>
+            </button>
+            
+            {/* Pages de consultation */}
+            <div style={{ marginTop: '12px', marginBottom: '8px', paddingLeft: '8px', fontSize: '0.85em', fontWeight: '600', color: '#9ca3af' }}>
+              Pages de consultation
+            </div>
+            <button className="drawer-action-item" onClick={() => handleNavAction(() => navigate(`/date/${new Date().toISOString().split('T')[0]}`))}>
+              <span className="action-icon">📅</span>
+              <span className="action-label">Menu du jour</span>
+            </button>
+            <button className="drawer-action-item" onClick={() => handleNavAction(() => navigate(`/week/${currentWeekNumber}`))}>
+              <span className="action-icon">📋</span>
+              <span className="action-label">Menu de la semaine</span>
+            </button>
+            
+            {/* Pages d'administration (admin uniquement) */}
+            {isAuthenticated && (
+              <>
+                <div style={{ marginTop: '12px', marginBottom: '8px', paddingLeft: '8px', fontSize: '0.85em', fontWeight: '600', color: '#9ca3af' }}>
+                  Administration
+                </div>
+                <button className="drawer-action-item" onClick={() => handleNavAction(() => navigate('/admin'))}>
+                  <span className="action-icon">⚙️</span>
+                  <span className="action-label">Tableau de bord</span>
+                </button>
+                <button className="drawer-action-item" onClick={() => handleNavAction(() => navigate(`/admin/date/${new Date().toISOString().split('T')[0]}`))}>
+                  <span className="action-icon">✏️</span>
+                  <span className="action-label">Éditer le jour</span>
+                </button>
+                <button className="drawer-action-item" onClick={() => handleNavAction(() => navigate(`/admin/week/${currentWeekNumber}`))}>
+                  <span className="action-icon">📝</span>
+                  <span className="action-label">Éditer la semaine</span>
+                </button>
+              </>
+            )}
+            
+            {/* Pages de debug */}
+            <div style={{ marginTop: '12px', marginBottom: '8px', paddingLeft: '8px', fontSize: '0.85em', fontWeight: '600', color: '#9ca3af' }}>
+              Debug
+            </div>
+            <button className="drawer-action-item" onClick={() => handleNavAction(() => navigate('/auth/callback'))}>
+              <span className="action-icon">🔄</span>
+              <span className="action-label">Test Auth Callback</span>
+            </button>
+          </div>
 
           {/* Section de la liste des menus disponibles */}
           <div className="drawer-section">

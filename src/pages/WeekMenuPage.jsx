@@ -1,11 +1,10 @@
 // Page qui affiche le menu d'une semaine spécifique
-import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getWeekLabel, getCurrentYear } from '../utils/dateUtils';
 import PageLayout from '../components/PageLayout';
+import UserStatus from '../components/UserStatus';
 import MenuTable from '../components/MenuTable';
 import WeekPicker from '../components/WeekPicker';
-import DailyMenu from './DailyMenu';
 import Footer from '../components/Footer';
 import defaultMenu from '../data/defaultMenu';
 
@@ -13,7 +12,6 @@ import defaultMenu from '../data/defaultMenu';
  * WeekMenuPage - Page autonome pour afficher le menu d'une semaine
  */
 export default function WeekMenuPage() {
-  const [showDailyMenu, setShowDailyMenu] = useState(false);
   const { weekNumber } = useParams();
   const navigate = useNavigate();
   const currentYear = getCurrentYear();
@@ -41,20 +39,12 @@ export default function WeekMenuPage() {
     <main className="container">
       <PageLayout 
         title="Cafétéria ORIF"
-        actions={
-          <button 
-            className="toggle-view-btn"
-            onClick={() => setShowDailyMenu(!showDailyMenu)}
-            title={showDailyMenu ? "Voir le menu de la semaine" : "Voir le menu du jour"}
-          >
-            {showDailyMenu ? "📅 Menu semaine" : "📆 Menu du jour"}
-          </button>
-        }
+        actions={<UserStatus />}
       >
         <div style={{ maxWidth: '400px', margin: '0 auto 20px' }}>
           <WeekPicker />
         </div>
-        {showDailyMenu ? <DailyMenu /> : <MenuTable menu={weekMenu} />}
+        <MenuTable menu={weekMenu} />
         <Footer />
       </PageLayout>
     </main>

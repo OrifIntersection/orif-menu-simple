@@ -114,10 +114,27 @@ CREATE TABLE public.menu_items (
   CONSTRAINT fk_menu_items_dish FOREIGN KEY (dish_id)      REFERENCES public.dishes(id)
 );
 
+-- 10. Affectation des plats par date (pour édition directe)
+CREATE TABLE public.meal_items (
+  id bigserial NOT NULL,
+  date date NOT NULL,
+  meal_type_id integer NOT NULL,
+  category_id integer NOT NULL,
+  dish_id integer NOT NULL,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  PRIMARY KEY (id),
+  CONSTRAINT fk_meal_items_meal FOREIGN KEY (meal_type_id) REFERENCES public.meal_types(id),
+  CONSTRAINT fk_meal_items_cat  FOREIGN KEY (category_id)  REFERENCES public.categories(id),
+  CONSTRAINT fk_meal_items_dish FOREIGN KEY (dish_id)      REFERENCES public.dishes(id),
+  CONSTRAINT unique_meal_assignment UNIQUE (date, meal_type_id, category_id)
+);
+
 -- =====================================================
 -- ETAPE 2 : INDEX UTILES
 -- =====================================================
 CREATE INDEX idx_menu_items_lookup ON public.menu_items (menu_day_id, meal_type_id, category_id);
+CREATE INDEX idx_meal_items_date ON public.meal_items (date);
 CREATE INDEX idx_menus_year_week   ON public.menus (year, week_number);
 CREATE INDEX idx_menu_days_date    ON public.menu_days (day_date);
 CREATE INDEX idx_dishes_active     ON public.dishes (is_active);
@@ -342,6 +359,32 @@ WHERE md.day_name='Vendredi' AND md.day_date='2025-11-08' AND mt.code='SOIR' AND
 );
 
 -- =====================================================
+-- ETAPE 6.5 : DONNEES DE TEST MEAL_ITEMS (édition par date)
+-- =====================================================
+-- Quelques exemples pour tester l'édition par date
+INSERT INTO public.meal_items (date, meal_type_id, category_id, dish_id)
+SELECT '2025-11-12'::date, mt.id, c.id, d.id
+FROM public.meal_types mt, public.categories c, public.dishes d
+WHERE mt.code='MIDI' AND (
+  (c.code='SALADE'   AND d.name='Salade de tomates') OR
+  (c.code='VIANDE'   AND d.name='Boeuf bourguignon') OR
+  (c.code='FECULENT' AND d.name='Puree de pommes de terre') OR
+  (c.code='LEGUMES'  AND d.name='Haricots verts') OR
+  (c.code='DESSERT'  AND d.name='Creme brulee')
+);
+
+INSERT INTO public.meal_items (date, meal_type_id, category_id, dish_id)
+SELECT '2025-11-13'::date, mt.id, c.id, d.id
+FROM public.meal_types mt, public.categories c, public.dishes d
+WHERE mt.code='SOIR' AND (
+  (c.code='SALADE'   AND d.name='Betteraves') OR
+  (c.code='VIANDE'   AND d.name='Escalope de porc') OR
+  (c.code='FECULENT' AND d.name='Riz basmati') OR
+  (c.code='LEGUMES'  AND d.name='Courgettes') OR
+  (c.code='DESSERT'  AND d.name='Yaourt aux fruits')
+);
+
+-- =====================================================
 -- ETAPE 7 : ROW LEVEL SECURITY (RLS)
 -- =====================================================
 
@@ -350,6 +393,7 @@ ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.menus ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.menu_days ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.menu_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.meal_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.dishes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.meal_types ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
@@ -357,9 +401,24 @@ ALTER TABLE public.allergens ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.dish_allergens ENABLE ROW LEVEL SECURITY;
 
 -- Policies de LECTURE PUBLIQUE (anonyme + authentifie)
+-- Supprimer les politiques existantes si elles existent
+DROP POLICY IF EXISTS "public_read_menus" ON public.menus;
+DROP POLICY IF EXISTS "public_read_menu_days" ON public.menu_days;
+DROP POLICY IF EXISTS "public_read_menu_items" ON public.menu_items;
+DROP POLICY IF EXISTS "public_read_meal_items" ON public.meal_items;
+DROP POLICY IF EXISTS "admin_write_meal_items" ON public.meal_items;
+DROP POLICY IF EXISTS "public_read_dishes" ON public.dishes;
+DROP POLICY IF EXISTS "public_read_meal_types" ON public.meal_types;
+DROP POLICY IF EXISTS "public_read_categories" ON public.categories;
+DROP POLICY IF EXISTS "public_read_allergens" ON public.allergens;
+DROP POLICY IF EXISTS "public_read_dish_allergens" ON public.dish_allergens;
+
+-- Créer les nouvelles politiques
 CREATE POLICY "public_read_menus" ON public.menus FOR SELECT USING (true);
 CREATE POLICY "public_read_menu_days" ON public.menu_days FOR SELECT USING (true);
 CREATE POLICY "public_read_menu_items" ON public.menu_items FOR SELECT USING (true);
+CREATE POLICY "public_read_meal_items" ON public.meal_items FOR SELECT USING (true);
+CREATE POLICY "admin_write_meal_items" ON public.meal_items FOR ALL USING (true);
 CREATE POLICY "public_read_dishes" ON public.dishes FOR SELECT USING (true);
 CREATE POLICY "public_read_meal_types" ON public.meal_types FOR SELECT USING (true);
 CREATE POLICY "public_read_categories" ON public.categories FOR SELECT USING (true);

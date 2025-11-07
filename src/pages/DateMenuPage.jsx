@@ -1,19 +1,16 @@
 // Page qui affiche le menu pour une date spécifique
-import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { parseDate, formatDate, getDayName, isWeekday, getWeekNumber, getCurrentYear, getWeekLabel } from '../utils/dateUtils';
+import { parseDate, formatDate, getDayName, isWeekday } from '../utils/dateUtils';
 import PageLayout from '../components/PageLayout';
-import MenuTable from '../components/MenuTable';
+import UserStatus from '../components/UserStatus';
 import Footer from '../components/Footer';
 import DailyMenu from './DailyMenu';
 import DatePicker from '../components/DatePicker';
-import defaultMenu from '../data/defaultMenu';
 
 /**
  * DateMenuPage - Page autonome pour afficher le menu d'une date
  */
 export default function DateMenuPage() {
-  const [showDailyMenu, setShowDailyMenu] = useState(true);
   const { date } = useParams();
   const navigate = useNavigate();
 
@@ -53,30 +50,19 @@ export default function DateMenuPage() {
   }
 
   const dayName = getDayName(targetDate);
-  const weekNumber = getWeekNumber(targetDate);
   const pageTitle = `Menu du ${dayName} ${formatDate(targetDate)}`;
-  const currentYear = getCurrentYear();
-  const weekLabel = getWeekLabel(currentYear, weekNumber);
-  const weekMenu = { ...defaultMenu, weekLabel };
 
   return (
     <main className="container">
       <PageLayout 
         title={pageTitle}
-        actions={
-          <button 
-            className="toggle-view-btn"
-            onClick={() => setShowDailyMenu(!showDailyMenu)}
-            title={showDailyMenu ? "Voir le menu de la semaine" : "Voir le menu du jour"}
-          >
-            {showDailyMenu ? "📅 Menu semaine" : "📆 Menu du jour"}
-          </button>
-        }
+        actions={<UserStatus />}
       >
         <div style={{ maxWidth: '400px', margin: '0 auto 20px' }}>
           <DatePicker />
         </div>
-        {showDailyMenu ? <DailyMenu /> : <MenuTable menu={weekMenu} />}
+        <DailyMenu />
+        
         <Footer />
       </PageLayout>
     </main>

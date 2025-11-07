@@ -48,6 +48,24 @@ export function formatDate(date) {
 }
 
 /**
+ * Formate une date pour l'affichage (ex: "6 novembre 2025")
+ * @param {Date} date - La date à formater
+ * @returns {string} La date formatée pour l'affichage
+ */
+export function formatDateForDisplay(date) {
+  const monthNames = [
+    'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+    'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'
+  ];
+  
+  const day = date.getDate();
+  const month = monthNames[date.getMonth()];
+  const year = date.getFullYear();
+  
+  return `${day} ${month} ${year}`;
+}
+
+/**
  * Parse une date au format YYYY-MM-DD
  * @param {string} dateString - La chaîne de date à parser
  * @returns {Date} L'objet Date
@@ -118,4 +136,23 @@ export function getDayName(date) {
 export function isWeekday(date) {
   const day = date.getDay();
   return day >= 1 && day <= 5; // Lundi (1) à vendredi (5)
+}
+
+/**
+ * Obtient toutes les dates d'une semaine donnée (du lundi au dimanche)
+ * @param {number} year - L'année
+ * @param {number} weekNumber - Le numéro de semaine (1-53)
+ * @returns {Date[]} Array des 7 dates de la semaine
+ */
+export function getWeekDates(year, weekNumber) {
+  const monday = getMondayOfWeek(year, weekNumber);
+  const dates = [];
+  
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(monday);
+    date.setDate(monday.getDate() + i);
+    dates.push(date);
+  }
+  
+  return dates;
 }
