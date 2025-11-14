@@ -1,8 +1,7 @@
 // Composant MenuDrawer 100% autonome - Menu latéral qui s'ouvre depuis la droite
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { getCurrentWeekNumber, getCurrentYear, getWeekLabel } from "../utils/dateUtils";
-import defaultMenu from "../data/defaultMenu";
+import { getCurrentWeekNumber, getCurrentYear } from "../utils/dateUtils";
 import UserStatus from "./UserStatus";
 import { useAuth } from "../hooks/useAuth";
 
@@ -18,19 +17,27 @@ export default function MenuDrawer() {
   const currentYear = getCurrentYear();
   const currentWeekNumber = getCurrentWeekNumber();
 
-  // Génération autonome des menus (2 passées + actuelle + 2 futures)
-  const menusData = [];
-  for (let i = -2; i <= 2; i++) {
-    const weekNum = currentWeekNumber + i;
-    if (weekNum > 0 && weekNum <= 53) {
-      menusData.push({
-        id: `week-${weekNum}`,
-        ...defaultMenu,
-        weekLabel: getWeekLabel(currentYear, weekNum),
-        weekNumber: weekNum
-      });
+  // Récupération des menus depuis Supabase (exemple simplifié)
+  const [menusData, setMenusData] = useState([]);
+  useEffect(() => {
+    async function fetchMenus() {
+      try {
+        const { data, error } = await import('../services/MenuService').then(mod => mod.MenuService.getAllMenus());
+        if (error || !data) {
+          setMenusData([]);
+        } else {
+          setMenusData(data.map(menu => ({
+            id: `week-${menu.week_number}`,
+            weekLabel: menu.week_label,
+            weekNumber: menu.week_number
+          })));
+        }
+      } catch {
+        setMenusData([]);
+      }
     }
-  }
+    fetchMenus();
+  }, [currentYear]);
 
   // Déterminer le menu actuel selon la page
   let currentMenuId = `week-${currentWeekNumber}`;

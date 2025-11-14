@@ -1,7 +1,7 @@
 // Fichier principal de l'application React avec système de navigation
+import React from "react";
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { getCurrentYear, getCurrentWeekNumber, getWeekLabel } from "./utils/dateUtils";
-import defaultMenu from "./data/defaultMenu";
+import { getCurrentYear, getCurrentWeekNumber } from "./utils/dateUtils";
 import PageLayout from "./components/PageLayout";
 import MenuTable from "./components/MenuTable";
 import Footer from "./components/Footer";
@@ -26,8 +26,27 @@ import "./styles.css";
 function HomePage() {
   const currentYear = getCurrentYear();
   const currentWeekNumber = getCurrentWeekNumber();
-  const weekLabel = getWeekLabel(currentYear, currentWeekNumber);
-  const currentWeekMenu = { ...defaultMenu, weekLabel };
+  const [menuData, setMenuData] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    async function fetchMenu() {
+      setLoading(true);
+      try {
+        const { data, error } = await import('./services/MenuService').then(mod => mod.MenuService.getCompleteMenuByWeek(currentYear, currentWeekNumber));
+        if (error || !data) {
+          setMenuData(null);
+        } else {
+          setMenuData(data);
+        }
+      } catch {
+        setMenuData(null);
+      }
+      setLoading(false);
+    }
+    fetchMenu();
+  }, [currentYear, currentWeekNumber]);
+
   // Calcul des dates de début et de fin de semaine
   const getWeekDates = (week, year) => {
     const simpleMonday = (y, w) => {
@@ -44,6 +63,7 @@ function HomePage() {
   };
   const [startDate, endDate] = getWeekDates(currentWeekNumber, currentYear);
   const formatDate = (date) => date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+
   return (
     <main className="container">
       <PageLayout 
@@ -53,7 +73,15 @@ function HomePage() {
         <h2 className="menu-title" style={{textAlign: 'center', marginBottom: '1.5rem'}}>
           {`Menu la semaine N° ${currentWeekNumber} du ${formatDate(startDate)} au ${formatDate(endDate)}`}
         </h2>
-        <MenuTable menu={currentWeekMenu} />
+        {loading ? (
+          <div>Chargement du menu...</div>
+        ) : menuData ? (
+          <MenuTable menu={menuData} />
+        ) : (
+          <div style={{textAlign: 'center', color: '#d32f2f', fontWeight: 'bold', margin: '2rem 0'}}>
+            Aucun menu disponible pour cette semaine.
+          </div>
+        )}
         <Footer />
       </PageLayout>
     </main>
