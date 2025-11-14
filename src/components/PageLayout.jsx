@@ -17,7 +17,6 @@ export default function PageLayout({ title, actions, children }) {
           <span className="logo" aria-hidden="true"></span>
           <h1>{title}</h1>
         </div>
-        
         <div className="toolbar">
           <div className="toolbar-buttons">
             <MenuDrawer />
@@ -25,7 +24,6 @@ export default function PageLayout({ title, actions, children }) {
           </div>
         </div>
       </header>
-
       {children}
     </>
   );

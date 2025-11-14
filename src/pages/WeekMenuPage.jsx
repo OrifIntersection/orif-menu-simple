@@ -1,6 +1,6 @@
 // Page qui affiche le menu d'une semaine spécifique
-import { useParams, useNavigate } from 'react-router-dom';
-import { getWeekLabel, getCurrentYear } from '../utils/dateUtils';
+// ...existing code...
+import { useParams } from 'react-router-dom';
 import PageLayout from '../components/PageLayout';
 import UserStatus from '../components/UserStatus';
 import MenuTable from '../components/MenuTable';
@@ -12,29 +12,26 @@ import defaultMenu from '../data/defaultMenu';
  * WeekMenuPage - Page autonome pour afficher le menu d'une semaine
  */
 export default function WeekMenuPage() {
+  // Récupère le numéro de semaine depuis l'URL
   const { weekNumber } = useParams();
-  const navigate = useNavigate();
-  const currentYear = getCurrentYear();
-  const weekNum = parseInt(weekNumber, 10);
-
-  if (isNaN(weekNum) || weekNum < 1 || weekNum > 53) {
-    return (
-      <main className="container">
-        <PageLayout title="Erreur">
-          <div style={{ textAlign: 'center', padding: '2rem' }}>
-            <h2>❌ Numéro de semaine invalide</h2>
-            <p>Le numéro de semaine doit être entre 1 et 53.</p>
-            <button onClick={() => navigate('/')}>🏠 Retour à l'accueil</button>
-          </div>
-          <Footer />
-        </PageLayout>
-      </main>
-    );
-  }
-
-  const weekLabel = getWeekLabel(currentYear, weekNum);
-  const weekMenu = { ...defaultMenu, weekLabel, weekNumber: weekNum };
-
+  const currentYear = 2025;
+  const weekNum = parseInt(weekNumber, 10) || 46;
+  // Calcul des dates de début et de fin de semaine dynamiquement
+  const getWeekDates = (week, year) => {
+    const simpleMonday = (y, w) => {
+      const d = new Date(y, 0, 1 + (w - 1) * 7);
+      const day = d.getDay();
+      const mondayOffset = day <= 4 ? day - 1 : day - 8;
+      d.setDate(d.getDate() - mondayOffset);
+      return d;
+    };
+    const start = simpleMonday(year, week);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 4);
+    return [start, end];
+  };
+  const [startDate, endDate] = getWeekDates(weekNum, currentYear);
+  const formatDate = (date) => date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
   return (
     <main className="container">
       <PageLayout 
@@ -44,12 +41,7 @@ export default function WeekMenuPage() {
         <div style={{ maxWidth: '400px', margin: '0 auto 20px' }}>
           <WeekPicker />
         </div>
-        <MenuTable menu={weekMenu} />
-        {/* Informations sur les régimes et allergies */}
-        <div className="menu-info" style={{marginTop: '1.5rem', fontSize: '1rem', color: '#444'}}>
-          <strong>Régimes acceptés avec certificat médical :</strong> sans lactose, et sans gluten.<br />
-          Si vous avez des doutes concernant les ingrédients qui peuvent provoquer des allergies ou d’autres réactions indésirables, veuillez vous adresser au Chef de cuisine
-        </div>
+        <MenuTable menu={{ ...defaultMenu, weekLabel: `${formatDate(startDate)} au ${formatDate(endDate)}`, weekNumber: weekNum }} />
         <Footer />
       </PageLayout>
     </main>

@@ -20,11 +20,11 @@ export default function MenuTable({ menu, showToggle, onToggle, toggleLabel }) {
       {/* En-tête avec titre et bouton optionnel */}
       <div className="table-header">
         {/* Titre indiquant la semaine affichée avec numéro */}
-        <h3 className="table-caption">
-          {menu.weekNumber
-            ? `Menu la semaine N° ${menu.weekNumber} du ${menu.weekLabel}`
-            : `Menu du ${weekLabel}`}
-        </h3>
+        {menu.weekNumber && (
+          <h3 className="table-caption">
+            {`Menu la semaine N° ${menu.weekNumber} du ${menu.weekLabel}`}
+          </h3>
+        )}
         {/* Bouton conditionnel pour basculer entre vue jour/semaine */}
         {showToggle && (
           <button className="table-toggle-btn" onClick={onToggle}>

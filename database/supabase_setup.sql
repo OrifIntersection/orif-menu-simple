@@ -374,6 +374,14 @@ CREATE POLICY "public_read_dish_allergens" ON public.dish_allergens FOR SELECT U
 -- FIN : Supabase pret pour test
 -- =====================================================
 
+-- Mise à jour des rôles admin pour les utilisateurs principaux
+UPDATE public.profiles
+SET role = 'admin'
+WHERE user_id IN (
+  '1ebb59cc-e034-4f09-b8a5-68e07015d11d',
+  'da2924c3-9b49-4d1e-8736-14af2324c095',
+  '98057cf8-066c-4d97-b363-2db5aae00364'
+);
 
 
 

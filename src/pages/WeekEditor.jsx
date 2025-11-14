@@ -202,7 +202,7 @@ const WeekEditor = () => {
 
   if (loading) {
     return (
-      <AdminLayout title={`Édition Semaine ${weekNum}`}>
+      <AdminLayout title="Cafétéria ORIF">
         <div style={{ textAlign: 'center', padding: '2rem' }}>
           🔄 Chargement des données...
         </div>
@@ -211,7 +211,7 @@ const WeekEditor = () => {
   }
 
   return (
-    <AdminLayout title={`Édition Semaine ${weekNum}`}>
+    <AdminLayout title="Cafétéria ORIF">
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         
         {error && (

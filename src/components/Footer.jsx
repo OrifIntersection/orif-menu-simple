@@ -4,11 +4,12 @@
  */
 export default function Footer() {
   return (
-    // Élément footer HTML avec classe CSS pour le styling
     <footer className="footer">
-      {/* Conteneur du texte de copyright */}
       <div className="copyright">
-        {/* Texte en petit caractères avec l'année et le nom de l'organisation */}
+        <div className="menu-info" style={{marginBottom: '1rem', fontSize: '1rem', color: '#444'}}>
+          <strong>Régimes acceptés avec certificat médical :</strong> sans lactose, et sans gluten.<br />
+          Si vous avez des doutes concernant les ingrédients qui peuvent provoquer des allergies ou d’autres réactions indésirables, veuillez vous adresser au Chef de cuisine.
+        </div>
         <small>© 2025 ORIF - Tous droits réservés</small>
       </div>
     </footer>

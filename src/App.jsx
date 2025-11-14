@@ -28,13 +28,31 @@ function HomePage() {
   const currentWeekNumber = getCurrentWeekNumber();
   const weekLabel = getWeekLabel(currentYear, currentWeekNumber);
   const currentWeekMenu = { ...defaultMenu, weekLabel };
-
+  // Calcul des dates de début et de fin de semaine
+  const getWeekDates = (week, year) => {
+    const simpleMonday = (y, w) => {
+      const d = new Date(y, 0, 1 + (w - 1) * 7);
+      const day = d.getDay();
+      const mondayOffset = day <= 4 ? day - 1 : day - 8;
+      d.setDate(d.getDate() - mondayOffset);
+      return d;
+    };
+    const start = simpleMonday(year, week);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 4);
+    return [start, end];
+  };
+  const [startDate, endDate] = getWeekDates(currentWeekNumber, currentYear);
+  const formatDate = (date) => date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
   return (
     <main className="container">
       <PageLayout 
         title="Cafétéria ORIF"
         actions={<UserStatus />}
       >
+        <h2 className="menu-title" style={{textAlign: 'center', marginBottom: '1.5rem'}}>
+          {`Menu la semaine N° ${currentWeekNumber} du ${formatDate(startDate)} au ${formatDate(endDate)}`}
+        </h2>
         <MenuTable menu={currentWeekMenu} />
         <Footer />
       </PageLayout>
