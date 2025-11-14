@@ -33,7 +33,7 @@ export default function WeekMenuPage() {
   }
 
   const weekLabel = getWeekLabel(currentYear, weekNum);
-  const weekMenu = { ...defaultMenu, weekLabel };
+  const weekMenu = { ...defaultMenu, weekLabel, weekNumber: weekNum };
 
   return (
     <main className="container">
@@ -45,6 +45,11 @@ export default function WeekMenuPage() {
           <WeekPicker />
         </div>
         <MenuTable menu={weekMenu} />
+        {/* Informations sur les régimes et allergies */}
+        <div className="menu-info" style={{marginTop: '1.5rem', fontSize: '1rem', color: '#444'}}>
+          <strong>Régimes acceptés avec certificat médical :</strong> sans lactose, et sans gluten.<br />
+          Si vous avez des doutes concernant les ingrédients qui peuvent provoquer des allergies ou d’autres réactions indésirables, veuillez vous adresser au Chef de cuisine
+        </div>
         <Footer />
       </PageLayout>
     </main>

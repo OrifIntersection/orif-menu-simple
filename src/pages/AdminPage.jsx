@@ -24,6 +24,41 @@ export default function AdminPage() {
           marginTop: '2rem' 
         }}>
           
+          {/* Section import Excel - NOUVEAU */}
+          <div style={{ 
+            border: '2px solid #dc3545', 
+            borderRadius: '12px', 
+            padding: '2rem',
+            backgroundColor: 'white',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+          }}>
+            <h3 style={{ marginTop: 0, color: '#dc3545' }}>📥 Import Excel</h3>
+            <p style={{ color: '#666', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+              Importez une semaine complète depuis un fichier Excel
+            </p>
+            <button 
+              onClick={() => navigate('/admin/import')}
+              style={{ 
+                padding: '1rem',
+                fontSize: '1rem',
+                backgroundColor: '#dc3545',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                width: '100%'
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#c82333'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = '#dc3545'}
+            >
+              📥 Importer un fichier Excel
+            </button>
+            <p style={{ fontSize: '0.85rem', color: '#999', marginTop: '1rem', marginBottom: 0 }}>
+              Format : Semaine, Jour, Moment, Plat
+            </p>
+          </div>
+          
           {/* Section modification rapide */}
           <div style={{ 
             border: '2px solid #007bff', 

@@ -19,8 +19,12 @@ export default function MenuTable({ menu, showToggle, onToggle, toggleLabel }) {
     <>
       {/* En-tête avec titre et bouton optionnel */}
       <div className="table-header">
-        {/* Titre indiquant la semaine affichée */}
-        <h3 className="table-caption">Menu du {weekLabel}</h3>
+        {/* Titre indiquant la semaine affichée avec numéro */}
+        <h3 className="table-caption">
+          {menu.weekNumber
+            ? `Menu la semaine N° ${menu.weekNumber} du ${menu.weekLabel}`
+            : `Menu du ${weekLabel}`}
+        </h3>
         {/* Bouton conditionnel pour basculer entre vue jour/semaine */}
         {showToggle && (
           <button className="table-toggle-btn" onClick={onToggle}>
@@ -28,7 +32,6 @@ export default function MenuTable({ menu, showToggle, onToggle, toggleLabel }) {
           </button>
         )}
       </div>
-      
       {/* Conteneur du tableau avec scroll horizontal si nécessaire */}
       <div className="table-wrap">
         <table>
@@ -36,21 +39,19 @@ export default function MenuTable({ menu, showToggle, onToggle, toggleLabel }) {
           <thead>
             <HeaderTable days={days} />
           </thead>
-          
           {/* Corps du tableau avec les lignes de repas */}
           <tbody>
             {/* Boucle sur chaque repas (Midi, Soir) */}
             {meals.map((meal) => (
               <SiderTable
-                key={meal} // Clé unique pour chaque ligne (nom du repas)
-                meal={meal} // Nom du repas (Midi/Soir)
-                days={days} // Liste des jours de la semaine
-                items={items} // Types d'aliments (Entrée, Plat, etc.)
-                data={data} // Données complètes du menu
+                key={meal}
+                meal={meal}
+                days={days}
+                items={items}
+                data={data}
               />
             ))}
           </tbody>
-          
           {/* Pied du tableau (répète l'en-tête pour faciliter la lecture) */}
           <tfoot>
             <HeaderTable days={days} />

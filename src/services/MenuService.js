@@ -635,21 +635,17 @@ export class MenuService {
       console.warn('Supabase non configuré, simulation de l\'assignation du plat')
       return Promise.resolve() // Simuler un succès
     }
-    
     try {
       const dateStr = date.toISOString().split('T')[0]
-
       const { error } = await supabase
         .from('meal_items')
         .upsert({
           date: dateStr,
           meal_type_id: mealTypeId,
-          category_id: categoryId,
           dish_id: dishId
         }, {
-          onConflict: 'date,meal_type_id,category_id'
+          onConflict: 'date,meal_type_id,dish_id'
         })
-
       if (error) throw error
     } catch (error) {
       console.warn('Supabase non disponible, simulation de l\'assignation du plat:', error.message)

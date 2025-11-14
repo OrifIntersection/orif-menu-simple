@@ -65,6 +65,11 @@ export default function DailyMenu() {
           </tfoot>
         </table>
       </div>
+      {/* Informations sur les régimes et allergies */}
+      <div className="menu-info" style={{marginTop: '1.5rem', fontSize: '1rem', color: '#444'}}>
+        <strong>Régimes acceptés avec certificat médical :</strong> sans lactose, et sans gluten.<br />
+        Si vous avez des doutes concernant les ingrédients qui peuvent provoquer des allergies ou d’autres réactions indésirables, veuillez vous adresser au Chef de cuisine
+      </div>
     </div>
   );
 }

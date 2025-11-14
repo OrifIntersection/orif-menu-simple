@@ -16,6 +16,7 @@ import DateEditor from './pages/DateEditor';
 import LoginPage from './pages/LoginPage';
 import AuthCallback from './pages/AuthCallback';
 import AuthCallbackDebug from './pages/AuthCallbackDebug';
+import ImportMenuPage from './pages/ImportMenuPage';
 import "./styles.css";
 
 /**
@@ -66,6 +67,8 @@ export default function App() {
           <Route path="/date/:date" element={<DateMenuPage />} />
           {/* Route pour la page d'administration */}
           <Route path="/admin" element={<AdminPage />} />
+          {/* Route pour l'import de menus Excel */}
+          <Route path="/admin/import" element={<ImportMenuPage />} />
           {/* Route pour éditer le menu d'une semaine */}
           <Route path="/admin/week/:weekNumber" element={<WeekEditor />} />
           {/* Route pour éditer le menu d'une date */}
