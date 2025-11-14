@@ -28,63 +28,69 @@ export default function ImportMenuPage() {
     setImporting(true);
     setImportResult(null);
 
-    try {
-      // Extraire l'année et le numéro de semaine depuis "2025-49"
-      const [year, week] = weekNumber.split('-').map(Number);
-      
-      // Obtenir les dates de la semaine
-      const weekDates = getWeekDates(year, week);
-      
-      // Mapper les jours français vers les indices
-      const dayMapping = {
-        'Lundi': 0,
-        'Mardi': 1,
-        'Mercredi': 2,
-        'Jeudi': 3,
-        'Vendredi': 4,
-        'Samedi': 5,
-        'Dimanche': 6
-      };
 
-      // Mapper les moments vers les meal_type_id
-      const momentMapping = {
-        'Midi': 1,
-        'Soir': 2
-      };
+      try {
+        // Extraire l'année et le numéro de semaine depuis "2025-49"
+        const [year, week] = weekNumber.split('-').map(Number);
 
-      let successCount = 0;
-      let errorCount = 0;
-      const errors = [];
+        // Obtenir les dates de la semaine
+        const weekDates = getWeekDates(year, week);
 
-      // Parcourir chaque plat importé
-      for (const menu of importedMenus) {
-        try {
-          // Trouver la date correspondante au jour
-          const dayIndex = dayMapping[menu.jour];
-          if (dayIndex === undefined) {
-            throw new Error(`Jour invalide: ${menu.jour}`);
-          }
-          
-          const date = weekDates[dayIndex];
-          
-          // Trouver le meal_type_id
-          const mealTypeId = momentMapping[menu.moment];
-          if (!mealTypeId) {
-            throw new Error(`Moment invalide: ${menu.moment}`);
-          }
+        // Mapper les jours français vers les indices
+        const dayMapping = {
+          'Lundi': 0,
+          'Mardi': 1,
+          'Mercredi': 2,
+          'Jeudi': 3,
+          'Vendredi': 4,
+          'Samedi': 5,
+          'Dimanche': 6
+        };
 
-          // Créer ou récupérer le plat
-          const dish = await MenuService.getOrCreateDish(menu.plat, '');
-          // Assigner le plat au menu (sans catégorie)
-          await MenuService.assignDishToMenu(date, mealTypeId, null, dish.id);
-          
-          successCount++;
-        } catch (error) {
-          console.error(`Erreur pour ${menu.jour} ${menu.moment} - ${menu.plat}:`, error);
-          errorCount++;
-          errors.push(`${menu.jour} ${menu.moment} - ${menu.plat}: ${error.message}`);
+        // Mapper les moments vers les meal_type_id
+        const momentMapping = {
+          'Midi': 1,
+          'Soir': 2
+        };
+
+        let successCount = 0;
+        let errorCount = 0;
+        const errors = [];
+
+        // 1. Supprimer les anciens plats pour chaque jour de la semaine
+        for (const date of weekDates) {
+          await MenuService.clearMenuForDate(date);
         }
-      }
+
+        // 2. Parcourir chaque plat importé
+        for (const menu of importedMenus) {
+          try {
+            // Trouver la date correspondante au jour
+            const dayIndex = dayMapping[menu.jour];
+            if (dayIndex === undefined) {
+              throw new Error(`Jour invalide: ${menu.jour}`);
+            }
+
+            const date = weekDates[dayIndex];
+
+            // Trouver le meal_type_id
+            const mealTypeId = momentMapping[menu.moment];
+            if (!mealTypeId) {
+              throw new Error(`Moment invalide: ${menu.moment}`);
+            }
+
+            // Créer ou récupérer le plat
+            const dish = await MenuService.getOrCreateDish(menu.plat, '');
+            // Assigner le plat au menu (sans catégorie)
+            await MenuService.assignDishToMenu(date, mealTypeId, null, dish.id);
+
+            successCount++;
+          } catch (error) {
+            console.error(`Erreur pour ${menu.jour} ${menu.moment} - ${menu.plat}:`, error);
+            errorCount++;
+            errors.push(`${menu.jour} ${menu.moment} - ${menu.plat}: ${error.message}`);
+          }
+        }
 
       setImportResult({
         success: true,

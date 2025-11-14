@@ -359,6 +359,8 @@ DROP POLICY IF EXISTS "public_read_allergens" ON public.allergens;
 DROP POLICY IF EXISTS "public_read_dish_allergens" ON public.dish_allergens;
 
 -- Créer les nouvelles politiques
+-- Policy INSERT pour permettre l'import de plats depuis Excel
+CREATE POLICY "public_insert_dishes" ON public.dishes FOR INSERT WITH CHECK (true);
 CREATE POLICY "public_read_menus" ON public.menus FOR SELECT USING (true);
 CREATE POLICY "public_read_menu_days" ON public.menu_days FOR SELECT USING (true);
 CREATE POLICY "public_read_menu_items" ON public.menu_items FOR SELECT USING (true);
@@ -370,16 +372,25 @@ CREATE POLICY "public_read_categories" ON public.categories FOR SELECT USING (tr
 CREATE POLICY "public_read_allergens" ON public.allergens FOR SELECT USING (true);
 CREATE POLICY "public_read_dish_allergens" ON public.dish_allergens FOR SELECT USING (true);
 
+
+
+-- NETTOYAGE DES DONNEES D'UNE SEMAINE AVANT IMPORT
+-- Exemple pour la semaine 2025-45 (à adapter selon la semaine à importer)
+DELETE FROM public.meal_items WHERE date BETWEEN '2025-11-03' AND '2025-11-09';
+DELETE FROM public.menu_items WHERE menu_day_id IN (
+  SELECT id FROM public.menu_days WHERE day_date BETWEEN '2025-11-03' AND '2025-11-09'
+);
+
 -- =====================================================
 -- FIN : Supabase pret pour test
 -- =====================================================
+
 
 -- Mise à jour des rôles admin pour les utilisateurs principaux
 UPDATE public.profiles
 SET role = 'admin'
 WHERE user_id IN (
   '1ebb59cc-e034-4f09-b8a5-68e07015d11d',
-  'da2924c3-9b49-4d1e-8736-14af2324c095',
   '98057cf8-066c-4d97-b363-2db5aae00364'
 );
 

@@ -1,3 +1,4 @@
+import React from "react";
 // Page qui affiche le menu d'une semaine spécifique
 import { useParams } from 'react-router-dom';
 import PageLayout from '../components/PageLayout';
@@ -5,7 +6,6 @@ import UserStatus from '../components/UserStatus';
 import MenuTable from '../components/MenuTable';
 import WeekPicker from '../components/WeekPicker';
 import Footer from '../components/Footer';
-import React from "react";
 
 /**
  * WeekMenuPage - Page autonome pour afficher le menu d'une semaine
