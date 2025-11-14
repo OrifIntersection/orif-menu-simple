@@ -27,49 +27,40 @@ export default function DailyMenu() {
     ...defaultMenu,
     days: [jourActuel] // Tableau avec un seul jour au lieu de 5
   };
-
   return (
-    // Conteneur avec classe spéciale pour le styling responsive du menu du jour
-    <div className="daily-menu-view">
-      {/* En-tête avec titre */}
-      <div className="table-header">
-        {/* Titre affichant le jour actuel */}
-        <h3 className="table-caption">Menu du {jourActuel}</h3>
-      </div>
-      
-      {/* Conteneur du tableau avec scroll horizontal si nécessaire */}
-      <div className="table-wrap">
-        <table>
-          {/* En-tête du tableau - affiche uniquement le jour actuel */}
-          <thead>
-            <HeaderTable days={menuDuJour.days} />
-          </thead>
-          
-          {/* Corps du tableau avec les repas Midi et Soir */}
-          <tbody>
-            {/* Boucle sur chaque repas (Midi, Soir) */}
-            {menuDuJour.meals.map((meal) => (
-              <SiderTable
-                key={meal} // Clé unique (nom du repas)
-                meal={meal} // Nom du repas
-                days={menuDuJour.days} // Un seul jour
-                items={menuDuJour.items} // Types de plats
-                data={menuDuJour.data} // Données du menu
-              />
-            ))}
-          </tbody>
-          
-          {/* Pied du tableau - répète l'en-tête */}
-          <tfoot>
-            <HeaderTable days={menuDuJour.days} />
-          </tfoot>
-        </table>
-      </div>
-      {/* Informations sur les régimes et allergies */}
-      <div className="menu-info" style={{marginTop: '1.5rem', fontSize: '1rem', color: '#444'}}>
-        <strong>Régimes acceptés avec certificat médical :</strong> sans lactose, et sans gluten.<br />
-        Si vous avez des doutes concernant les ingrédients qui peuvent provoquer des allergies ou d’autres réactions indésirables, veuillez vous adresser au Chef de cuisine
-      </div>
-    </div>
+    <main className="container">
+      <PageLayout title="Cafétéria ORIF">
+        <div className="daily-menu-view">
+          <div className="table-header">
+            <h3 className="table-caption">Menu du {jourActuel}</h3>
+          </div>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <HeaderTable days={menuDuJour.days} />
+              </thead>
+              <tbody>
+                {menuDuJour.meals.map((meal) => (
+                  <SiderTable
+                    key={meal}
+                    meal={meal}
+                    days={menuDuJour.days}
+                    items={menuDuJour.items}
+                    data={menuDuJour.data}
+                  />
+                ))}
+              </tbody>
+              <tfoot>
+                <HeaderTable days={menuDuJour.days} />
+              </tfoot>
+            </table>
+          </div>
+          <div className="menu-info" style={{marginTop: '1.5rem', fontSize: '1rem', color: '#444'}}>
+            <strong>Régimes acceptés avec certificat médical :</strong> sans lactose, et sans gluten.<br />
+            Si vous avez des doutes concernant les ingrédients qui peuvent provoquer des allergies ou d’autres réactions indésirables, veuillez vous adresser au Chef de cuisine
+          </div>
+        </div>
+      </PageLayout>
+    </main>
   );
 }
