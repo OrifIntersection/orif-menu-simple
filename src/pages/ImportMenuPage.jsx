@@ -76,7 +76,7 @@ export default function ImportMenuPage() {
           // Créer ou récupérer le plat
           const dish = await MenuService.getOrCreateDish(menu.plat, '');
           // Assigner le plat au menu (sans catégorie)
-          await MenuService.assignDishToMenu(date, mealTypeId, dish.id);
+          await MenuService.assignDishToMenu(date, mealTypeId, null, dish.id);
           
           successCount++;
         } catch (error) {
