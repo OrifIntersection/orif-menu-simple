@@ -1,0 +1,368 @@
+/* ========================================
+   STYLES RESPONSIVE - Menu du jour uniquement
+   ======================================== */
+
+/* Responsive pour petits écrans - menu du jour UNIQUEMENT */
+@media (max-width: 768px) {
+  /* Appliquer uniquement au menu du jour (1 seul jour) */
+  .daily-menu-view table {
+    min-width: 100% !important;
+  }
+  
+  .daily-menu-view thead th,
+  .daily-menu-view tfoot th {
+    padding: 8px 4px;
+  }
+  
+  .daily-menu-view td {
+    padding: 8px 4px;
+  }
+  
+  .daily-menu-view tbody th.meal-label {
+    width: 30px;
+    padding: 8px 2px;
+  }
+  
+  .container {
+    padding: 8px;
+  }
+  
+  .table-caption {
+    font-size: 1em;
+  }
+  
+  /* Le bouton reste à droite sur mobile */
+  .table-header {
+    gap: 8px;
+  }
+  
+  .table-toggle-btn {
+    font-size: 0.85em;
+    padding: 6px 10px;
+  }
+}
+
+/* Responsive pour très petits écrans - menu du jour uniquement */
+@media (max-width: 480px) {
+  .daily-menu-view table {
+    min-width: 100% !important;
+  }
+  
+  .daily-menu-view thead th,
+  .daily-menu-view tfoot th {
+    padding: 6px 2px;
+  }
+  
+  .daily-menu-view td {
+    padding: 6px 2px;
+  }
+  
+  .daily-menu-view tbody th.meal-label {
+    width: 25px;
+    padding: 6px 1px;
+  }
+  
+  /* Le header reste en ligne sur mobile */
+  .topbar {
+    gap: 8px;
+  }
+  
+  .brand h1 {
+    font-size: 1em;
+    white-space: nowrap;
+  }
+  
+  .logo {
+    width: 60px;
+    height: 20px;
+  }
+}
+
+/* Responsive pour écrans ultra-petits (< 400px) - réduction maximale de l'espace */
+@media (max-width: 400px) {
+  /* Réduction du padding général */
+  .container {
+    padding: 4px;
+  }
+  
+  /* Menu du jour: table avec largeurs fixes */
+  .daily-menu-view table {
+    table-layout: fixed;
+    width: 100%;
+  }
+  
+  /* Menu du jour: padding minimum */
+  .daily-menu-view thead th,
+  .daily-menu-view tfoot th {
+    padding: 2px 1px !important;
+    font-size: 0.85em;
+  }
+  
+  .daily-menu-view td {
+    padding: 2px 1px !important;
+    font-size: 0.85em;
+  }
+  
+  /* Colonnes du jour: 90% */
+  .daily-menu-view thead th:not(.corner-cell),
+  .daily-menu-view tfoot th:not(.corner-cell) {
+    width: 90% !important;
+  }
+  
+  /* Cellules d'angle: 5% */
+  .daily-menu-view thead th.corner-cell,
+  .daily-menu-view tfoot th.corner-cell {
+    width: 5% !important;
+  }
+  
+  .daily-menu-view tbody th.meal-label {
+    width: 5% !important;
+    padding: 2px 0 !important;
+    font-size: 0.75em;
+  }
+  
+  .daily-menu-view tbody th {
+    width: 5% !important;
+  }
+  
+  .daily-menu-view tbody td {
+    width: 90% !important;
+  }
+  
+  /* Header ultra-compact */
+  .topbar {
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+  
+  .brand h1 {
+    font-size: 0.9em;
+  }
+  
+  .logo {
+    width: 50px;
+    height: 18px;
+  }
+  
+  /* Boutons plus petits */
+  button {
+    padding: 6px 8px;
+    font-size: 0.85em;
+  }
+  
+  .table-toggle-btn {
+    padding: 4px 8px;
+    font-size: 0.8em;
+  }
+  
+  /* Table caption plus petit */
+  .table-caption {
+    font-size: 0.9em;
+  }
+  
+  /* Drawer adapté */
+  .menu-drawer {
+    width: 260px;
+    right: -260px;
+  }
+}
+
+/* Responsive pour écrans minuscules (< 350px) - compression maximale */
+@media (max-width: 350px) {
+  /* Padding absolu minimum */
+  .container {
+    padding: 2px;
+  }
+  
+  /* Menu du jour: compression maximale */
+  .daily-menu-view table {
+    table-layout: fixed;
+    width: 100%;
+  }
+  
+  .daily-menu-view thead th,
+  .daily-menu-view tfoot th {
+    padding: 1px 0 !important;
+    font-size: 0.8em;
+  }
+  
+  .daily-menu-view td {
+    padding: 1px 0 !important;
+    font-size: 0.8em;
+    line-height: 1.2;
+  }
+  
+  /* Colonnes du jour: 90% */
+  .daily-menu-view thead th:not(.corner-cell),
+  .daily-menu-view tfoot th:not(.corner-cell) {
+    width: 90% !important;
+  }
+  
+  /* Cellules d'angle: 5% */
+  .daily-menu-view thead th.corner-cell,
+  .daily-menu-view tfoot th.corner-cell {
+    width: 5% !important;
+  }
+  
+  .daily-menu-view tbody th.meal-label {
+    width: 5% !important;
+    padding: 1px 0 !important;
+    font-size: 0.7em;
+  }
+  
+  .daily-menu-view tbody th {
+    width: 5% !important;
+  }
+  
+  .daily-menu-view tbody td {
+    width: 90% !important;
+  }
+  
+  /* Header minimal */
+  .topbar {
+    gap: 2px;
+    margin-bottom: 6px;
+  }
+  
+  .brand h1 {
+    font-size: 0.85em;
+  }
+  
+  .logo {
+    width: 45px;
+    height: 16px;
+  }
+  
+  /* Boutons minimaux */
+  button {
+    padding: 4px 6px;
+    font-size: 0.8em;
+  }
+  
+  .table-toggle-btn {
+    padding: 3px 6px;
+    font-size: 0.75em;
+  }
+  
+  .table-caption {
+    font-size: 0.85em;
+  }
+  
+  /* Drawer ultra-compact */
+  .menu-drawer {
+    width: 240px;
+    right: -240px;
+  }
+  
+  /* Border radius réduit pour gagner de l'espace visuel */
+  .table-wrap {
+    border-radius: 4px;
+  }
+  
+  button, .drawer-action-item, .drawer-menu-item {
+    border-radius: 4px;
+  }
+}
+
+/* Responsive pour écrans 320px (iPhone SE, etc.) - compression absolue */
+@media (max-width: 320px) {
+  /* Padding minimum absolu */
+  .container {
+    padding: 1px;
+  }
+  
+  /* Menu du jour: compression absolue pour 320px */
+  .daily-menu-view table {
+    min-width: 100% !important;
+    table-layout: fixed;
+    width: 100%;
+  }
+  
+  /* Forcer la colonne du jour à prendre 90% de l'espace */
+  .daily-menu-view thead th:not(.corner-cell),
+  .daily-menu-view tfoot th:not(.corner-cell) {
+    width: 90% !important;
+  }
+  
+  /* Les cellules d'angle et meal-label: 5% chacune */
+  .daily-menu-view thead th.corner-cell,
+  .daily-menu-view tfoot th.corner-cell {
+    width: 5% !important;
+  }
+  
+  .daily-menu-view thead th,
+  .daily-menu-view tfoot th {
+    padding: 1px 0 !important;
+    font-size: 0.75em;
+    word-wrap: break-word;
+  }
+  
+  .daily-menu-view td {
+    padding: 1px 0 !important;
+    font-size: 0.75em;
+    line-height: 1.1;
+    word-wrap: break-word;
+  }
+  
+  .daily-menu-view tbody th.meal-label {
+    width: 5% !important;
+    padding: 0 !important;
+    font-size: 0.65em;
+  }
+  
+  /* Forcer les cellules meal-label à 5% */
+  .daily-menu-view tbody th {
+    width: 5% !important;
+  }
+  
+  /* Les cellules de contenu prennent 90% */
+  .daily-menu-view tbody td {
+    width: 90% !important;
+  }
+  
+  /* Réduction du border pour gagner de l'espace */
+  .table-wrap {
+    border-width: 1px;
+  }
+  
+  .daily-menu-view td,
+  .daily-menu-view th {
+    border-width: 1px;
+  }
+  
+  /* Header ultra-compact */
+  .topbar {
+    gap: 2px;
+    margin-bottom: 4px;
+  }
+  
+  .brand h1 {
+    font-size: 0.8em;
+  }
+  
+  .logo {
+    width: 40px;
+    height: 14px;
+  }
+  
+  /* Boutons ultra-compacts */
+  button {
+    padding: 3px 4px;
+    font-size: 0.75em;
+  }
+  
+  .table-toggle-btn {
+    padding: 2px 4px;
+    font-size: 0.7em;
+  }
+  
+  .table-caption {
+    font-size: 0.8em;
+  }
+  
+  /* Header du tableau plus compact */
+  .table-header {
+    margin-bottom: 4px;
+    gap: 4px;
+  }
+}

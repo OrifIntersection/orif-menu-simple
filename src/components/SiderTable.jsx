@@ -12,26 +12,20 @@ import MenuCell from "./MenuCell";
  */
 export default function SiderTable({ meal, days, data, items }) {
   return (
-    // Ligne de tableau (tr) représentant un repas complet
     <tr>
-      {/* Cellule de gauche avec le label du repas en vertical */}
       <th className="meal-label">{meal}</th>
-      
-      {/* Boucle sur chaque jour pour créer une cellule de menu */}
-      {days.map((day) => {
-        // Récupère les données du menu pour ce repas et ce jour
-        // Si les données n'existent pas, utilise un objet vide {}
+      {days.map((day, idx) => {
+        // Classe unique par cellule : cell-jour-<day>-repas-<meal>
+        const cellClass = `cell-jour-${day.toLowerCase()} cell-repas-${meal.toLowerCase()} cell-idx-${idx}`;
+        if (!items || items.length === 0) {
+          const value = (data[meal] && data[meal][day]) || "";
+          const lines = Array.isArray(value) ? value : [value];
+          return <MenuCell key={day} lines={lines} className={cellClass} />;
+        }
         const cell = (data[meal] && data[meal][day]) || {};
-        
-        // Crée un tableau avec les lignes de la cellule (Entrée, Plat, etc.)
-        // Si une valeur n'existe pas, utilise une chaîne vide ""
         const lines = items.map((it) => cell[it] || "");
-        
-        // Retourne une cellule de menu avec toutes les lignes
-        return <MenuCell key={day} lines={lines} />;
+        return <MenuCell key={day} lines={lines} className={cellClass} />;
       })}
-      
-      {/* Cellule de droite avec le label du repas en vertical (miroir de gauche) */}
       <th className="meal-label meal-label-right">{meal}</th>
     </tr>
   );

@@ -1,0 +1,21 @@
+{
+  "year": 2025,
+  "week_number": 46,
+  "days": ["2025-11-15"],
+  "items": [
+    {
+      "date": "2025-11-15",
+      "meal_type_id": "Midi",
+      "meal_types": {"label": "Midi"},
+      "dishes": {"name": "Poulet rôti", "description": "Poulet rôti avec légumes"}
+    },
+    {
+      "date": "2025-11-15",
+      "meal_type_id": "Soir",
+      "meal_types": {"label": "Soir"},
+      "dishes": {"name": "Soupe de légumes", "description": "Soupe maison"}
+    }
+  ],
+  "meals": ["Midi", "Soir"],
+  "data": {}
+}

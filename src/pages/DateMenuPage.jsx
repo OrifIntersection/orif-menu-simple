@@ -11,6 +11,7 @@ import DatePicker from '../components/DatePicker';
  * DateMenuPage - Page autonome pour afficher le menu d'une date
  */
 export default function DateMenuPage() {
+    let renderError = null;
   const { date } = useParams();
   const navigate = useNavigate();
 
@@ -19,7 +20,7 @@ export default function DateMenuPage() {
     targetDate = parseDate(date);
     if (isNaN(targetDate.getTime())) throw new Error('Date invalide');
   } catch {
-    return (
+    renderError = (
       <main className="container">
         <PageLayout title="Erreur">
           <div style={{ textAlign: 'center', padding: '2rem' }}>
@@ -33,9 +34,9 @@ export default function DateMenuPage() {
     );
   }
 
-  if (!isWeekday(targetDate)) {
+  if (!renderError && !isWeekday(targetDate)) {
     const dayName = getDayName(targetDate);
-    return (
+    renderError = (
       <main className="container">
         <PageLayout title="Cafétéria ORIF">
           <div style={{ textAlign: 'center', padding: '2rem' }}>
@@ -49,6 +50,8 @@ export default function DateMenuPage() {
     );
   }
 
+  if (renderError) return renderError;
+
   const dayName = getDayName(targetDate);
   const pageTitle = `Menu du ${dayName} ${formatDate(targetDate)}`;
 
@@ -61,8 +64,7 @@ export default function DateMenuPage() {
         <div style={{ maxWidth: '400px', margin: '0 auto 20px' }}>
           <DatePicker />
         </div>
-        <DailyMenu />
-        
+        <DailyMenu date={date} />
         <Footer />
       </PageLayout>
     </main>

@@ -1,77 +1,101 @@
 // Page qui affiche uniquement le menu du jour en cours
+// ...existing code...
 import React from "react";
-// Import des composants de tableau
+import PageLayout from "../components/PageLayout";
 import HeaderTable from "../components/HeaderTable";
 import SiderTable from "../components/SiderTable";
+import { supabase } from "../lib/supabase";
+import { LocalMenuService } from "../services/LocalMenuService";
+import { format } from "date-fns";
 
-/**
- * DailyMenu - Affiche le menu uniquement pour le jour actuel
- */
-export default function DailyMenu() {
-  const [menuDuJour, setMenuDuJour] = React.useState(null);
+export default function DailyMenu(props) {
+  const [menuItems, setMenuItems] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
+  // DEBUG : affiche l'état de menuItems (menuDataJour)
+  const debugInfo = (
+    <div style={{ background: '#fff3cd', color: '#856404', padding: '1rem', borderRadius: 8, marginBottom: '1rem', fontSize: '0.95rem' }}>
+      <strong>DEBUG</strong><br />
+      <div>menuDataJour : <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', fontSize: '0.9rem', background: '#f8f9fa', padding: '0.5rem', borderRadius: 4 }}>{JSON.stringify(menuItems, null, 2)}</pre></div>
+      <div>loading : {String(loading)}</div>
+    </div>
+  );
+  const date = props.date || format(new Date(), "yyyy-MM-dd");
+  const jours = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
+  const jourObj = new Date(date);
+  const jourActuel = jours[jourObj.getDay()];
+
   React.useEffect(() => {
     async function fetchMenu() {
       setLoading(true);
-      const today = new Date().getDay();
-      const jourIndex = today >= 1 && today <= 5 ? today - 1 : 0;
-      const jours = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
-      const jourActuel = jours[jourIndex];
-      try {
-        const { data, error } = await import('../services/MenuService').then(mod => mod.MenuService.getMenuForDate(new Date()));
-        if (error || !data) {
-          setMenuDuJour({ days: [jourActuel], meals: [], items: [], data: {} });
-        } else {
-          setMenuDuJour({ days: [jourActuel], meals: Object.keys(data), items: [], data });
+      let items = [];
+      if (supabase) {
+        const { data, error } = await supabase
+          .from("meal_items")
+          .select(`*, meal_types (id, code, label), dishes (id, name, description)`)
+          .eq("date", date);
+        if (!error && data && data.length > 0) {
+          items = data;
         }
-      } catch {
-        setMenuDuJour({ days: [jourActuel], meals: [], items: [], data: {} });
       }
+      // Fallback localStorage si rien dans Supabase
+      if (items.length === 0) {
+        // Trouve la semaine correspondant à la date
+        const allMenus = LocalMenuService.getAllMenus();
+        const menuSemaine = allMenus.find(menu => menu.days && menu.days.includes(date));
+        if (menuSemaine && Array.isArray(menuSemaine.items)) {
+          items = menuSemaine.items.filter(item => item.date === date);
+        }
+      }
+      setMenuItems(items);
       setLoading(false);
     }
     fetchMenu();
-  }, []);
-  const jourActuel = menuDuJour?.days?.[0] || '';
+  }, [date]);
+
+  // Regrouper par type de repas (midi/soir)
+  const mealsGrouped = React.useMemo(() => {
+    const grouped = {};
+    menuItems.forEach(item => {
+      const type = item.meal_types?.label || item.meal_type_id;
+      if (!grouped[type]) grouped[type] = [];
+      grouped[type].push(item);
+    });
+    return grouped;
+  }, [menuItems]);
+
   return (
     <main className="container">
-      <PageLayout title="Cafétéria ORIF">
+      <PageLayout title={`Cafétéria ORIF`}>
+        {debugInfo}
         <div className="daily-menu-view">
           <div className="table-header">
-            <h3 className="table-caption">Menu du {jourActuel}</h3>
+            <h3 className="table-caption">Menu du {jourActuel} ({date})</h3>
           </div>
           {loading ? (
             <div>Chargement du menu...</div>
-          ) : menuDuJour && menuDuJour.meals.length > 0 ? (
-            <div className="table-wrap">
-              <table>
-                <thead>
-                  <HeaderTable days={menuDuJour.days} />
-                </thead>
-                <tbody>
-                  {menuDuJour.meals.map((meal) => (
-                    <SiderTable
-                      key={meal}
-                      meal={meal}
-                      days={menuDuJour.days}
-                      items={menuDuJour.items}
-                      data={menuDuJour.data}
-                    />
-                  ))}
-                </tbody>
-                <tfoot>
-                  <HeaderTable days={menuDuJour.days} />
-                </tfoot>
-              </table>
-            </div>
+          ) : Object.keys(mealsGrouped).length > 0 ? (
+            Object.entries(mealsGrouped).map(([type, items]) => (
+              <div key={type} style={{ marginBottom: "2rem" }}>
+                <h4>{type}</h4>
+                <table>
+                  <thead>
+                    <HeaderTable days={[jourActuel]} />
+                  </thead>
+                  <tbody>
+                    <SiderTable meal={type} days={[jourActuel]} items={items} data={{}} />
+                  </tbody>
+                </table>
+              </div>
+            ))
           ) : (
-            <div style={{textAlign: 'center', color: '#d32f2f', fontWeight: 'bold', margin: '2rem 0'}}>
-              Aucun menu disponible pour aujourd'hui.
+            <div style={{ color: '#d32f2f', fontWeight: 'bold', margin: '2rem 0', textAlign: 'center' }}>
+              Aucun menu disponible pour ce jour.<br />
+              <span style={{ fontWeight: 'normal', color: '#333', fontSize: '1rem' }}>
+                Vous pouvez importer un menu pour cette date via la page d'importation.<br />
+                <a href="/import-local" style={{ color: '#007bff', textDecoration: 'underline' }}>Importer un menu</a>
+              </span>
             </div>
           )}
-          <div className="menu-info" style={{marginTop: '1.5rem', fontSize: '1rem', color: '#444'}}>
-            <strong>Régimes acceptés avec certificat médical :</strong> sans lactose, et sans gluten.<br />
-            Si vous avez des doutes concernant les ingrédients qui peuvent provoquer des allergies ou d’autres réactions indésirables, veuillez vous adresser au Chef de cuisine
-          </div>
         </div>
       </PageLayout>
     </main>
