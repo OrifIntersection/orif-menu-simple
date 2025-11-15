@@ -159,7 +159,6 @@ function HomePage() {
         <h2 className="menu-title" style={{textAlign: 'center', marginBottom: '1.5rem'}}>
           {`Menu la semaine N° ${currentWeekNumber} du ${formatDate(startDate)} au ${formatDate(endDate)}`}
         </h2>
-        {debugInfo}
         {loading ? (
           <div>Chargement du menu...</div>
         ) : menuData ? (
@@ -172,6 +171,8 @@ function HomePage() {
             Aucun menu disponible pour cette semaine.
           </div>
         )}
+        {/* DEBUG block en bas du tableau */}
+        {debugInfo}
         <Footer />
       </PageLayout>
     </main>

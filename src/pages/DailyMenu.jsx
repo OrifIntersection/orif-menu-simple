@@ -11,14 +11,6 @@ import { format } from "date-fns";
 export default function DailyMenu(props) {
   const [menuItems, setMenuItems] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
-  // DEBUG : affiche l'état de menuItems (menuDataJour)
-  const debugInfo = (
-    <div style={{ background: '#fff3cd', color: '#856404', padding: '1rem', borderRadius: 8, marginBottom: '1rem', fontSize: '0.95rem' }}>
-      <strong>DEBUG</strong><br />
-      <div>menuDataJour : <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', fontSize: '0.9rem', background: '#f8f9fa', padding: '0.5rem', borderRadius: 4 }}>{JSON.stringify(menuItems, null, 2)}</pre></div>
-      <div>loading : {String(loading)}</div>
-    </div>
-  );
   const date = props.date || format(new Date(), "yyyy-MM-dd");
   const jours = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
   const jourObj = new Date(date);
@@ -66,7 +58,6 @@ export default function DailyMenu(props) {
   return (
     <main className="container">
       <PageLayout title={`Cafétéria ORIF`}>
-        {debugInfo}
         <div className="daily-menu-view">
           <div className="table-header">
             <h3 className="table-caption">Menu du {jourActuel} ({date})</h3>
