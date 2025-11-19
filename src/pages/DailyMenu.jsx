@@ -31,27 +31,64 @@ export default function DailyMenu(props) {
       }
       // Fallback localStorage si rien dans Supabase
       if (items.length === 0) {
-        // Trouve la semaine correspondant à la date
+        // Trouve le menu dans le localStorage par date
         const allMenus = LocalMenuService.getAllMenus();
-        const menuSemaine = allMenus.find(menu => menu.days && menu.days.includes(date));
-        if (menuSemaine && Array.isArray(menuSemaine.items)) {
-          items = menuSemaine.items.filter(item => item.date === date);
+        
+        // Calculer le numéro de semaine de la date
+        const dateObj = new Date(date + 'T12:00:00');
+        const tempDate = new Date(dateObj.getTime());
+        tempDate.setHours(0, 0, 0, 0);
+        tempDate.setDate(tempDate.getDate() + 3 - (tempDate.getDay() + 6) % 7);
+        const week1 = new Date(tempDate.getFullYear(), 0, 4);
+        const weekNum = 1 + Math.round(((tempDate.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+        const year = tempDate.getFullYear();
+        
+        const menuSemaine = allMenus.find(menu => menu.year === year && menu.week_number === weekNum);
+        
+        console.log('📦 DEBUG menuDataJour:', { date, jourActuel, menuSemaine });
+        
+        if (menuSemaine && menuSemaine.data) {
+          // Transformer les données du format semaine vers le format jour
+          const menuDuJour = {
+            meals: menuSemaine.meals || ['Midi', 'Soir'],
+            jourActuel: jourActuel,
+            data: {}
+          };
+          
+          // Extraire seulement les données du jour actuel
+          menuSemaine.meals?.forEach(meal => {
+            if (menuSemaine.data[meal] && menuSemaine.data[meal][jourActuel]) {
+              menuDuJour.data[meal] = menuSemaine.data[meal][jourActuel];
+            }
+          });
+          
+          setMenuItems(menuDuJour);
         }
       }
-      setMenuItems(items);
+      else {
+        setMenuItems({ items });
+      }
       setLoading(false);
     }
     fetchMenu();
-  }, [date]);
+  }, [date, jourActuel]);
 
   // Regrouper par type de repas (midi/soir)
   const mealsGrouped = React.useMemo(() => {
+    // Si menuItems a une structure de jour (avec data)
+    if (menuItems.data) {
+      return menuItems.data;
+    }
+    
+    // Sinon, format Supabase avec items
     const grouped = {};
-    menuItems.forEach(item => {
-      const type = item.meal_types?.label || item.meal_type_id;
-      if (!grouped[type]) grouped[type] = [];
-      grouped[type].push(item);
-    });
+    if (menuItems.items) {
+      menuItems.items.forEach(item => {
+        const type = item.meal_types?.label || item.meal_type_id;
+        if (!grouped[type]) grouped[type] = [];
+        grouped[type].push(item);
+      });
+    }
     return grouped;
   }, [menuItems]);
 
@@ -65,17 +102,12 @@ export default function DailyMenu(props) {
           {loading ? (
             <div>Chargement du menu...</div>
           ) : Object.keys(mealsGrouped).length > 0 ? (
-            Object.entries(mealsGrouped).map(([type, items]) => (
+            Object.entries(mealsGrouped).map(([type, platsString]) => (
               <div key={type} style={{ marginBottom: "2rem" }}>
                 <h4>{type}</h4>
-                <table>
-                  <thead>
-                    <HeaderTable days={[jourActuel]} />
-                  </thead>
-                  <tbody>
-                    <SiderTable meal={type} days={[jourActuel]} items={items} data={{}} />
-                  </tbody>
-                </table>
+                <div style={{ padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
+                  {platsString || <span style={{ color: '#999' }}>Aucun plat pour ce repas</span>}
+                </div>
               </div>
             ))
           ) : (

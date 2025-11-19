@@ -31,16 +31,25 @@ export default function ImportLocalMenuPage() {
       const moments = ["Midi", "Soir"];
       const data = {};
       
+      // Fonction helper pour formater date en YYYY-MM-DD sans problème de timezone
+      const formatDateLocal = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+      
       // Récupère toutes les dates uniques
-      const uniqueDates = [...new Set(menus.map(m => m.date?.toISOString().slice(0, 10)).filter(Boolean))].sort();
+      const uniqueDates = [...new Set(menus.map(m => m.date ? formatDateLocal(m.date) : null).filter(Boolean))].sort();
       
       console.log('📅 Dates uniques trouvées:', uniqueDates);
       
       moments.forEach((meal) => {
         data[meal] = {};
         uniqueDates.forEach((dateStr) => {
-          // IMPORTANT: Ajouter 'T12:00:00' pour éviter les problèmes de timezone
-          const date = new Date(dateStr + 'T12:00:00');
+          // Parser la date en restant en timezone locale
+          const [year, month, day] = dateStr.split('-').map(Number);
+          const date = new Date(year, month - 1, day, 12, 0, 0); // Midi pour éviter problèmes timezone
           const dayIndex = date.getDay(); // 0 = Dimanche, 1 = Lundi, ..., 6 = Samedi
           const dayName = joursSemaine[dayIndex === 0 ? 6 : dayIndex - 1]; // Dimanche (0) → index 6
           
@@ -48,7 +57,8 @@ export default function ImportLocalMenuPage() {
           
           const plats = menus
             .filter((m) => {
-              const mDateStr = m.date?.toISOString().slice(0, 10);
+              if (!m.date) return false;
+              const mDateStr = formatDateLocal(m.date);
               const momentMatch = m.moment.toLowerCase() === meal.toLowerCase();
               return mDateStr === dateStr && momentMatch;
             })

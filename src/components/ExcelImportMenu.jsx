@@ -83,10 +83,12 @@ function ExcelImportMenu({ onImport }) {
               // Si c'est un nombre (format Excel), le convertir en date
               if (typeof dateValue === 'number') {
                 // Excel stocke les dates comme nombre de jours depuis le 1er janvier 1900
-                // Mais il y a un bug historique : Excel compte le 29 février 1900 qui n'existe pas
-                const excelEpoch = new Date(1900, 0, 1);
-                const daysOffset = dateValue - (dateValue > 59 ? 2 : 1); // Correction du bug Excel
-                parsedDate = new Date(excelEpoch.getTime() + daysOffset * 24 * 60 * 60 * 1000);
+                // Formule standard : (excelDate - 25569) * 86400 * 1000 donne le timestamp Unix
+                const timestamp = (dateValue - 25569) * 86400 * 1000;
+                parsedDate = new Date(timestamp);
+                
+                // Ajuster pour timezone locale (midi)
+                parsedDate.setHours(12, 0, 0, 0);
                 
                 // Formater en DD.MM.YYYY pour l'affichage
                 const day = String(parsedDate.getDate()).padStart(2, '0');
