@@ -4,9 +4,10 @@ import React from "react";
 import PageLayout from "../components/PageLayout";
 import HeaderTable from "../components/HeaderTable";
 import SiderTable from "../components/SiderTable";
+import DishList from "../components/DishList";
 import { supabase } from "../lib/supabase";
 import { LocalMenuService } from "../services/LocalMenuService";
-import { format } from "date-fns";
+import { format, getISOWeek, getYear } from "date-fns";
 
 export default function DailyMenu(props) {
   const [menuItems, setMenuItems] = React.useState([]);
@@ -34,18 +35,17 @@ export default function DailyMenu(props) {
         // Trouve le menu dans le localStorage par date
         const allMenus = LocalMenuService.getAllMenus();
         
-        // Calculer le numéro de semaine de la date
+        // Calculer le numéro de semaine ISO de la date
         const dateObj = new Date(date + 'T12:00:00');
-        const tempDate = new Date(dateObj.getTime());
-        tempDate.setHours(0, 0, 0, 0);
-        tempDate.setDate(tempDate.getDate() + 3 - (tempDate.getDay() + 6) % 7);
-        const week1 = new Date(tempDate.getFullYear(), 0, 4);
-        const weekNum = 1 + Math.round(((tempDate.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
-        const year = tempDate.getFullYear();
+        const weekNum = getISOWeek(dateObj);
+        const year = getYear(dateObj);
+        
+        console.log('📦 DEBUG allMenus:', allMenus.map(m => ({ year: m.year, week: m.week_number })));
+        console.log('📦 DEBUG recherche:', { year, weekNum });
         
         const menuSemaine = allMenus.find(menu => menu.year === year && menu.week_number === weekNum);
         
-        console.log('📦 DEBUG menuDataJour:', { date, jourActuel, menuSemaine });
+        console.log('📦 DEBUG menuDataJour:', { date, jourActuel, weekNum, year, menuSemaine });
         
         if (menuSemaine && menuSemaine.data) {
           // Transformer les données du format semaine vers le format jour
@@ -75,18 +75,29 @@ export default function DailyMenu(props) {
 
   // Regrouper par type de repas (midi/soir)
   const mealsGrouped = React.useMemo(() => {
-    // Si menuItems a une structure de jour (avec data)
+    // Si menuItems a une structure de jour localStorage (avec data et strings)
     if (menuItems.data) {
       return menuItems.data;
     }
     
-    // Sinon, format Supabase avec items
+    // Sinon, format Supabase avec items - convertir en strings
     const grouped = {};
-    if (menuItems.items) {
+    if (menuItems.items && Array.isArray(menuItems.items)) {
       menuItems.items.forEach(item => {
-        const type = item.meal_types?.label || item.meal_type_id;
-        if (!grouped[type]) grouped[type] = [];
-        grouped[type].push(item);
+        const mealType = item.meal_types?.label || item.meal_type_id || 'Midi';
+        if (!grouped[mealType]) {
+          grouped[mealType] = [];
+        }
+        
+        // Créer une string au format "TYPE: Nom du plat"
+        const dishType = item.dish_type || item.dishes?.dish_type || 'AUTRE';
+        const dishName = item.dishes?.name || item.name || '';
+        grouped[mealType].push(`${dishType}: ${dishName}`);
+      });
+      
+      // Convertir les tableaux en strings jointes par " / "
+      Object.keys(grouped).forEach(mealType => {
+        grouped[mealType] = grouped[mealType].join(' / ');
       });
     }
     return grouped;
@@ -103,11 +114,17 @@ export default function DailyMenu(props) {
             <div>Chargement du menu...</div>
           ) : Object.keys(mealsGrouped).length > 0 ? (
             Object.entries(mealsGrouped).map(([type, platsString]) => (
-              <div key={type} style={{ marginBottom: "2rem" }}>
-                <h4>{type}</h4>
-                <div style={{ padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
-                  {platsString || <span style={{ color: '#999' }}>Aucun plat pour ce repas</span>}
-                </div>
+              <div key={type} style={{ marginBottom: "2.5rem" }}>
+                <h3 style={{ 
+                  fontSize: '1.4em', 
+                  marginBottom: '1rem',
+                  color: '#1971c2',
+                  borderBottom: '2px solid #e9ecef',
+                  paddingBottom: '0.5rem'
+                }}>
+                  {type}
+                </h3>
+                <DishList dishString={platsString} style="cards" />
               </div>
             ))
           ) : (
