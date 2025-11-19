@@ -1,26 +1,13 @@
 import React, { useState } from "react";
-import { useAuth } from '../hooks/useAuth';
 import * as XLSX from "xlsx";
 import { useNavigate } from "react-router-dom";
 import ExcelImportMenu from "../components/ExcelImportMenu";
 import { LocalMenuService } from "../services/LocalMenuService";
 
 export default function ImportLocalMenuPage() {
-  const { isAuthenticated, userRole, loading } = useAuth();
-  // Protection accès admin
+  // Pas de protection d'authentification - mode dégradé gracieux
   const navigate = useNavigate();
   const [pendingMenus, setPendingMenus] = useState(null);
-  if (loading) {
-    return <div>Chargement de l'authentification...</div>;
-  }
-  if (!isAuthenticated || userRole !== 'admin') {
-    return (
-      <div style={{ maxWidth: 500, margin: '3rem auto', background: '#fff3cd', color: '#856404', padding: '2rem', borderRadius: 12, textAlign: 'center', fontWeight: 'bold' }}>
-        Accès réservé aux administrateurs.<br />
-        Veuillez vous connecter avec un compte administrateur pour importer des menus.
-      </div>
-    );
-  }
 
   // Réinitialiser l'import et le formulaire
   const handleReset = () => {
@@ -34,35 +21,83 @@ export default function ImportLocalMenuPage() {
       alert("Aucun plat importé. Vérifiez le fichier Excel.");
       return;
     }
-    const joursSemaine = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"];
-    const moments = ["Midi", "Soir"];
-    const data = {};
-    moments.forEach((meal) => {
-      data[meal] = {};
-      joursSemaine.forEach((day) => {
-        const plats = menus
-          .filter((m) => m.jour === day && m.moment === meal)
-          .map((m) => m.plat)
-          .filter(Boolean);
-        data[meal][day] = plats.length > 0 ? plats.join(" / ") : "";
+    
+    // Support pour le nouveau format avec dates
+    const hasNewFormat = menus.some(m => m.date);
+    
+    if (hasNewFormat) {
+      // Nouveau format : grouper par date et moment
+      const joursSemaine = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
+      const moments = ["Midi", "Soir"];
+      const data = {};
+      
+      // Récupère toutes les dates uniques
+      const uniqueDates = [...new Set(menus.map(m => m.date?.toISOString().slice(0, 10)).filter(Boolean))].sort();
+      
+      moments.forEach((meal) => {
+        data[meal] = {};
+        uniqueDates.forEach((dateStr) => {
+          const date = new Date(dateStr);
+          const dayName = joursSemaine[date.getDay() === 0 ? 6 : date.getDay() - 1]; // Dimanche = 0 → 6
+          
+          const plats = menus
+            .filter((m) => {
+              const mDateStr = m.date?.toISOString().slice(0, 10);
+              const momentMatch = m.moment.toLowerCase() === meal.toLowerCase();
+              return mDateStr === dateStr && momentMatch;
+            })
+            .map((m) => m.plat)
+            .filter(Boolean);
+          
+          data[meal][dayName] = plats.length > 0 ? plats.join(" / ") : "";
+        });
       });
-    });
-    const platsSemaine = Object.values(data)
-      .flatMap((obj) => Object.values(obj))
-      .filter(Boolean);
-    if (platsSemaine.length === 0) {
-      alert(`Semaine ${week}: Aucun plat importé.`);
-      return;
+      
+      const menuToImport = {
+        year: Number(week.split("-")[0]),
+        week_number: Number(week.split("-")[1]),
+        week_label: week,
+        days: joursSemaine,
+        meals: moments,
+        data,
+      };
+      setPendingMenus([menuToImport]);
+    } else {
+      // Ancien format : grouper par jour et moment
+      const joursSemaine = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"];
+      const moments = ["Midi", "Soir"];
+      const data = {};
+      
+      moments.forEach((meal) => {
+        data[meal] = {};
+        joursSemaine.forEach((day) => {
+          const plats = menus
+            .filter((m) => m.jour === day && m.moment === meal)
+            .map((m) => m.plat)
+            .filter(Boolean);
+          data[meal][day] = plats.length > 0 ? plats.join(" / ") : "";
+        });
+      });
+      
+      const platsSemaine = Object.values(data)
+        .flatMap((obj) => Object.values(obj))
+        .filter(Boolean);
+      
+      if (platsSemaine.length === 0) {
+        alert(`Semaine ${week}: Aucun plat importé.`);
+        return;
+      }
+      
+      const menuToImport = {
+        year: Number(week.split("-")[0]),
+        week_number: Number(week.split("-")[1]),
+        week_label: week,
+        days: joursSemaine,
+        meals: moments,
+        data,
+      };
+      setPendingMenus([menuToImport]);
     }
-    const menuToImport = {
-      year: Number(week.split("-")[0]),
-      week_number: Number(week.split("-")[1]),
-      week_label: week,
-      days: joursSemaine,
-      meals: moments,
-      data,
-    };
-    setPendingMenus([menuToImport]);
   };
 
   // Enregistre les menus dans le LocalStorage

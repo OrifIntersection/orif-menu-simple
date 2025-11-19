@@ -75,14 +75,32 @@ function ExcelImportMenu({ onImport }) {
           menus = dataRows
             .filter((row) => row[dateIdx] && row[momentIdx] && row[platIdx])
             .map((row) => {
-              // Parser la date (format DD.MM.YYYY ou DD/MM/YYYY)
-              const dateStr = String(row[dateIdx]).trim();
+              // Parser la date (format DD.MM.YYYY, DD/MM/YYYY ou nombre Excel)
+              const dateValue = row[dateIdx];
               let parsedDate = null;
+              let dateStr = String(dateValue).trim();
               
-              if (dateStr.includes('.')) {
+              // Si c'est un nombre (format Excel), le convertir en date
+              if (typeof dateValue === 'number') {
+                // Excel stocke les dates comme nombre de jours depuis le 1er janvier 1900
+                // Mais il y a un bug historique : Excel compte le 29 février 1900 qui n'existe pas
+                const excelEpoch = new Date(1900, 0, 1);
+                const daysOffset = dateValue - (dateValue > 59 ? 2 : 1); // Correction du bug Excel
+                parsedDate = new Date(excelEpoch.getTime() + daysOffset * 24 * 60 * 60 * 1000);
+                
+                // Formater en DD.MM.YYYY pour l'affichage
+                const day = String(parsedDate.getDate()).padStart(2, '0');
+                const month = String(parsedDate.getMonth() + 1).padStart(2, '0');
+                const year = parsedDate.getFullYear();
+                dateStr = `${day}.${month}.${year}`;
+              } 
+              // Si c'est une chaîne avec des points
+              else if (dateStr.includes('.')) {
                 const [day, month, year] = dateStr.split('.');
                 parsedDate = new Date(year, month - 1, day);
-              } else if (dateStr.includes('/')) {
+              } 
+              // Si c'est une chaîne avec des slashes
+              else if (dateStr.includes('/')) {
                 const [day, month, year] = dateStr.split('/');
                 parsedDate = new Date(year, month - 1, day);
               }
