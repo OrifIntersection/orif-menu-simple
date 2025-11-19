@@ -5,6 +5,7 @@ import UserStatus from '../components/UserStatus';
 import MenuTable from '../components/MenuTable';
 import WeekPicker from '../components/WeekPicker';
 import Footer from '../components/Footer';
+import ColorLegend from '../components/ColorLegend';
 import { supabase } from '../lib/supabase';
 import { LocalMenuService } from '../services/LocalMenuService';
 import { getISOWeek, startOfISOWeek, addDays, format } from 'date-fns';
@@ -70,7 +71,10 @@ export default function WeekMenuPage() {
         {loading ? (
           <div>Chargement du menu...</div>
         ) : menuData && menuData.data ? (
-          <MenuTable menu={menuData} />
+          <>
+            <MenuTable menu={menuData} />
+            <ColorLegend />
+          </>
         ) : (
           <div style={{textAlign: 'center', color: '#d32f2f', fontWeight: 'bold', margin: '2rem 0'}}>
             Aucun menu disponible pour cette semaine.

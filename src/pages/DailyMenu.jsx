@@ -1,10 +1,8 @@
-// Page qui affiche uniquement le menu du jour en cours
-// ...existing code...
 import React from "react";
+import { Table } from 'antd';
 import PageLayout from "../components/PageLayout";
-import HeaderTable from "../components/HeaderTable";
-import SiderTable from "../components/SiderTable";
-import DishList from "../components/DishList";
+import DishListWeek from "../components/DishListWeek";
+import ColorLegend from "../components/ColorLegend";
 import { supabase } from "../lib/supabase";
 import { LocalMenuService } from "../services/LocalMenuService";
 import { format, getISOWeek, getYear } from "date-fns";
@@ -24,7 +22,7 @@ export default function DailyMenu(props) {
       if (supabase) {
         const { data, error } = await supabase
           .from("meal_items")
-          .select(`*, meal_types (id, code, label), dishes (id, name, description)`)
+          .select(`*, meal_types (id, code, label), dishes (id, name, description, dish_type)`)
           .eq("date", date);
         if (!error && data && data.length > 0) {
           items = data;
@@ -40,12 +38,7 @@ export default function DailyMenu(props) {
         const weekNum = getISOWeek(dateObj);
         const year = getYear(dateObj);
         
-        console.log('📦 DEBUG allMenus:', allMenus.map(m => ({ year: m.year, week: m.week_number })));
-        console.log('📦 DEBUG recherche:', { year, weekNum });
-        
         const menuSemaine = allMenus.find(menu => menu.year === year && menu.week_number === weekNum);
-        
-        console.log('📦 DEBUG menuDataJour:', { date, jourActuel, weekNum, year, menuSemaine });
         
         if (menuSemaine && menuSemaine.data) {
           // Transformer les données du format semaine vers le format jour
@@ -84,15 +77,18 @@ export default function DailyMenu(props) {
     const grouped = {};
     if (menuItems.items && Array.isArray(menuItems.items)) {
       menuItems.items.forEach(item => {
-        const mealType = item.meal_types?.label || item.meal_type_id || 'Midi';
+        const mealType = item.meal_types?.label || 'Midi';
         if (!grouped[mealType]) {
           grouped[mealType] = [];
         }
         
-        // Créer une string au format "TYPE: Nom du plat"
-        const dishType = item.dish_type || item.dishes?.dish_type || 'AUTRE';
-        const dishName = item.dishes?.name || item.name || '';
-        grouped[mealType].push(`${dishType}: ${dishName}`);
+        // Récupérer le type et le nom du plat depuis la relation dishes
+        const dishType = item.dishes?.dish_type || 'AUTRE';
+        const dishName = item.dishes?.name || '';
+        
+        if (dishName) {
+          grouped[mealType].push(`${dishType}: ${dishName}`);
+        }
       });
       
       // Convertir les tableaux en strings jointes par " / "
@@ -102,6 +98,31 @@ export default function DailyMenu(props) {
     }
     return grouped;
   }, [menuItems]);
+
+  // Créer les colonnes du tableau
+  const columns = [
+    {
+      title: jourActuel,
+      dataIndex: 'day',
+      key: 'day',
+      width: 120,
+      className: 'day-column',
+      render: (text) => <strong>{text}</strong>
+    },
+    ...Object.keys(mealsGrouped).map(mealType => ({
+      title: mealType,
+      dataIndex: mealType,
+      key: mealType,
+      render: (text) => text ? <DishListWeek dishString={text} /> : null
+    }))
+  ];
+
+  // Créer les données pour la seule ligne du jour
+  const dataSource = [{
+    key: date,
+    day: format(new Date(date + 'T12:00:00'), 'dd/MM/yyyy'),
+    ...mealsGrouped
+  }];
 
   return (
     <main className="container">
@@ -113,20 +134,16 @@ export default function DailyMenu(props) {
           {loading ? (
             <div>Chargement du menu...</div>
           ) : Object.keys(mealsGrouped).length > 0 ? (
-            Object.entries(mealsGrouped).map(([type, platsString]) => (
-              <div key={type} style={{ marginBottom: "2.5rem" }}>
-                <h3 style={{ 
-                  fontSize: '1.4em', 
-                  marginBottom: '1rem',
-                  color: '#1971c2',
-                  borderBottom: '2px solid #e9ecef',
-                  paddingBottom: '0.5rem'
-                }}>
-                  {type}
-                </h3>
-                <DishList dishString={platsString} style="cards" />
-              </div>
-            ))
+            <>
+              <Table 
+                columns={columns}
+                dataSource={dataSource}
+                pagination={false}
+                bordered
+                className="menu-table"
+              />
+              <ColorLegend />
+            </>
           ) : (
             <div style={{ color: '#d32f2f', fontWeight: 'bold', margin: '2rem 0', textAlign: 'center' }}>
               Aucun menu disponible pour ce jour.<br />

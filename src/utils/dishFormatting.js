@@ -1,3 +1,5 @@
+export const DISH_TYPE_ORDER = ['ENTREE', 'PLAT', 'GARNITURE', 'LEGUME', 'DESSERT', 'AUTRE'];
+
 export const DISH_TYPE_CONFIG = {
   ENTREE: {
     color: '#A5D8FF',
@@ -36,6 +38,10 @@ export const DISH_TYPE_CONFIG = {
     label: 'Autre'
   }
 };
+
+export function getDishTypeConfig(type) {
+  return DISH_TYPE_CONFIG[type] || DISH_TYPE_CONFIG.AUTRE;
+}
 
 export function parseDishString(dishString) {
   if (!dishString || typeof dishString !== 'string') return [];
