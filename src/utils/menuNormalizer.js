@@ -29,12 +29,16 @@ export function normalizeMenu(menu, weekNumber) {
       const dayIndex = (date.getDay() + 6) % 7;
       const day = days[dayIndex];
       const mealType = item.meal_types?.code || item.meal_type || 'Midi';
+      const dishType = item.dishes?.dish_type || item.dish_type || 'AUTRE';
       const dishName = item.dishes?.name || item.dish_name || '';
       
+      // Format: "TYPE: Nom du plat" pour que les émojis s'affichent
+      const dishWithType = `${dishType}: ${dishName}`;
+      
       if (!data[mealType][day]) {
-        data[mealType][day] = dishName;
+        data[mealType][day] = dishWithType;
       } else {
-        data[mealType][day] += ` / ${dishName}`;
+        data[mealType][day] += ` / ${dishWithType}`;
       }
     });
     
