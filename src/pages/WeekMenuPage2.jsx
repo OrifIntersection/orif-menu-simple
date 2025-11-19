@@ -6,6 +6,7 @@ import WeekPicker from '../components/WeekPicker';
 import Footer from '../components/Footer';
 import { LocalMenuService } from '../services/LocalMenuService';
 import { getISOWeek } from 'date-fns';
+import { filterWeekdays } from '../utils/menuNormalizer';
 
 export default function WeekMenuPage2() {
   const { weekNumber } = useParams();
@@ -15,6 +16,9 @@ export default function WeekMenuPage2() {
 
   // Récupère le menu local pour la semaine sélectionnée
   const menu = LocalMenuService.getMenuByWeek(currentYear, selectedWeek);
+  
+  // Filtrer pour afficher uniquement Lundi-Vendredi
+  const filteredMenu = menu ? filterWeekdays(menu) : null;
 
   // Debug : affiche le menu récupéré et le numéro de semaine
   const debugInfo = (
@@ -32,11 +36,11 @@ export default function WeekMenuPage2() {
         <div style={{ maxWidth: '400px', margin: '0 auto 20px' }}>
           <WeekPicker value={selectedWeek} onChange={setSelectedWeek} />
         </div>
-        {menu ? (
-          menu.days && menu.days.length > 0 ? (
+        {filteredMenu ? (
+          filteredMenu.days && filteredMenu.days.length > 0 ? (
             <div style={{ marginBottom: '2rem' }}>
               <h3 style={{ marginBottom: '0.5rem', color: '#007bff' }}>Menu local importé</h3>
-              <MenuTable menu={menu} />
+              <MenuTable menu={filteredMenu} />
             </div>
           ) : (
             <div style={{textAlign: 'center', color: '#d32f2f', fontWeight: 'bold', margin: '2rem 0'}}>
