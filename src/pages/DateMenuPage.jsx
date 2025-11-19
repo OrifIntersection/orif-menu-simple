@@ -60,25 +60,7 @@ export default function DateMenuPage() {
   });
   const dayTitle = `Menu du ${dayName} ${dateFormatted}`;
 
-  // DEBUG block
-  let debugMenuData = null;
-  let debugMenuDataJour = null;
-  let debugLoading = true;
-  try {
-    const localMenus = JSON.parse(localStorage.getItem('menus_local') || '[]');
-    debugMenuData = localMenus;
-    // Recherche du menu du jour
-    const dayName = getDayName(targetDate);
-    debugMenuDataJour = localMenus.filter(m => {
-      if (!m.days || !m.data) return false;
-      return m.days.some(day => day === dayName);
-    });
-    debugLoading = false;
-  } catch {
-    debugMenuData = [];
-    debugMenuDataJour = [];
-    debugLoading = true;
-  }
+  // Pas de DEBUG ici - DailyMenu gère ses propres données
 
   return (
     <main className="container">
@@ -93,13 +75,6 @@ export default function DateMenuPage() {
           <DatePicker />
         </div>
         <DailyMenu date={date} />
-        {/* DEBUG block en bas du tableau */}
-        <div style={{ background: '#fff3cd', color: '#856404', padding: '1rem', borderRadius: 8, marginTop: '2rem', fontSize: '0.95rem' }}>
-          <strong>DEBUG</strong><br />
-          <div>menuData : <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', fontSize: '0.9rem', background: '#f8f9fa', padding: '0.5rem', borderRadius: 4 }}>{JSON.stringify(debugMenuData, null, 2)}</pre></div>
-          <div>menuDataJour : <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', fontSize: '0.9rem', background: '#f8f9fa', padding: '0.5rem', borderRadius: 4 }}>{JSON.stringify(debugMenuDataJour, null, 2)}</pre></div>
-          <div>loading : {String(debugLoading)}</div>
-        </div>
         <Footer />
       </PageLayout>
     </main>

@@ -4,7 +4,7 @@ import ColorLegend from "../components/ColorLegend";
 import { supabase } from "../lib/supabase";
 import { LocalMenuService } from "../services/LocalMenuService";
 import { format, getISOWeek, getYear } from "date-fns";
-import { normalizeMenu } from "../utils/menuNormalizer";
+import { normalizeMenu, extractDayFromMenu } from "../utils/menuNormalizer";
 
 export default function DailyMenu(props) {
   const [menuData, setMenuData] = React.useState(null);
@@ -40,7 +40,9 @@ export default function DailyMenu(props) {
         );
         
         if (menuSemaine && menuSemaine.data) {
-          setMenuData(menuSemaine);
+          // Extraire uniquement le jour demandé du menu hebdomadaire
+          const dayMenu = extractDayFromMenu(menuSemaine, jourActuel);
+          setMenuData(dayMenu);
         } else {
           setMenuData(null);
         }
@@ -49,7 +51,9 @@ export default function DailyMenu(props) {
         const dateObj = new Date(date + 'T12:00:00');
         const weekNum = getISOWeek(dateObj);
         const normalized = normalizeMenu({ items }, weekNum);
-        setMenuData(normalized);
+        // Extraire uniquement le jour demandé
+        const dayMenu = extractDayFromMenu(normalized, jourActuel);
+        setMenuData(dayMenu);
       }
       setLoading(false);
     }

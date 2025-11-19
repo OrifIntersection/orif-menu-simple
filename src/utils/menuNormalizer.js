@@ -165,3 +165,22 @@ export function filterWeekdays(menu) {
     data: filteredData
   };
 }
+
+// Extraire un seul jour d'un menu hebdomadaire
+export function extractDayFromMenu(menu, dayName) {
+  if (!menu || !menu.data) return null;
+  
+  const meals = menu.meals || ['Midi', 'Soir'];
+  const dayData = {};
+  
+  meals.forEach(mealType => {
+    dayData[mealType] = {};
+    dayData[mealType][dayName] = (menu.data[mealType] && menu.data[mealType][dayName]) || '';
+  });
+  
+  return {
+    ...menu,
+    days: [dayName],
+    data: dayData
+  };
+}
