@@ -39,8 +39,12 @@ export default function ImportLocalMenuPage() {
       moments.forEach((meal) => {
         data[meal] = {};
         uniqueDates.forEach((dateStr) => {
-          const date = new Date(dateStr);
-          const dayName = joursSemaine[date.getDay() === 0 ? 6 : date.getDay() - 1]; // Dimanche = 0 → 6
+          // IMPORTANT: Ajouter 'T12:00:00' pour éviter les problèmes de timezone
+          const date = new Date(dateStr + 'T12:00:00');
+          const dayIndex = date.getDay(); // 0 = Dimanche, 1 = Lundi, ..., 6 = Samedi
+          const dayName = joursSemaine[dayIndex === 0 ? 6 : dayIndex - 1]; // Dimanche (0) → index 6
+          
+          console.log(`📅 ${dateStr} → jour ${dayIndex} → ${dayName}`);
           
           const plats = menus
             .filter((m) => {
@@ -53,7 +57,7 @@ export default function ImportLocalMenuPage() {
           
           data[meal][dayName] = plats.length > 0 ? plats.join(" / ") : "";
           
-          console.log(`${dayName} ${meal}: ${plats.length} plats`);
+          console.log(`  ${dayName} ${meal}: ${plats.length} plats`);
         });
       });
       
