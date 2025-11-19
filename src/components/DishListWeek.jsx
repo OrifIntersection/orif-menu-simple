@@ -1,4 +1,5 @@
 import React from 'react';
+import { Tag } from 'antd';
 import { parseDishString, DISH_TYPE_CONFIG } from '../utils/dishFormatting';
 
 const TYPE_ORDER = ['ENTREE', 'PLAT', 'GARNITURE', 'LEGUME', 'DESSERT', 'AUTRE'];
@@ -25,23 +26,23 @@ export default function DishListWeek({ dishString }) {
   const sortedTypes = TYPE_ORDER.filter(type => groupedByType[type]);
 
   return (
-    <div style={{ lineHeight: '1.8' }}>
-      {sortedTypes.map((type, typeIdx) => (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', lineHeight: '1.8' }}>
+      {sortedTypes.map((type) => (
         <React.Fragment key={type}>
           {groupedByType[type].map((dish, dishIdx) => (
-            <React.Fragment key={`${type}-${dishIdx}`}>
-              <span 
-                style={{ 
-                  color: DISH_TYPE_CONFIG[dish.type]?.darkColor || '#495057',
-                  fontWeight: '500'
-                }}
-              >
-                {dish.name}
-              </span>
-              {(typeIdx < sortedTypes.length - 1 || dishIdx < groupedByType[type].length - 1) && (
-                <span style={{ color: '#adb5bd', margin: '0 4px' }}> / </span>
-              )}
-            </React.Fragment>
+            <Tag 
+              key={`${type}-${dishIdx}`}
+              color={DISH_TYPE_CONFIG[dish.type]?.color || '#CED4DA'}
+              style={{ 
+                margin: 0,
+                fontSize: '13px',
+                padding: '4px 10px',
+                borderRadius: '4px',
+                border: 'none'
+              }}
+            >
+              {dish.name}
+            </Tag>
           ))}
         </React.Fragment>
       ))}
