@@ -54,13 +54,18 @@ export default function DailyMenu(props) {
 
   const hasMenu = menuData && menuData.data && Object.keys(menuData.data).length > 0;
   const meals = menuData?.meals || ['Midi', 'Soir'];
+  
+  // Formater la date pour le titre
+  const dateFormatted = new Date(date + 'T12:00:00').toLocaleDateString('fr-FR', { 
+    day: 'numeric', 
+    month: 'long', 
+    year: 'numeric' 
+  });
+  const pageTitle = `Menu du ${jourActuel} ${dateFormatted}`;
 
   return (
     <main className="container">
-      <PageLayout title={`Cafétéria ORIF`}>
-        <div className="table-header">
-          <h3 className="table-caption">Menu du {jourActuel} ({date})</h3>
-        </div>
+      <PageLayout title={pageTitle}>
         {loading ? (
           <div>Chargement du menu...</div>
         ) : hasMenu ? (
