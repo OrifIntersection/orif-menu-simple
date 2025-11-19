@@ -17,12 +17,27 @@ export default function MenuDrawer() {
   const currentYear = getCurrentYear();
   const currentWeekNumber = getCurrentWeekNumber();
 
-  // Récupération des semaines disponibles depuis meal_items
+  // Récupération des semaines disponibles depuis localStorage
   const [menusData, setMenusData] = useState([]);
   useEffect(() => {
     async function fetchMenus() {
       try {
-        // Récupérer toutes les dates présentes dans meal_items
+        // D'ABORD : Vérifier localStorage
+        const localMenus = JSON.parse(localStorage.getItem('menus_local') || '[]');
+        if (localMenus.length > 0) {
+          const formattedMenus = localMenus.map(menu => ({
+            id: `week-${menu.week_number}`,
+            year: menu.year,
+            weekNum: menu.week_number,
+            weekLabel: `Semaine ${menu.week_number}`,
+            days: menu.days || [],
+            meals: menu.meals || []
+          }));
+          setMenusData(formattedMenus.sort((a, b) => b.year !== a.year ? b.year - a.year : b.weekNum - a.weekNum));
+          return;
+        }
+
+        // SINON : Essayer Supabase
         const { data, error } = await import("../lib/supabase").then(mod => mod.supabase.from("meal_items").select("date").order("date", { ascending: false }));
         if (error || !data) {
           setMenusData([]);
