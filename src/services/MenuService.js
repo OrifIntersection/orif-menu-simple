@@ -290,19 +290,29 @@ export class MenuService {
   // ========================================
 
   /**
-   * Créer ou récupérer un plat
+   * Créer ou récupérer un plat (NOUVELLE STRUCTURE)
    * @param {string} name - Nom du plat
-   * @param {string} description - Description du plat
+   * @param {string} dishType - Type de plat (ENTREE, PLAT, GARNITURE, LEGUME, DESSERT, AUTRE)
    * @returns {Promise<Object>} Plat créé ou existant
    */
-  static async getOrCreateDish(name, description = '') {
+  static async getOrCreateDish(name, dishType = 'AUTRE') {
+    if (!supabase) {
+      console.warn('Supabase non configuré, retour d\'un plat simulé')
+      return { id: Date.now(), name, dish_type: dishType }
+    }
+
     try {
-      // Chercher si le plat existe déjà
+      // Normaliser le type de plat
+      const validTypes = ['ENTREE', 'PLAT', 'GARNITURE', 'LEGUME', 'DESSERT', 'AUTRE'];
+      const normalizedType = validTypes.includes(dishType) ? dishType : 'AUTRE';
+
+      // Chercher si le plat existe déjà avec ce nom ET ce type
       const { data: existingDish, error: searchError } = await supabase
         .from('dishes')
         .select('*')
         .eq('name', name)
-        .single()
+        .eq('dish_type', normalizedType)
+        .maybeSingle()
 
       if (existingDish && !searchError) {
         return existingDish
@@ -311,7 +321,11 @@ export class MenuService {
       // Créer un nouveau plat
       const { data, error } = await supabase
         .from('dishes')
-        .insert({ name, description })
+        .insert({ 
+          name, 
+          dish_type: normalizedType,
+          is_active: true
+        })
         .select()
         .single()
 
@@ -319,6 +333,129 @@ export class MenuService {
       return data
     } catch (error) {
       console.error('Erreur lors de la création/récupération du plat:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Créer ou récupérer un meal (NOUVELLE STRUCTURE)
+   * @param {string} mealDate - Date au format YYYY-MM-DD
+   * @param {string} mealType - Type de meal (MIDI ou SOIR)
+   * @returns {Promise<Object>} Meal créé ou existant
+   */
+  static async getOrCreateMeal(mealDate, mealType) {
+    if (!supabase) {
+      console.warn('Supabase non configuré, retour d\'un meal simulé')
+      return { id: Date.now(), meal_date: mealDate, meal_type: mealType }
+    }
+
+    try {
+      // Normaliser le type de meal
+      const normalizedMealType = mealType.toUpperCase() === 'MIDI' ? 'MIDI' : 'SOIR';
+
+      // Chercher si le meal existe déjà
+      const { data: existingMeal, error: searchError } = await supabase
+        .from('meals')
+        .select('*')
+        .eq('meal_date', mealDate)
+        .eq('meal_type', normalizedMealType)
+        .maybeSingle()
+
+      if (existingMeal && !searchError) {
+        return existingMeal
+      }
+
+      // Créer un nouveau meal
+      const { data, error } = await supabase
+        .from('meals')
+        .insert({ 
+          meal_date: mealDate, 
+          meal_type: normalizedMealType
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error('Erreur lors de la création/récupération du meal:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Assigner un plat à un meal (NOUVELLE STRUCTURE)
+   * @param {number} mealId - ID du meal
+   * @param {number} dishId - ID du plat
+   * @param {number} position - Position du plat dans le meal
+   * @returns {Promise<Object>} Lien créé
+   */
+  static async assignDishToMeal(mealId, dishId, position = null) {
+    if (!supabase) {
+      console.warn('Supabase non configuré, simulation de l\'assignation du plat')
+      return Promise.resolve()
+    }
+
+    try {
+      const { data, error} = await supabase
+        .from('meals_dishes')
+        .upsert({
+          meal_id: mealId,
+          dish_id: dishId,
+          position: position
+        }, {
+          onConflict: 'meal_id,dish_id'
+        })
+        .select()
+
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error('Erreur lors de l\'assignation du plat au meal:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Supprimer tous les plats d'un meal pour une date spécifique (NOUVELLE STRUCTURE)
+   * @param {string} mealDate - Date au format YYYY-MM-DD
+   * @returns {Promise<void>}
+   */
+  static async clearMenuForDate(mealDate) {
+    if (!supabase) {
+      console.warn('Supabase non configuré, simulation du vidage du menu')
+      return Promise.resolve()
+    }
+    
+    try {
+      // Récupérer tous les meals pour cette date
+      const { data: meals, error: mealsError } = await supabase
+        .from('meals')
+        .select('id')
+        .eq('meal_date', mealDate)
+
+      if (mealsError) throw mealsError
+
+      if (meals && meals.length > 0) {
+        // Supprimer toutes les associations meals_dishes pour ces meals
+        const mealIds = meals.map(m => m.id)
+        const { error: deleteError } = await supabase
+          .from('meals_dishes')
+          .delete()
+          .in('meal_id', mealIds)
+
+        if (deleteError) throw deleteError
+
+        // Optionnel : supprimer les meals eux-mêmes
+        const { error: deleteMealsError } = await supabase
+          .from('meals')
+          .delete()
+          .eq('meal_date', mealDate)
+
+        if (deleteMealsError) throw deleteMealsError
+      }
+    } catch (error) {
+      console.error('Erreur lors du vidage du menu pour la date:', error)
       throw error
     }
   }
