@@ -17,21 +17,14 @@ export default function MenuTable({ menu, showToggle, onToggle, toggleLabel }) {
 
   return (
     <>
-      {/* En-tête avec titre et bouton optionnel */}
-      <div className="table-header">
-        {/* Titre indiquant la semaine affichée avec numéro */}
-        {menu.weekNumber && (
-          <h3 className="table-caption">
-            {`Menu la semaine N° ${menu.weekNumber} du ${menu.weekLabel}`}
-          </h3>
-        )}
-        {/* Bouton conditionnel pour basculer entre vue jour/semaine */}
-        {showToggle && (
+      {/* En-tête avec bouton optionnel */}
+      {showToggle && (
+        <div className="table-header">
           <button className="table-toggle-btn" onClick={onToggle}>
             {toggleLabel}
           </button>
-        )}
-      </div>
+        </div>
+      )}
       {/* Conteneur du tableau avec scroll horizontal si nécessaire */}
       <div className="table-wrap">
         <table>

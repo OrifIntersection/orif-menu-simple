@@ -9,6 +9,7 @@ import MenuTable from "./components/MenuTable";
 import Footer from "./components/Footer";
 import UserStatus from "./components/UserStatus";
 import { AuthProvider } from "./contexts/AuthContext";
+import { filterWeekdays } from "./utils/menuNormalizer";
 import WeekMenuPage from "./pages/WeekMenuPage";
 import DateMenuPage from "./pages/DateMenuPage";
 import AdminPage from "./pages/AdminPage";
@@ -54,11 +55,13 @@ function HomePage() {
     // Vérifie d'abord le localStorage
     const localMenu = LocalMenuService.getMenuByWeek(currentYear, currentWeekNumber);
     if (localMenu && localMenu.days && localMenu.days.length > 0) {
-      setMenuData({
+      // Filtrer pour afficher uniquement Lundi-Vendredi
+      const filtered = filterWeekdays({
         meals: localMenu.meals,
         days: localMenu.days,
         data: localMenu.data
       });
+      setMenuData(filtered);
       setLoading(false);
       return;
     }
@@ -85,12 +88,14 @@ function HomePage() {
       if (error) {
         setMenuData(null);
       } else {
-        setMenuData({
+        // Filtrer pour afficher uniquement Lundi-Vendredi
+        const filtered = filterWeekdays({
           meals: ["Midi", "Soir"],
           days: weekDates,
           items: data || [],
           data: {}
         });
+        setMenuData(filtered);
       }
       setLoading(false);
     })();
