@@ -58,39 +58,58 @@ export default function DailyMenu(props) {
       {loading ? (
         <div>Chargement du menu...</div>
       ) : hasMenu ? (
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th className="corner-cell"></th>
-                <th>{jourActuel}</th>
-                <th className="corner-cell"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {meals.map((meal) => {
-                const cellClass = `cell-jour-${jourActuel.toLowerCase()} cell-repas-${meal.toLowerCase()}`;
-                const value = (menuData.data[meal] && menuData.data[meal][jourActuel]) || "";
-                const lines = Array.isArray(value) ? value : [value];
-                
-                return (
-                  <tr key={meal}>
-                    <th className="meal-label">{meal}</th>
-                    <MenuCell lines={lines} className={cellClass} />
-                    <th className="meal-label meal-label-right">{meal}</th>
-                  </tr>
-                );
-              })}
-            </tbody>
-            <tfoot>
-              <tr>
-                <th className="corner-cell"></th>
-                <th>{jourActuel}</th>
-                <th className="corner-cell"></th>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
+        <>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th className="corner-cell"></th>
+                  <th>{jourActuel}</th>
+                  <th className="corner-cell"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {meals.map((meal) => {
+                  const cellClass = `cell-jour-${jourActuel.toLowerCase()} cell-repas-${meal.toLowerCase()}`;
+                  const value = (menuData.data[meal] && menuData.data[meal][jourActuel]) || "";
+                  const lines = Array.isArray(value) ? value : [value];
+                  
+                  return (
+                    <tr key={meal}>
+                      <th className="meal-label">{meal}</th>
+                      <MenuCell lines={lines} className={cellClass} />
+                      <th className="meal-label meal-label-right">{meal}</th>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <th className="corner-cell"></th>
+                  <th>{jourActuel}</th>
+                  <th className="corner-cell"></th>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          {/* Légende des émojis */}
+          <div style={{ 
+            marginTop: '1rem', 
+            padding: '0.75rem', 
+            background: '#f8f9fa', 
+            borderRadius: '8px',
+            fontSize: '0.9rem',
+            textAlign: 'center',
+            color: '#495057'
+          }}>
+            <span style={{ marginRight: '1rem' }}>🥗 Entrée</span>
+            <span style={{ marginRight: '1rem' }}>🍽️ Plat</span>
+            <span style={{ marginRight: '1rem' }}>🥔 Garniture</span>
+            <span style={{ marginRight: '1rem' }}>🥬 Légume</span>
+            <span style={{ marginRight: '1rem' }}>🍰 Dessert</span>
+            <span>✨ Autre</span>
+          </div>
+        </>
       ) : (
         <div style={{ color: '#d32f2f', fontWeight: 'bold', margin: '2rem 0', textAlign: 'center' }}>
           Aucun menu disponible pour ce jour.<br />

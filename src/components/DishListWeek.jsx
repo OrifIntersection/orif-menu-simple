@@ -1,17 +1,7 @@
 import React from 'react';
-import { CoffeeOutlined, FireOutlined, AppleOutlined, StarOutlined, SmileOutlined, MoreOutlined } from '@ant-design/icons';
 import { parseDishString, DISH_TYPE_CONFIG } from '../utils/dishFormatting';
 
 const TYPE_ORDER = ['ENTREE', 'PLAT', 'GARNITURE', 'LEGUME', 'DESSERT', 'AUTRE'];
-
-const DISH_ICONS = {
-  ENTREE: CoffeeOutlined,
-  PLAT: FireOutlined,
-  GARNITURE: AppleOutlined,
-  LEGUME: StarOutlined,
-  DESSERT: SmileOutlined,
-  AUTRE: MoreOutlined
-};
 
 export default function DishListWeek({ dishString }) {
   if (!dishString || typeof dishString !== 'string') {
@@ -39,16 +29,10 @@ export default function DishListWeek({ dishString }) {
       {sortedTypes.map((type, typeIdx) => (
         <React.Fragment key={type}>
           {groupedByType[type].map((dish, dishIdx) => {
-            const Icon = DISH_ICONS[dish.type] || MoreOutlined;
+            const emoji = DISH_TYPE_CONFIG[dish.type]?.icon || '✨';
             return (
               <React.Fragment key={`${type}-${dishIdx}`}>
-                <Icon 
-                  style={{ 
-                    color: DISH_TYPE_CONFIG[dish.type]?.darkColor || '#495057',
-                    marginRight: '4px',
-                    fontSize: '14px'
-                  }}
-                />
+                <span style={{ marginRight: '4px' }}>{emoji}</span>
                 <span 
                   style={{ 
                     color: '#212529',

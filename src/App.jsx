@@ -22,6 +22,7 @@ import WeekMenuPage2 from './pages/WeekMenuPage2';
 import ImportLocalMenuPage from './pages/ImportLocalMenuPage';
 import ImportMenuPage from './pages/ImportMenuPage';
 import StyleDemo from './pages/StyleDemo';
+import EmojiDemo from './pages/EmojiDemo';
 import "./styles.css";
 
 /**
@@ -216,6 +217,8 @@ export default function App() {
           <Route path="/import-local" element={<ImportLocalMenuPage />} />
           {/* Route pour la démonstration des styles d'affichage */}
           <Route path="/styles" element={<StyleDemo />} />
+          {/* Route pour la démonstration des émojis */}
+          <Route path="/emoji-demo" element={<EmojiDemo />} />
           {/* Route pour afficher le menu d'une date spécifique */}
           <Route path="/date/:date" element={<DateMenuPage />} />
           {/* Route pour la page d'administration */}
