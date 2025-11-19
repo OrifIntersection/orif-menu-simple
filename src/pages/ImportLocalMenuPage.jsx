@@ -34,6 +34,8 @@ export default function ImportLocalMenuPage() {
       // Récupère toutes les dates uniques
       const uniqueDates = [...new Set(menus.map(m => m.date?.toISOString().slice(0, 10)).filter(Boolean))].sort();
       
+      console.log('📅 Dates uniques trouvées:', uniqueDates);
+      
       moments.forEach((meal) => {
         data[meal] = {};
         uniqueDates.forEach((dateStr) => {
@@ -46,12 +48,16 @@ export default function ImportLocalMenuPage() {
               const momentMatch = m.moment.toLowerCase() === meal.toLowerCase();
               return mDateStr === dateStr && momentMatch;
             })
-            .map((m) => m.plat)
+            .map((m) => `${m.typePlat}: ${m.plat}`)
             .filter(Boolean);
           
           data[meal][dayName] = plats.length > 0 ? plats.join(" / ") : "";
+          
+          console.log(`${dayName} ${meal}: ${plats.length} plats`);
         });
       });
+      
+      console.log('📦 Structure de données créée:', data);
       
       const menuToImport = {
         year: Number(week.split("-")[0]),
@@ -61,6 +67,8 @@ export default function ImportLocalMenuPage() {
         meals: moments,
         data,
       };
+      
+      console.log('📋 Menu à importer:', menuToImport);
       setPendingMenus([menuToImport]);
     } else {
       // Ancien format : grouper par jour et moment
@@ -106,19 +114,33 @@ export default function ImportLocalMenuPage() {
       alert("Aucun menu à importer. Veuillez d'abord importer un fichier Excel.");
       return;
     }
+    
+    console.log('💾 Sauvegarde des menus dans le localStorage...', pendingMenus);
+    
     // Enregistre chaque menu individuellement
     pendingMenus.forEach(menu => {
       if (menu && menu.year && menu.week_number) {
+        console.log(`Sauvegarde menu semaine ${menu.week_number} année ${menu.year}`);
         LocalMenuService.saveMenu(menu);
+        console.log('✅ Menu sauvegardé avec succès');
       }
     });
-    setPendingMenus(null);
+    
+    // Vérifier que ça a bien été sauvegardé
+    const allMenus = LocalMenuService.getAllMenus();
+    console.log('📚 Tous les menus dans localStorage:', allMenus);
+    
     // Navigue vers la semaine importée
-    if (pendingMenus[0] && pendingMenus[0].week_label) {
-      navigate("/week/" + pendingMenus[0].week_label);
+    if (pendingMenus[0] && pendingMenus[0].week_number) {
+      const weekNum = pendingMenus[0].week_number;
+      alert(`Menu de la semaine ${weekNum} importé avec succès ! Redirection...`);
+      navigate("/week/" + weekNum);
     } else {
-      alert("Importation réussie, mais impossible de naviguer vers la semaine (donnée manquante).");
+      alert("Importation réussie !");
+      navigate("/");
     }
+    
+    setPendingMenus(null);
   };
 
   return (
