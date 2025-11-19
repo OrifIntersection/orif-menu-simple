@@ -112,26 +112,6 @@ function HomePage() {
         title="Cafétéria ORIF"
         actions={<UserStatus />}
       >
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem', gap: '1rem', flexWrap: 'wrap' }}>
-          <button
-            style={{ padding: '0.7rem 1.5rem', background: '#007bff', color: 'white', border: 'none', borderRadius: 8, fontWeight: 'bold', cursor: 'pointer' }}
-            onClick={() => navigate(`/week/${currentWeekNumber}`)}
-          >
-            Menu de la semaine
-          </button>
-          <button
-            style={{ padding: '0.7rem 1.5rem', background: '#28a745', color: 'white', border: 'none', borderRadius: 8, fontWeight: 'bold', cursor: 'pointer' }}
-            onClick={() => navigate('/import-local')}
-          >
-            Importation locale
-          </button>
-          <button
-            style={{ padding: '0.7rem 1.5rem', background: '#8b5cf6', color: 'white', border: 'none', borderRadius: 8, fontWeight: 'bold', cursor: 'pointer' }}
-            onClick={() => navigate('/styles')}
-          >
-            🎨 Voir les styles
-          </button>
-        </div>
         {/* Bouton déroulant pour choisir une autre semaine */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '1rem' }}>
           <select

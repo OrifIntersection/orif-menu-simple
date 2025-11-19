@@ -242,17 +242,12 @@ export default function MenuDrawer() {
                   <span className="action-icon">📝</span>
                   <span className="action-label">Éditer la semaine</span>
                 </button>
+                <button className="drawer-action-item" onClick={() => handleNavAction(() => navigate('/auth/callback'))}>
+                  <span className="action-icon">🔧</span>
+                  <span className="action-label">Page de debug</span>
+                </button>
               </>
             )}
-            
-            {/* Pages de debug */}
-            <div style={{ marginTop: '12px', marginBottom: '8px', paddingLeft: '8px', fontSize: '0.85em', fontWeight: '600', color: '#9ca3af' }}>
-              Debug
-            </div>
-            <button className="drawer-action-item" onClick={() => handleNavAction(() => navigate('/auth/callback'))}>
-              <span className="action-icon">🔄</span>
-              <span className="action-label">Test Auth Callback</span>
-            </button>
           </div>
 
           {/* Section de la liste des menus disponibles */}
