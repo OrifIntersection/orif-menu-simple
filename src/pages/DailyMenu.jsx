@@ -6,13 +6,14 @@ import ColorLegend from "../components/ColorLegend";
 import { supabase } from "../lib/supabase";
 import { LocalMenuService } from "../services/LocalMenuService";
 import { format, getISOWeek, getYear } from "date-fns";
+import { slugifyMealKey } from "../utils/mealKeyUtils";
 
 export default function DailyMenu(props) {
-  const [menuItems, setMenuItems] = React.useState([]);
+  const [menuItems, setMenuItems] = React.useState({});
   const [loading, setLoading] = React.useState(true);
   const date = props.date || format(new Date(), "yyyy-MM-dd");
   const jours = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
-  const jourObj = new Date(date);
+  const jourObj = new Date(date + 'T12:00:00');
   const jourActuel = jours[jourObj.getDay()];
 
   React.useEffect(() => {
@@ -38,7 +39,9 @@ export default function DailyMenu(props) {
         const weekNum = getISOWeek(dateObj);
         const year = getYear(dateObj);
         
-        const menuSemaine = allMenus.find(menu => menu.year === year && menu.week_number === weekNum);
+        const menuSemaine = allMenus.find(menu => 
+          Number(menu.year) === year && Number(menu.week_number) === weekNum
+        );
         
         if (menuSemaine && menuSemaine.data) {
           // Transformer les données du format semaine vers le format jour
@@ -55,6 +58,7 @@ export default function DailyMenu(props) {
             }
           });
           
+          console.log('📅 Extraction jour:', { jourActuel, menuDuJour });
           setMenuItems(menuDuJour);
         }
       }
@@ -66,20 +70,32 @@ export default function DailyMenu(props) {
     fetchMenu();
   }, [date, jourActuel]);
 
-  // Regrouper par type de repas (midi/soir)
+  // Regrouper par type de repas (midi/soir) avec clés slugifiées
   const mealsGrouped = React.useMemo(() => {
+    console.log('🔍 menuItems:', menuItems);
+    const result = { meals: [] };
+    
     // Si menuItems a une structure de jour localStorage (avec data et strings)
     if (menuItems.data) {
-      return menuItems.data;
+      console.log('📦 menuItems.data exists:', Object.keys(menuItems.data));
+      Object.entries(menuItems.data).forEach(([mealType, dishes]) => {
+        const { slug, label } = slugifyMealKey(mealType);
+        result.meals.push({ slug, label });
+        result[slug] = dishes;
+        console.log(`  ➡️ ${mealType} (${slug}):`, dishes.substring(0, 50) + '...');
+      });
+      console.log('📊 DailyMenu - localStorage result:', result);
+      return result;
     }
     
     // Sinon, format Supabase avec items - convertir en strings
-    const grouped = {};
     if (menuItems.items && Array.isArray(menuItems.items)) {
+      const tempGrouped = {};
+      
       menuItems.items.forEach(item => {
         const mealType = item.meal_types?.label || 'Midi';
-        if (!grouped[mealType]) {
-          grouped[mealType] = [];
+        if (!tempGrouped[mealType]) {
+          tempGrouped[mealType] = [];
         }
         
         // Récupérer le type et le nom du plat depuis la relation dishes
@@ -87,16 +103,19 @@ export default function DailyMenu(props) {
         const dishName = item.dishes?.name || '';
         
         if (dishName) {
-          grouped[mealType].push(`${dishType}: ${dishName}`);
+          tempGrouped[mealType].push(`${dishType}: ${dishName}`);
         }
       });
       
-      // Convertir les tableaux en strings jointes par " / "
-      Object.keys(grouped).forEach(mealType => {
-        grouped[mealType] = grouped[mealType].join(' / ');
+      // Convertir avec clés slugifiées
+      Object.entries(tempGrouped).forEach(([mealType, dishes]) => {
+        const { slug, label } = slugifyMealKey(mealType);
+        result.meals.push({ slug, label });
+        result[slug] = dishes.join(' / ');
       });
     }
-    return grouped;
+    
+    return result;
   }, [menuItems]);
 
   // Créer les colonnes du tableau
@@ -109,10 +128,10 @@ export default function DailyMenu(props) {
       className: 'day-column',
       render: (text) => <strong>{text}</strong>
     },
-    ...Object.keys(mealsGrouped).map(mealType => ({
-      title: mealType,
-      dataIndex: mealType,
-      key: mealType,
+    ...(mealsGrouped.meals || []).map(({ slug, label }) => ({
+      title: label,
+      dataIndex: slug,
+      key: slug,
       render: (text) => text ? <DishListWeek dishString={text} /> : null
     }))
   ];
@@ -121,7 +140,10 @@ export default function DailyMenu(props) {
   const dataSource = [{
     key: date,
     day: format(new Date(date + 'T12:00:00'), 'dd/MM/yyyy'),
-    ...mealsGrouped
+    ...(mealsGrouped.meals || []).reduce((acc, { slug }) => {
+      acc[slug] = mealsGrouped[slug];
+      return acc;
+    }, {})
   }];
 
   return (
