@@ -104,6 +104,16 @@ export default function DailyMenu(props) {
           </div>
           {/* Légende des émojis */}
           <ColorLegend />
+          
+          {/* Bloc DEBUG en bas du tableau */}
+          <div style={{ background: '#fff3cd', color: '#856404', padding: '1rem', borderRadius: 8, marginTop: '1rem', fontSize: '0.95rem' }}>
+            <strong>DEBUG - Menu du jour</strong><br />
+            <div>Date demandée : {date}</div>
+            <div>Jour actuel : {jourActuel}</div>
+            <div>menuData.days : {JSON.stringify(menuData?.days || [])}</div>
+            <div>menuData : <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', fontSize: '0.9rem', background: '#f8f9fa', padding: '0.5rem', borderRadius: 4, maxHeight: '200px', overflow: 'auto' }}>{JSON.stringify(menuData, null, 2)}</pre></div>
+            <div>loading : {String(loading)}</div>
+          </div>
         </>
       ) : (
         <div style={{ color: '#d32f2f', fontWeight: 'bold', margin: '2rem 0', textAlign: 'center' }}>
