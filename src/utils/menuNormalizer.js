@@ -1,3 +1,66 @@
+// Fonction pour retirer les accents (normalisation Unicode)
+function removeAccents(str) {
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+// Normaliser les codes de repas Supabase vers "Midi" ou "Soir"
+function normalizeMealType(code) {
+  if (!code) return null; // Rejeter au lieu de deviner
+  
+  const normalized = removeAccents(code.toLowerCase().trim());
+  
+  const mealMapping = {
+    'midi': 'Midi',
+    'lunch': 'Midi',
+    'dejeuner': 'Midi',
+    'soir': 'Soir',
+    'dinner': 'Soir',
+    'diner': 'Soir',
+    'souper': 'Soir'
+  };
+  
+  return mealMapping[normalized] || null; // Retourne null si inconnu
+}
+
+// Normaliser les types de plats vers les clés attendues
+function normalizeDishType(type) {
+  if (!type) return 'AUTRE';
+  
+  // Retirer les accents et mettre en majuscules
+  const normalized = removeAccents(type.toUpperCase().trim());
+  
+  // Mapping étendu des variations possibles
+  const mapping = {
+    'ENTREE': 'ENTREE',
+    'ENTREE FROIDE': 'ENTREE',
+    'ENTREE CHAUDE': 'ENTREE',
+    'STARTER': 'ENTREE',
+    'APPETIZER': 'ENTREE',
+    'PLAT': 'PLAT',
+    'PLAT PRINCIPAL': 'PLAT',
+    'PLAT CHAUD': 'PLAT',
+    'MAIN': 'PLAT',
+    'MAIN COURSE': 'PLAT',
+    'GARNITURE': 'GARNITURE',
+    'ACCOMPAGNEMENT': 'GARNITURE',
+    'SIDE': 'GARNITURE',
+    'SIDE DISH': 'GARNITURE',
+    'LEGUME': 'LEGUME',
+    'LEGUMES': 'LEGUME',
+    'VEGETABLE': 'LEGUME',
+    'VEGETABLES': 'LEGUME',
+    'DESSERT': 'DESSERT',
+    'DESSERT CHAUD': 'DESSERT',
+    'DESSERT FROID': 'DESSERT',
+    'SWEET': 'DESSERT',
+    'AUTRE': 'AUTRE',
+    'OTHER': 'AUTRE',
+    'DIVERS': 'AUTRE'
+  };
+  
+  return mapping[normalized] || 'AUTRE';
+}
+
 export function normalizeMenu(menu, weekNumber) {
   if (!menu) return null;
   
@@ -25,12 +88,39 @@ export function normalizeMenu(menu, weekNumber) {
     });
     
     menu.items.forEach(item => {
+      // Valider la date
+      if (!item.date) return;
       const date = new Date(item.date);
+      if (isNaN(date.getTime())) return; // Date invalide
+      
       const dayIndex = (date.getDay() + 6) % 7;
       const day = days[dayIndex];
-      const mealType = item.meal_types?.code || item.meal_type || 'Midi';
-      const dishType = item.dishes?.dish_type || item.dish_type || 'AUTRE';
+      
+      // Vérifier que le jour est valide
+      if (!day || dayIndex < 0 || dayIndex > 6) return;
+      
+      // Normaliser le type de repas (Midi/Soir)
+      const rawMealType = item.meal_types?.code || item.meal_type;
+      const mealType = normalizeMealType(rawMealType);
+      
+      // Rejeter si le type de repas est inconnu
+      if (!mealType) {
+        console.warn(`Type de repas inconnu ignoré: "${rawMealType}"`);
+        return;
+      }
+      
+      // Normaliser le type de plat (ENTREE/PLAT/etc.)
+      const rawDishType = item.dishes?.dish_type || item.dish_type || 'AUTRE';
+      const dishType = normalizeDishType(rawDishType);
+      
+      // Récupérer le nom du plat
       const dishName = item.dishes?.name || item.dish_name || '';
+      
+      // Ignorer les plats sans nom
+      if (!dishName.trim()) {
+        console.warn(`Plat sans nom ignoré pour ${mealType} - ${day}`);
+        return;
+      }
       
       // Format: "TYPE: Nom du plat" pour que les émojis s'affichent
       const dishWithType = `${dishType}: ${dishName}`;

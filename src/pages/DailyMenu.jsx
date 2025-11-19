@@ -4,6 +4,7 @@ import ColorLegend from "../components/ColorLegend";
 import { supabase } from "../lib/supabase";
 import { LocalMenuService } from "../services/LocalMenuService";
 import { format, getISOWeek, getYear } from "date-fns";
+import { normalizeMenu } from "../utils/menuNormalizer";
 
 export default function DailyMenu(props) {
   const [menuData, setMenuData] = React.useState(null);
@@ -44,7 +45,11 @@ export default function DailyMenu(props) {
           setMenuData(null);
         }
       } else {
-        setMenuData({ items });
+        // IMPORTANT: Normaliser les données Supabase pour que les émojis s'affichent
+        const dateObj = new Date(date + 'T12:00:00');
+        const weekNum = getISOWeek(dateObj);
+        const normalized = normalizeMenu({ items }, weekNum);
+        setMenuData(normalized);
       }
       setLoading(false);
     }

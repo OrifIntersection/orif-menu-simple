@@ -9,7 +9,7 @@ import MenuTable from "./components/MenuTable";
 import Footer from "./components/Footer";
 import UserStatus from "./components/UserStatus";
 import { AuthProvider } from "./contexts/AuthContext";
-import { filterWeekdays } from "./utils/menuNormalizer";
+import { normalizeMenu, filterWeekdays } from "./utils/menuNormalizer";
 import WeekMenuPage from "./pages/WeekMenuPage";
 import DateMenuPage from "./pages/DateMenuPage";
 import AdminPage from "./pages/AdminPage";
@@ -89,13 +89,10 @@ function HomePage() {
       if (error) {
         setMenuData(null);
       } else {
+        // IMPORTANT: Normaliser les données Supabase AVANT de filtrer
+        const normalized = normalizeMenu({ items: data || [] }, currentWeekNumber);
         // Filtrer pour afficher uniquement Lundi-Vendredi
-        const filtered = filterWeekdays({
-          meals: ["Midi", "Soir"],
-          days: weekDates,
-          items: data || [],
-          data: {}
-        });
+        const filtered = filterWeekdays(normalized);
         setMenuData(filtered);
       }
       setLoading(false);
