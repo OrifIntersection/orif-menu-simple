@@ -1,7 +1,5 @@
 import React from "react";
-import PageLayout from "../components/PageLayout";
 import MenuCell from "../components/MenuCell";
-import ColorLegend from "../components/ColorLegend";
 import { supabase } from "../lib/supabase";
 import { LocalMenuService } from "../services/LocalMenuService";
 import { format, getISOWeek, getYear } from "date-fns";
@@ -54,67 +52,54 @@ export default function DailyMenu(props) {
 
   const hasMenu = menuData && menuData.data && Object.keys(menuData.data).length > 0;
   const meals = menuData?.meals || ['Midi', 'Soir'];
-  
-  // Formater la date pour le titre
-  const dateFormatted = new Date(date + 'T12:00:00').toLocaleDateString('fr-FR', { 
-    day: 'numeric', 
-    month: 'long', 
-    year: 'numeric' 
-  });
-  const pageTitle = `Menu du ${jourActuel} ${dateFormatted}`;
 
   return (
-    <main className="container">
-      <PageLayout title={pageTitle}>
-        {loading ? (
-          <div>Chargement du menu...</div>
-        ) : hasMenu ? (
-          <>
-            <div className="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th className="corner-cell"></th>
-                    <th>{jourActuel}</th>
-                    <th className="corner-cell"></th>
+    <>
+      {loading ? (
+        <div>Chargement du menu...</div>
+      ) : hasMenu ? (
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th className="corner-cell"></th>
+                <th>{jourActuel}</th>
+                <th className="corner-cell"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {meals.map((meal) => {
+                const cellClass = `cell-jour-${jourActuel.toLowerCase()} cell-repas-${meal.toLowerCase()}`;
+                const value = (menuData.data[meal] && menuData.data[meal][jourActuel]) || "";
+                const lines = Array.isArray(value) ? value : [value];
+                
+                return (
+                  <tr key={meal}>
+                    <th className="meal-label">{meal}</th>
+                    <MenuCell lines={lines} className={cellClass} />
+                    <th className="meal-label meal-label-right">{meal}</th>
                   </tr>
-                </thead>
-                <tbody>
-                  {meals.map((meal) => {
-                    const cellClass = `cell-jour-${jourActuel.toLowerCase()} cell-repas-${meal.toLowerCase()}`;
-                    const value = (menuData.data[meal] && menuData.data[meal][jourActuel]) || "";
-                    const lines = Array.isArray(value) ? value : [value];
-                    
-                    return (
-                      <tr key={meal}>
-                        <th className="meal-label">{meal}</th>
-                        <MenuCell lines={lines} className={cellClass} />
-                        <th className="meal-label meal-label-right">{meal}</th>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-                <tfoot>
-                  <tr>
-                    <th className="corner-cell"></th>
-                    <th>{jourActuel}</th>
-                    <th className="corner-cell"></th>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-            <ColorLegend />
-          </>
-        ) : (
-          <div style={{ color: '#d32f2f', fontWeight: 'bold', margin: '2rem 0', textAlign: 'center' }}>
-            Aucun menu disponible pour ce jour.<br />
-            <span style={{ fontWeight: 'normal', color: '#333', fontSize: '1rem' }}>
-              Vous pouvez importer un menu pour cette date via la page d'importation.<br />
-              <a href="/import-local" style={{ color: '#007bff', textDecoration: 'underline' }}>Importer un menu</a>
-            </span>
-          </div>
-        )}
-      </PageLayout>
-    </main>
+                );
+              })}
+            </tbody>
+            <tfoot>
+              <tr>
+                <th className="corner-cell"></th>
+                <th>{jourActuel}</th>
+                <th className="corner-cell"></th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      ) : (
+        <div style={{ color: '#d32f2f', fontWeight: 'bold', margin: '2rem 0', textAlign: 'center' }}>
+          Aucun menu disponible pour ce jour.<br />
+          <span style={{ fontWeight: 'normal', color: '#333', fontSize: '1rem' }}>
+            Vous pouvez importer un menu pour cette date via la page d'importation.<br />
+            <a href="/import-local" style={{ color: '#007bff', textDecoration: 'underline' }}>Importer un menu</a>
+          </span>
+        </div>
+      )}
+    </>
   );
 }

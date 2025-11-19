@@ -53,7 +53,12 @@ export default function DateMenuPage() {
   if (renderError) return renderError;
 
   const dayName = getDayName(targetDate);
-  const pageTitle = `Menu du ${dayName} ${formatDate(targetDate)}`;
+  const dateFormatted = targetDate.toLocaleDateString('fr-FR', { 
+    day: 'numeric', 
+    month: 'long', 
+    year: 'numeric' 
+  });
+  const pageTitle = `Menu du ${dayName} ${dateFormatted}`;
 
   // DEBUG block
   let debugMenuData = null;
