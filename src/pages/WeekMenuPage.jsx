@@ -8,6 +8,7 @@ import Footer from '../components/Footer';
 import { supabase } from '../lib/supabase';
 import { LocalMenuService } from '../services/LocalMenuService';
 import { getISOWeek, startOfISOWeek, addDays, format } from 'date-fns';
+import { normalizeMenu, filterWeekdays } from '../utils/menuNormalizer';
 
 /**
  * WeekMenuPage - Page autonome pour afficher le menu d'une semaine
@@ -27,7 +28,8 @@ export default function WeekMenuPage() {
       const localMenu = LocalMenuService.getMenuByWeek(currentYear, weekNum);
       if (localMenu && localMenu.data) {
         console.log('📦 Menu trouvé dans localStorage:', localMenu);
-        setMenuData(localMenu);
+        const normalized = normalizeMenu(localMenu, weekNum);
+        setMenuData(normalized);
         setLoading(false);
         return;
       }
@@ -45,7 +47,8 @@ export default function WeekMenuPage() {
       if (error || !data || data.length === 0) {
         setMenuData(null);
       } else {
-        setMenuData({ items: data || [] });
+        const normalized = normalizeMenu({ items: data }, weekNum);
+        setMenuData(normalized);
       }
       setLoading(false);
     }
@@ -59,10 +62,7 @@ export default function WeekMenuPage() {
   const weekTitle = `Menu Semaine ${weekNum} (${format(weekDateStart, 'dd/MM/yyyy')} - ${format(weekDateEnd, 'dd/MM/yyyy')})`;
   
   // Filtrer pour afficher uniquement Lundi-Vendredi
-  const filteredMenuData = menuData ? {
-    ...menuData,
-    days: menuData.days?.filter((day, index) => index < 5) || ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi']
-  } : null;
+  const filteredMenuData = filterWeekdays(menuData);
 
   return (
     <main className="container">
