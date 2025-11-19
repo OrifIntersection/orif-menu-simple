@@ -20,6 +20,7 @@ import AuthCallbackDebug from './pages/AuthCallbackDebug';
 import WeekMenuPage2 from './pages/WeekMenuPage2';
 import ImportLocalMenuPage from './pages/ImportLocalMenuPage';
 import ImportMenuPage from './pages/ImportMenuPage';
+import StyleDemo from './pages/StyleDemo';
 import "./styles.css";
 
 /**
@@ -116,7 +117,7 @@ function HomePage() {
         title="Cafétéria ORIF"
         actions={<UserStatus />}
       >
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem', gap: '1rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem', gap: '1rem', flexWrap: 'wrap' }}>
           <button
             style={{ padding: '0.7rem 1.5rem', background: '#007bff', color: 'white', border: 'none', borderRadius: 8, fontWeight: 'bold', cursor: 'pointer' }}
             onClick={() => navigate(`/week/${currentWeekNumber}`)}
@@ -127,7 +128,13 @@ function HomePage() {
             style={{ padding: '0.7rem 1.5rem', background: '#28a745', color: 'white', border: 'none', borderRadius: 8, fontWeight: 'bold', cursor: 'pointer' }}
             onClick={() => navigate('/import-local')}
           >
-            Importation locale (robuste)
+            Importation locale
+          </button>
+          <button
+            style={{ padding: '0.7rem 1.5rem', background: '#8b5cf6', color: 'white', border: 'none', borderRadius: 8, fontWeight: 'bold', cursor: 'pointer' }}
+            onClick={() => navigate('/styles')}
+          >
+            🎨 Voir les styles
           </button>
         </div>
         {/* Bouton déroulant pour choisir une autre semaine */}
@@ -202,6 +209,8 @@ export default function App() {
           <Route path="/week2/:weekNumber" element={<WeekMenuPage2 />} />
           {/* Route pour l'importation locale robuste */}
           <Route path="/import-local" element={<ImportLocalMenuPage />} />
+          {/* Route pour la démonstration des styles d'affichage */}
+          <Route path="/styles" element={<StyleDemo />} />
           {/* Route pour afficher le menu d'une date spécifique */}
           <Route path="/date/:date" element={<DateMenuPage />} />
           {/* Route pour la page d'administration */}
