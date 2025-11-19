@@ -1,5 +1,6 @@
 import React from "react";
 import MenuCell from "../components/MenuCell";
+import ColorLegend from "../components/ColorLegend";
 import { supabase } from "../lib/supabase";
 import { LocalMenuService } from "../services/LocalMenuService";
 import { format, getISOWeek, getYear } from "date-fns";
@@ -93,22 +94,7 @@ export default function DailyMenu(props) {
             </table>
           </div>
           {/* Légende des émojis */}
-          <div style={{ 
-            marginTop: '1rem', 
-            padding: '0.75rem', 
-            background: '#f8f9fa', 
-            borderRadius: '8px',
-            fontSize: '0.9rem',
-            textAlign: 'center',
-            color: '#495057'
-          }}>
-            <span style={{ marginRight: '1rem' }}>🥗 Entrée</span>
-            <span style={{ marginRight: '1rem' }}>🍽️ Plat</span>
-            <span style={{ marginRight: '1rem' }}>🥔 Garniture</span>
-            <span style={{ marginRight: '1rem' }}>🥬 Légume</span>
-            <span style={{ marginRight: '1rem' }}>🍰 Dessert</span>
-            <span>✨ Autre</span>
-          </div>
+          <ColorLegend />
         </>
       ) : (
         <div style={{ color: '#d32f2f', fontWeight: 'bold', margin: '2rem 0', textAlign: 'center' }}>

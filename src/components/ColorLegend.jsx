@@ -1,24 +1,20 @@
-import React from 'react';
-import { getDishTypeConfig, DISH_TYPE_ORDER } from '../utils/dishFormatting';
-
 export default function ColorLegend() {
   return (
-    <div className="color-legend">
-      <h3>💡 Légende des couleurs</h3>
-      <div className="legend-items">
-        {DISH_TYPE_ORDER.map(type => {
-          const config = getDishTypeConfig(type);
-          return (
-            <div key={type} className="legend-item">
-              <span 
-                className="legend-color" 
-                style={{ backgroundColor: config.color }}
-              ></span>
-              <span className="legend-label">{config.label}</span>
-            </div>
-          );
-        })}
-      </div>
+    <div style={{ 
+      marginTop: '1rem', 
+      padding: '0.75rem', 
+      background: '#f8f9fa', 
+      borderRadius: '8px',
+      fontSize: '0.9rem',
+      textAlign: 'center',
+      color: '#495057'
+    }}>
+      <span style={{ marginRight: '1rem' }}>🥗 Entrée</span>
+      <span style={{ marginRight: '1rem' }}>🍽️ Plat</span>
+      <span style={{ marginRight: '1rem' }}>🥔 Garniture</span>
+      <span style={{ marginRight: '1rem' }}>🥬 Légume</span>
+      <span style={{ marginRight: '1rem' }}>🍰 Dessert</span>
+      <span>✨ Autre</span>
     </div>
   );
 }
