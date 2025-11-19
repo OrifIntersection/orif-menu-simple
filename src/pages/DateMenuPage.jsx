@@ -58,7 +58,7 @@ export default function DateMenuPage() {
     month: 'long', 
     year: 'numeric' 
   });
-  const pageTitle = `Menu du ${dayName} ${dateFormatted}`;
+  const dayTitle = `Menu du ${dayName} ${dateFormatted}`;
 
   // DEBUG block
   let debugMenuData = null;
@@ -83,9 +83,12 @@ export default function DateMenuPage() {
   return (
     <main className="container">
       <PageLayout 
-        title={pageTitle}
+        title="Cafétéria ORIF"
         actions={<UserStatus />}
       >
+        <div className="table-header">
+          <h3 className="table-caption">{dayTitle}</h3>
+        </div>
         <div style={{ maxWidth: '400px', margin: '0 auto 20px' }}>
           <DatePicker />
         </div>

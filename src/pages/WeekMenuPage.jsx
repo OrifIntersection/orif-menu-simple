@@ -55,13 +55,19 @@ export default function WeekMenuPage() {
   // Générer le titre avec le numéro de semaine
   const weekStart = startOfISOWeek(new Date(currentYear, 0, 1));
   const weekDateStart = addDays(weekStart, (weekNum - 1) * 7);
-  const weekDateEnd = addDays(weekDateStart, 6);
-  const title = `Menu Semaine ${weekNum} (${format(weekDateStart, 'dd/MM/yyyy')} - ${format(weekDateEnd, 'dd/MM/yyyy')})`;
+  const weekDateEnd = addDays(weekDateStart, 4); // Vendredi au lieu de Dimanche
+  const weekTitle = `Menu Semaine ${weekNum} (${format(weekDateStart, 'dd/MM/yyyy')} - ${format(weekDateEnd, 'dd/MM/yyyy')})`;
+  
+  // Filtrer pour afficher uniquement Lundi-Vendredi
+  const filteredMenuData = menuData ? {
+    ...menuData,
+    days: menuData.days?.filter((day, index) => index < 5) || ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi']
+  } : null;
 
   return (
     <main className="container">
       <PageLayout 
-        title={title}
+        title="Cafétéria ORIF"
         actions={<UserStatus />}
       >
         <div style={{ maxWidth: '400px', margin: '0 auto 20px' }}>
@@ -69,8 +75,13 @@ export default function WeekMenuPage() {
         </div>
         {loading ? (
           <div>Chargement du menu...</div>
-        ) : menuData && menuData.data ? (
-          <MenuTable menu={menuData} />
+        ) : filteredMenuData && filteredMenuData.data ? (
+          <>
+            <div className="table-header">
+              <h3 className="table-caption">{weekTitle}</h3>
+            </div>
+            <MenuTable menu={filteredMenuData} />
+          </>
         ) : (
           <div style={{textAlign: 'center', color: '#d32f2f', fontWeight: 'bold', margin: '2rem 0'}}>
             Aucun menu disponible pour cette semaine.
