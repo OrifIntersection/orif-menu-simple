@@ -40,15 +40,7 @@ function HomePage() {
     const [menuData, setMenuData] = React.useState(null);
     const [loading, setLoading] = React.useState(true);
 
-    // Debug : affiche l'état de menuData
-    const debugInfo = (
-      <div style={{ background: '#fff3cd', color: '#856404', padding: '1rem', borderRadius: 8, marginBottom: '1rem', fontSize: '0.95rem' }}>
-        <strong>DEBUG</strong><br />
-        <div>menuData : <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', fontSize: '0.9rem', background: '#f8f9fa', padding: '0.5rem', borderRadius: 4 }}>{JSON.stringify(menuData, null, 2)}</pre></div>
-        <div>loading : {String(loading)}</div>
-      </div>
-    );
-  const currentYear = getCurrentYear();
+    const currentYear = getCurrentYear();
   const currentWeekNumber = getCurrentWeekNumber();
   // ...hooks déjà déclarés plus haut...
   React.useEffect(() => {
@@ -181,8 +173,6 @@ function HomePage() {
             Aucun menu disponible pour cette semaine.
           </div>
         )}
-        {/* DEBUG block en bas du tableau */}
-        {debugInfo}
         <Footer />
       </PageLayout>
     </main>
