@@ -29,9 +29,11 @@ export const isSupabaseConfigured = () => {
 // Helper pour obtenir l'URL de redirection selon l'environnement
 export const getRedirectUrl = (path = '/auth/callback') => {
   const isDev = import.meta.env.DEV
+  
+  // En production sur Replit, utilise le domaine Replit
   const baseUrl = isDev 
-    ? 'http://localhost:5174' 
-    : 'https://menu-cafet.vercel.app' // À ajuster selon votre domaine Vercel
+    ? 'http://localhost:5000' 
+    : window.location.origin
   
   return `${baseUrl}${path}`
 }
