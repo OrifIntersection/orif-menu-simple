@@ -21,13 +21,13 @@ args = "Start application"
 name = "Start application"
 author = "agent"
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run dev"
-waitForPort = 5000
-
 [workflows.workflow.metadata]
 outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev:replit"
+waitForPort = 5000
 
 [[ports]]
 localPort = 5000
@@ -44,3 +44,7 @@ externalPort = 3001
 [[ports]]
 localPort = 37713
 externalPort = 3000
+
+[[ports]]
+localPort = 40295
+externalPort = 3002

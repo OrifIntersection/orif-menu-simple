@@ -80,6 +80,7 @@ body {
   gap: 8px;
   flex-shrink: 0;
   flex-wrap: wrap;
+  margin-left: auto;
 }
 
 .toolbar-buttons {
