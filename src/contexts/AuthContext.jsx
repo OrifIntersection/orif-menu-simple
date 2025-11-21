@@ -1,6 +1,6 @@
 // Provider d'authentification intégré avec Supabase
 import React, { useState, useEffect } from 'react'
-import AuthContext from './auth-context.js'
+import AuthContext from './auth-context.jsx'
 import { authHelpers, isSupabaseConfigured } from '../lib/supabase'
 
 export const AuthProvider = ({ children }) => {
