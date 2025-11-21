@@ -64,6 +64,7 @@ function normalizeDishType(type) {
 export function normalizeMenu(menu, weekNumber) {
   if (!menu) return null;
   
+  // Déjà normalisé (localStorage format)
   if (menu.days && menu.data) {
     return {
       weekNumber: menu.week_number || weekNumber,
@@ -75,6 +76,65 @@ export function normalizeMenu(menu, weekNumber) {
     };
   }
   
+  // NOUVELLE STRUCTURE: Array de meals avec jointures
+  if (Array.isArray(menu) && menu.length > 0 && menu[0].meal_date) {
+    const days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+    const meals = ['Midi', 'Soir'];
+    const data = {};
+    
+    meals.forEach(meal => {
+      data[meal] = {};
+      days.forEach(day => {
+        data[meal][day] = '';
+      });
+    });
+    
+    menu.forEach(mealItem => {
+      // Valider la date
+      if (!mealItem.meal_date) return;
+      const date = new Date(mealItem.meal_date);
+      if (isNaN(date.getTime())) return;
+      
+      const dayIndex = (date.getDay() + 6) % 7;
+      const day = days[dayIndex];
+      if (!day || dayIndex < 0 || dayIndex > 6) return;
+      
+      // Normaliser le type de repas
+      const rawMealType = mealItem.meal_type;
+      const mealType = normalizeMealType(rawMealType);
+      if (!mealType) {
+        console.warn(`Type de repas inconnu ignoré: "${rawMealType}"`);
+        return;
+      }
+      
+      // Traiter les plats de ce meal
+      const dishes = mealItem.meals_dishes || [];
+      dishes.forEach(mealDish => {
+        const dish = mealDish.dishes;
+        if (!dish || !dish.name) return;
+        
+        const dishType = normalizeDishType(dish.dish_type || 'AUTRE');
+        const dishWithType = `${dishType}: ${dish.name}`;
+        
+        if (!data[mealType][day]) {
+          data[mealType][day] = dishWithType;
+        } else {
+          data[mealType][day] += ` / ${dishWithType}`;
+        }
+      });
+    });
+    
+    return {
+      weekNumber: weekNumber,
+      weekLabel: `Semaine ${weekNumber}`,
+      year: new Date().getFullYear(),
+      days,
+      meals,
+      data
+    };
+  }
+  
+  // ANCIENNE STRUCTURE: items array (meal_items)
   if (menu.items && Array.isArray(menu.items)) {
     const days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
     const meals = ['Midi', 'Soir'];

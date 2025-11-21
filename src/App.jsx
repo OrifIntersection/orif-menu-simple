@@ -75,9 +75,23 @@ function HomePage() {
       });
       const { supabase } = await import('./lib/supabase');
       const { data, error } = await supabase
-        .from('meal_items')
-        .select(`*, meal_types (id, code, label), dishes (id, name, description)`)
-        .in('date', weekDates);
+        .from('meals')
+        .select(`
+          id,
+          meal_date,
+          meal_type,
+          meals_dishes (
+            dish_id,
+            position,
+            dishes (
+              id,
+              name,
+              description,
+              dish_type
+            )
+          )
+        `)
+        .in('meal_date', weekDates);
       if (error) {
         setMenuData(null);
       } else {

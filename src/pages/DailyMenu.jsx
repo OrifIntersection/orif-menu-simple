@@ -17,19 +17,33 @@ export default function DailyMenu(props) {
   React.useEffect(() => {
     async function fetchMenu() {
       setLoading(true);
-      let items = [];
+      let mealsData = [];
       if (supabase) {
         const { data, error } = await supabase
-          .from("meal_items")
-          .select(`*, meal_types (id, code, label), dishes (id, name, description, dish_type)`)
-          .eq("date", date);
+          .from("meals")
+          .select(`
+            id,
+            meal_date,
+            meal_type,
+            meals_dishes (
+              dish_id,
+              position,
+              dishes (
+                id,
+                name,
+                description,
+                dish_type
+              )
+            )
+          `)
+          .eq("meal_date", date);
         if (!error && data && data.length > 0) {
-          items = data;
+          mealsData = data;
         }
       }
       
       // Fallback localStorage si rien dans Supabase
-      if (items.length === 0) {
+      if (mealsData.length === 0) {
         const allMenus = LocalMenuService.getAllMenus();
         const dateObj = new Date(date + 'T12:00:00');
         const weekNum = getISOWeek(dateObj);
@@ -50,7 +64,7 @@ export default function DailyMenu(props) {
         // IMPORTANT: Normaliser les données Supabase pour que les émojis s'affichent
         const dateObj = new Date(date + 'T12:00:00');
         const weekNum = getISOWeek(dateObj);
-        const normalized = normalizeMenu({ items }, weekNum);
+        const normalized = normalizeMenu(mealsData, weekNum);
         // Extraire uniquement le jour demandé
         const dayMenu = extractDayFromMenu(normalized, jourActuel);
         setMenuData(dayMenu);

@@ -21,21 +21,21 @@ export const useMenus = (initialYear = null, initialWeek = null) => {
       setLoading(true)
       setError(null)
       const { data, error } = await supabase
-        .from('meal_items')
-        .select('date')
-        .order('date', { ascending: false });
+        .from('meals')
+        .select('meal_date')
+        .order('meal_date', { ascending: false });
       if (error) throw error;
       // Regrouper par semaine/année
       const weeks = {};
       data.forEach(item => {
-        const d = new Date(item.date);
+        const d = new Date(item.meal_date);
         const year = d.getFullYear();
         const jan1 = new Date(year, 0, 1);
         const days = Math.floor((d - jan1) / (24 * 60 * 60 * 1000));
         const weekNum = Math.ceil((days + jan1.getDay() + 1) / 7);
         const key = `${year}-W${weekNum}`;
         if (!weeks[key]) weeks[key] = { year, weekNum, dates: [] };
-        weeks[key].dates.push(item.date);
+        weeks[key].dates.push(item.meal_date);
       });
       setMenus(Object.values(weeks));
     } catch (err) {
@@ -66,9 +66,23 @@ export const useMenus = (initialYear = null, initialWeek = null) => {
         return date.toISOString().slice(0, 10);
       });
       const { data, error } = await supabase
-        .from('meal_items')
-        .select(`*, meal_types (id, code, label), dishes (id, name, description)`)
-        .in('date', weekDates);
+        .from('meals')
+        .select(`
+          id,
+          meal_date,
+          meal_type,
+          meals_dishes (
+            dish_id,
+            position,
+            dishes (
+              id,
+              name,
+              description,
+              dish_type
+            )
+          )
+        `)
+        .in('meal_date', weekDates);
       if (error) throw error;
       setCurrentMenu(data || []);
       return data;
@@ -81,15 +95,23 @@ export const useMenus = (initialYear = null, initialWeek = null) => {
     }
   }
 
-  // Charger les données de référence (types de repas et catégories)
+  // Charger les données de référence (types de repas - ENUMs)
   const loadReferenceData = async () => {
     try {
-      const [mealTypesData, categoriesData] = await Promise.all([
-        MenuService.getMealTypes(),
-        MenuService.getCategories()
+      // Les types de repas sont maintenant des ENUMs (MIDI/SOIR)
+      setMealTypes([
+        { code: 'MIDI', label: 'Midi' },
+        { code: 'SOIR', label: 'Soir' }
       ])
-      setMealTypes(mealTypesData)
-      setCategories(categoriesData)
+      // Les catégories sont maintenant dish_type (ENUM dans dishes)
+      setCategories([
+        { code: 'ENTREE', label: 'Entrée', emoji: '🥗' },
+        { code: 'PLAT', label: 'Plat principal', emoji: '🍽️' },
+        { code: 'GARNITURE', label: 'Garniture', emoji: '🥔' },
+        { code: 'LEGUME', label: 'Légume', emoji: '🥬' },
+        { code: 'DESSERT', label: 'Dessert', emoji: '🍰' },
+        { code: 'AUTRE', label: 'Autre', emoji: '✨' }
+      ])
     } catch (err) {
       console.error('Erreur chargement données de référence:', err)
     }

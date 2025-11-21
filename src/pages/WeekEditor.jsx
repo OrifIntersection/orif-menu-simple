@@ -47,9 +47,23 @@ const WeekEditor = () => {
         try {
           const { supabase } = await import('../lib/supabase');
           const { data, error } = await supabase
-            .from('meal_items')
-            .select(`*, meal_types (id, code, label), dishes (id, name, description)`)
-            .eq('date', date);
+            .from('meals')
+            .select(`
+              id,
+              meal_date,
+              meal_type,
+              meals_dishes (
+                dish_id,
+                position,
+                dishes (
+                  id,
+                  name,
+                  description,
+                  dish_type
+                )
+              )
+            `)
+            .eq('meal_date', date);
           weekMenusData[i] = data || [];
         } catch (err) {
           console.warn(`Menu vide pour le jour ${i}:`, err.message);

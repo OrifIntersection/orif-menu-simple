@@ -39,14 +39,14 @@ export default function MenuDrawer() {
         }
 
         // SINON : Essayer Supabase
-        const { data, error } = await import("../lib/supabase").then(mod => mod.supabase.from("meal_items").select("date").order("date", { ascending: false }));
+        const { data, error } = await import("../lib/supabase").then(mod => mod.supabase.from("meals").select("meal_date").order("meal_date", { ascending: false }));
         if (error || !data) {
           setMenusData([]);
         } else {
           // Regrouper par semaine et année
           const weeks = {};
           data.forEach(item => {
-            const d = new Date(item.date);
+            const d = new Date(item.meal_date);
             const year = d.getFullYear();
             // ISO week
             const jan1 = new Date(year, 0, 1);
@@ -54,7 +54,7 @@ export default function MenuDrawer() {
             const weekNum = Math.ceil((days + jan1.getDay() + 1) / 7);
             const key = `${year}-W${weekNum}`;
             if (!weeks[key]) weeks[key] = { year, weekNum, dates: [] };
-            weeks[key].dates.push(item.date);
+            weeks[key].dates.push(item.meal_date);
           });
           setMenusData(Object.values(weeks).sort((a, b) => b.year !== a.year ? b.year - a.year : b.weekNum - a.weekNum));
         }

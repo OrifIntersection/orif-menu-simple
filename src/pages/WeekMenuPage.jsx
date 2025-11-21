@@ -40,14 +40,28 @@ export default function WeekMenuPage() {
       const weekDates = Array.from({ length: 7 }, (_, i) => format(addDays(weekStart, i), 'yyyy-MM-dd'));
       
       const { data, error } = await supabase
-        .from('meal_items')
-        .select(`*, meal_types (id, code, label), dishes (id, name, description)`)
-        .in('date', weekDates);
+        .from('meals')
+        .select(`
+          id,
+          meal_date,
+          meal_type,
+          meals_dishes (
+            dish_id,
+            position,
+            dishes (
+              id,
+              name,
+              description,
+              dish_type
+            )
+          )
+        `)
+        .in('meal_date', weekDates);
         
       if (error || !data || data.length === 0) {
         setMenuData(null);
       } else {
-        const normalized = normalizeMenu({ items: data }, weekNum);
+        const normalized = normalizeMenu(data, weekNum);
         setMenuData(normalized);
       }
       setLoading(false);
