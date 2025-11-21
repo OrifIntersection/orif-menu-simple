@@ -331,7 +331,7 @@ CREATE POLICY "meals_dishes_admin_write"
 -- Toute personne avec un email dans cette liste deviendra
 -- automatiquement ADMIN à sa première connexion.
 INSERT INTO public.admin_whitelist (email) VALUES
-  ('admin@orif.ch')
+  ('raphael.schwab@orif.ch')
 ON CONFLICT (email) DO NOTHING;
 
 -- Pour ajouter d'autres admins, ajoutez-les ici :
