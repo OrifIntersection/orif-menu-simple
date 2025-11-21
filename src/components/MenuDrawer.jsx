@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { getCurrentWeekNumber, getCurrentYear } from "../utils/dateUtils";
 import UserStatus from "./UserStatus";
-import { useAuth } from "../hooks/useAuth";
 import { startOfISOWeek, addWeeks } from 'date-fns';
 
 /**
@@ -14,7 +13,6 @@ export default function MenuDrawer() {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated } = useAuth();
   const currentYear = getCurrentYear();
   const currentWeekNumber = getCurrentWeekNumber();
 
