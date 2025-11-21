@@ -39,7 +39,11 @@ export default function MenuDrawer() {
         } 
 
         // SINON : Essayer Supabase
+<<<<<<< HEAD
         const { data, error } = await import("../lib/supabase").then(mod => mod.supabase.from("meals").select("meal_date").order("meal_date", { ascending: false }));
+=======
+        const { data, error } = await import("../lib/supabase").then(mod => mod.supabase.from("meal_items").select("date").order("date", { ascending: false }));
+>>>>>>> a114d219dd480109e87a00f11f1e4f5974e9388a
         if (error || !data) {
           setMenusData([]);
         } else {
