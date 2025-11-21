@@ -4,7 +4,7 @@ import MenuDrawer from './MenuDrawer';
 import HeaderPage from './HeaderPage';
 import Footer from './Footer';
 
-const AdminLayout = ({ children, title = 'Administration' }) => {
+const AdminLayout = ({ children }) => {
   return (
     <main className="container">
       {/* Header avec menu principal comme dans l'accueil */}

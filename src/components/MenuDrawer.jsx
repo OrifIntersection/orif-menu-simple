@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { getCurrentWeekNumber, getCurrentYear } from "../utils/dateUtils";
 import UserStatus from "./UserStatus";
 import { useAuth } from "../hooks/useAuth";
-import { startOfISOWeek, endOfISOWeek, addWeeks } from 'date-fns';
+import { startOfISOWeek, addWeeks } from 'date-fns';
 
 /**
  * MenuDrawer - Composant complètement autonome sans aucune prop
@@ -65,14 +65,6 @@ export default function MenuDrawer() {
     fetchMenus();
   }, [currentYear]);
 
-  // Déterminer le menu actuel selon la page
-  let currentMenuId = `week-${currentWeekNumber}`;
-  if (location.pathname.startsWith('/week/')) {
-    const weekNum = parseInt(location.pathname.split('/')[2]);
-    if (!isNaN(weekNum)) {
-      currentMenuId = `week-${weekNum}`;
-    }
-  }
 
   // Fonction pour basculer l'état du drawer (ouvert <-> fermé)
   const toggleDrawer = () => setIsOpen(!isOpen);
@@ -268,7 +260,6 @@ export default function MenuDrawer() {
                 const jan4 = new Date(menu.year, 0, 4); // 4 janvier est toujours dans la semaine ISO 1
                 const week1Start = startOfISOWeek(jan4);
                 const weekStart = addWeeks(week1Start, menu.weekNum - 1);
-                const weekEnd = endOfISOWeek(weekStart);
                 const fridayEnd = addWeeks(weekStart, 0);
                 fridayEnd.setDate(weekStart.getDate() + 4); // Vendredi
                 

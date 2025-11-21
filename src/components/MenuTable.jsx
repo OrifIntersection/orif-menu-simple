@@ -14,7 +14,7 @@ import ColorLegend from "./ColorLegend";
  */
 export default function MenuTable({ menu, showToggle, onToggle, toggleLabel }) {
   // Déstructuration des données du menu pour un accès plus facile
-  const { weekLabel, days, meals, items, data } = menu;
+  const { days, meals, items, data } = menu;
 
   return (
     <>

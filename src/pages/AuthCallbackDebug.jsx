@@ -6,8 +6,7 @@ import MenuCell from '../components/MenuCell';
 import ColorLegend from '../components/ColorLegend';
 import { LocalMenuService } from '../services/LocalMenuService';
 import { getCurrentWeekNumber, getCurrentYear } from '../utils/dateUtils';
-import { getISOWeek, getYear } from 'date-fns';
-import { filterWeekdays, extractDayFromMenu, normalizeMenu } from '../utils/menuNormalizer';
+import { filterWeekdays, extractDayFromMenu } from '../utils/menuNormalizer';
 
 const AuthCallbackDebug = () => {
   const navigate = useNavigate();

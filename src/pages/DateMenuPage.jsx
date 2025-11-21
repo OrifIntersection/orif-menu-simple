@@ -1,6 +1,6 @@
 // Page qui affiche le menu pour une date spécifique
 import { useParams, useNavigate } from 'react-router-dom';
-import { parseDate, formatDate, getDayName, isWeekday } from '../utils/dateUtils';
+import { parseDate, getDayName, isWeekday } from '../utils/dateUtils';
 import PageLayout from '../components/PageLayout';
 import UserStatus from '../components/UserStatus';
 import Footer from '../components/Footer';

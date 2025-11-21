@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase.js'
+import { MenuService } from '../services/MenuService'
 
 /**
  * Hook personnalisé pour gérer les menus avec Supabase

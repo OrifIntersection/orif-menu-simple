@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MenuService } from '../services/MenuService';
 import AdminLayout from '../components/AdminLayout';
-import { getWeekDates, formatDate, getCurrentWeekNumber } from '../utils/dateUtils';
+import { getWeekDates, formatDate } from '../utils/dateUtils';
 
 const WeekEditor = () => {
   const { weekNumber } = useParams();
