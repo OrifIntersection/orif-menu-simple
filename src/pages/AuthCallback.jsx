@@ -22,31 +22,55 @@ const AuthCallback = () => {
           return
         }
 
-        // Obtenir la session depuis l'URL
-        const { data, error } = await supabase.auth.getSession()
+        console.log('📧 Traitement du Magic Link...')
         
-        if (error) {
-          throw error
-        }
+        // Vérifier si on a un hash dans l'URL (token du magic link)
+        const hashParams = new URLSearchParams(window.location.hash.substring(1))
+        const accessToken = hashParams.get('access_token')
+        const refreshToken = hashParams.get('refresh_token')
+        
+        console.log('🔍 Token détecté:', accessToken ? 'Oui' : 'Non')
 
-        if (data.session) {
-          // Succès - utilisateur connecté
-          setStatus('success')
-          setMessage(`Connexion réussie ! Bienvenue ${data.session.user.email}`)
+        if (accessToken && refreshToken) {
+          // Cas 1 : Token présent dans l'URL - Supabase va le traiter automatiquement
+          console.log('✅ Token trouvé, attente de la session...')
           
-          // Redirection vers la page admin après 2 secondes
-          setTimeout(() => {
-            navigate('/admin')
-          }, 2000)
+          // Attendre un court instant pour que Supabase traite le token
+          await new Promise(resolve => setTimeout(resolve, 500))
+          
+          // Récupérer la session après traitement
+          const { data, error } = await supabase.auth.getSession()
+          
+          if (error) throw error
+          
+          if (data.session) {
+            setStatus('success')
+            setMessage(`Connexion réussie ! Bienvenue ${data.session.user.email}`)
+            setTimeout(() => navigate('/admin'), 2000)
+          } else {
+            throw new Error('Session non créée après traitement du token')
+          }
         } else {
-          // Pas de session trouvée
-          setStatus('error')
-          setMessage('Aucune session trouvée. Le lien a peut-être expiré.')
-          setTimeout(() => navigate('/'), 3000)
+          // Cas 2 : Pas de token dans l'URL - vérifier s'il y a une session existante
+          console.log('ℹ️ Pas de token, vérification de la session existante...')
+          
+          const { data, error } = await supabase.auth.getSession()
+          
+          if (error) throw error
+          
+          if (data.session) {
+            setStatus('success')
+            setMessage(`Déjà connecté ! Bienvenue ${data.session.user.email}`)
+            setTimeout(() => navigate('/admin'), 2000)
+          } else {
+            setStatus('error')
+            setMessage('Lien invalide ou expiré. Veuillez redemander un nouveau lien.')
+            setTimeout(() => navigate('/'), 3000)
+          }
         }
 
       } catch (error) {
-        console.error('Erreur lors du callback auth:', error)
+        console.error('❌ Erreur lors du callback auth:', error)
         setStatus('error')
         setMessage(`Erreur d'authentification: ${error.message}`)
         setTimeout(() => navigate('/'), 3000)
