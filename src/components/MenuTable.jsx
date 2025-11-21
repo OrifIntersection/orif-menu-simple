@@ -13,8 +13,13 @@ import ColorLegend from "./ColorLegend";
  * @param {String} toggleLabel - Texte à afficher sur le bouton
  */
 export default function MenuTable({ menu, showToggle, onToggle, toggleLabel }) {
+  // Vérification défensive
+  if (!menu) {
+    return <div style={{ textAlign: 'center', padding: '2rem', color: '#999' }}>Aucun menu disponible</div>;
+  }
+
   // Déstructuration des données du menu pour un accès plus facile
-  const { days, meals, items, data } = menu;
+  const { days = [], meals = ['Midi', 'Soir'], items, data } = menu;
 
   return (
     <>
