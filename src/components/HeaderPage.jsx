@@ -1,12 +1,9 @@
 // Composant d'en-tête simple pour les pages de l'application
-// Note: weekLabel n'est plus utilisé mais conservé pour compatibilité
 
 /**
  * HeaderPage - En-tête de page avec logo et titre
- * 
- * @param {String} weekLabel - Label de la semaine (actuellement non utilisé)
  */
-export default function HeaderPage({ weekLabel }) {
+export default function HeaderPage() {
   return (
     // En-tête HTML avec barre de navigation supérieure
     <header className="topbar">

@@ -21,7 +21,7 @@ const AdminLayout = ({ children, title = 'Administration' }) => {
       </header>
 
       {/* Sous-header spécifique à l'administration */}
-      <HeaderPage weekLabel={title} />
+      <HeaderPage />
       
       <div style={{ padding: '1rem' }}>
         {children}
