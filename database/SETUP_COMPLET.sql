@@ -327,16 +327,23 @@ CREATE POLICY "meals_dishes_admin_write"
 -- ÉTAPE 10 : DONNÉES INITIALES
 -- =========================================
 
--- ⚠️ IMPORTANT : Remplacez par vos vrais emails !
+-- PARTIE A : Whitelist pour les FUTURS admins
 -- Toute personne avec un email dans cette liste deviendra
 -- automatiquement ADMIN à sa première connexion.
 INSERT INTO public.admin_whitelist (email) VALUES
-  ('raphael.schwab@orif.ch')
+  ('raphael.schmutz@orif.ch'),
+  ('aayyyyeesh@gmail.com')
 ON CONFLICT (email) DO NOTHING;
 
--- Pour ajouter d'autres admins, ajoutez-les ici :
--- ('autre-admin@orif.ch'),
--- ('votre-email@exemple.com')
+-- PARTIE B : Profils pour les comptes EXISTANTS
+-- Pour les comptes qui existent déjà, on crée directement le profil admin
+INSERT INTO public.profiles (user_id, full_name, role)
+VALUES 
+  ('1ebb59cc-e034-4f09-b8a5-68e07015d11d', 'Admin ORIF', 'admin'),
+  ('98057cf8-066c-4d97-b363-2db5aae00364', 'Raphael Schmutz', 'admin')
+ON CONFLICT (user_id) DO UPDATE
+SET role = 'admin',
+    full_name = EXCLUDED.full_name;
 
 -- Exemples de plats pour tester (optionnel)
 INSERT INTO public.dishes (name, dish_type, is_active) VALUES
