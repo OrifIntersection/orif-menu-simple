@@ -44,13 +44,15 @@ export default function UserStatus() {
 
     if (isAuthenticated) {
       const userInfo = getUserInfo();
+      const isAdmin = userInfo.role === 'admin';
+      
       return {
-        icon: '👨‍💼',
-        label: 'Administrateur',
+        icon: isAdmin ? '👨‍💼' : '👤',
+        label: isAdmin ? 'Administrateur' : 'Utilisateur',
         subtitle: userInfo.email || 'Connecté',
-        bgColor: '#e8f5e8',
-        borderColor: '#c3e6c3',
-        textColor: '#2d5a2d'
+        bgColor: isAdmin ? '#e8f5e8' : '#fff3cd',
+        borderColor: isAdmin ? '#c3e6c3' : '#ffc107',
+        textColor: isAdmin ? '#2d5a2d' : '#856404'
       };
     } else {
       return {
