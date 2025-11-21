@@ -4,18 +4,14 @@ import AuthContext from './auth-context.jsx'
 import { authHelpers, isSupabaseConfigured } from '../lib/supabase'
 
 export const AuthProvider = ({ children }) => {
-  // 🎭 MODE TEST - Connecté en tant qu'admin
-  const [isAuthenticated, setIsAuthenticated] = useState(true)
-  const [user, setUser] = useState({ email: 'admin@demo.local' })
-  const [userRole, setUserRole] = useState('admin')
-  const [loading, setLoading] = useState(false)
-  const [profile, setProfile] = useState({ user_id: 'demo-123', full_name: 'Admin Demo', role: 'admin' })
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [user, setUser] = useState(null)
+  const [userRole, setUserRole] = useState('guest')
+  const [loading, setLoading] = useState(true)
+  const [profile, setProfile] = useState(null)
 
   // Initialisation de l'auth au montage
   useEffect(() => {
-    // 🎭 useEffect désactivé en mode test
-    return
-    
     const initializeAuth = async () => {
       try {
         // Vérifier si Supabase est configuré
