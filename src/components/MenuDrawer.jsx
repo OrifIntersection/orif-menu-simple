@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { getCurrentWeekNumber, getCurrentYear } from "../utils/dateUtils";
 import UserStatus from "./UserStatus";
+import { useAuth } from "../hooks/useAuth";
 import { startOfISOWeek, addWeeks } from 'date-fns';
 
 /**
@@ -13,6 +14,7 @@ export default function MenuDrawer() {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { isAuthenticated, userRole } = useAuth();
   const currentYear = getCurrentYear();
   const currentWeekNumber = getCurrentWeekNumber();
 
@@ -92,12 +94,12 @@ export default function MenuDrawer() {
       onClick: () => navigate('/'),
       hidden: location.pathname === '/'
     },
-    // Administration - toujours visible pour développement
+    // Administration - visible seulement pour les utilisateurs connectés
     {
       icon: "⚙️",
       label: "Administration",
       onClick: () => navigate('/admin'),
-      hidden: false
+      hidden: !isAuthenticated || userRole === 'guest'
     }
   ].filter(action => !action.hidden);
 
@@ -214,26 +216,30 @@ export default function MenuDrawer() {
               <span className="action-label">Menu de la semaine</span>
             </button>
             
-            {/* Pages d'administration - toujours visibles */}
-            <div style={{ marginTop: '12px', marginBottom: '8px', paddingLeft: '8px', fontSize: '0.85em', fontWeight: '600', color: '#9ca3af' }}>
-              Administration
-            </div>
-            <button className="drawer-action-item" onClick={() => handleNavAction(() => navigate('/admin'))}>
-              <span className="action-icon">⚙️</span>
-              <span className="action-label">Tableau de bord</span>
-            </button>
-            <button className="drawer-action-item" onClick={() => handleNavAction(() => navigate(`/admin/date/${new Date().toISOString().split('T')[0]}`))}>
-              <span className="action-icon">✏️</span>
-              <span className="action-label">Éditer le jour</span>
-            </button>
-            <button className="drawer-action-item" onClick={() => handleNavAction(() => navigate(`/admin/week/${currentWeekNumber}`))}>
-              <span className="action-icon">📝</span>
-              <span className="action-label">Éditer la semaine</span>
-            </button>
-            <button className="drawer-action-item" onClick={() => handleNavAction(() => navigate('/auth/callback'))}>
-              <span className="action-icon">🔧</span>
-              <span className="action-label">Page de debug</span>
-            </button>
+            {/* Pages d'administration - visible seulement pour utilisateurs connectés */}
+            {isAuthenticated && userRole !== 'guest' && (
+              <>
+                <div style={{ marginTop: '12px', marginBottom: '8px', paddingLeft: '8px', fontSize: '0.85em', fontWeight: '600', color: '#9ca3af' }}>
+                  Administration
+                </div>
+                <button className="drawer-action-item" onClick={() => handleNavAction(() => navigate('/admin'))}>
+                  <span className="action-icon">⚙️</span>
+                  <span className="action-label">Tableau de bord</span>
+                </button>
+                <button className="drawer-action-item" onClick={() => handleNavAction(() => navigate(`/admin/date/${new Date().toISOString().split('T')[0]}`))}>
+                  <span className="action-icon">✏️</span>
+                  <span className="action-label">Éditer le jour</span>
+                </button>
+                <button className="drawer-action-item" onClick={() => handleNavAction(() => navigate(`/admin/week/${currentWeekNumber}`))}>
+                  <span className="action-icon">📝</span>
+                  <span className="action-label">Éditer la semaine</span>
+                </button>
+                <button className="drawer-action-item" onClick={() => handleNavAction(() => navigate('/auth/callback'))}>
+                  <span className="action-icon">🔧</span>
+                  <span className="action-label">Page de debug</span>
+                </button>
+              </>
+            )}
           </div>
 
           {/* Section de la liste des menus disponibles */}
@@ -277,16 +283,13 @@ export default function MenuDrawer() {
                       <div style={{ marginTop: '12px', marginBottom: '8px', paddingLeft: '8px', fontSize: '0.85em', fontWeight: '600', color: '#9ca3af' }}>
                         📅 Semaines passées
                       </div>
-                      {passedMenus.map((menu) => (
+                      {passedMenus.map((menu, idx) => (
                         <button
-                          key={menu.id}
+                          key={`menu-${menu.year}-${menu.weekNum}-${idx}`}
                           className="drawer-menu-item"
-                          onClick={() => handleMenuClick(menu.id)}
+                          onClick={() => handleMenuClick(`week-${menu.weekNum}`)}
                         >
-                          <div className="menu-item-label">{menu.weekLabel}</div>
-                          <div className="menu-item-meta">
-                            {Array.isArray(menu.days) ? `${menu.days.length} jours • ${Array.isArray(menu.meals) ? menu.meals.length : 0} repas` : 'Menu incomplet'}
-                          </div>
+                          <div className="menu-item-label">Semaine {menu.weekNum} ({menu.year})</div>
                         </button>
                       ))}
                     </>
@@ -298,16 +301,13 @@ export default function MenuDrawer() {
                       <div style={{ marginTop: '12px', marginBottom: '8px', paddingLeft: '8px', fontSize: '0.85em', fontWeight: '600', color: '#10b981' }}>
                         ⭐ Semaine actuelle
                       </div>
-                      {currentMenus.map((menu) => (
+                      {currentMenus.map((menu, idx) => (
                         <button
-                          key={menu.id}
+                          key={`menu-${menu.year}-${menu.weekNum}-${idx}`}
                           className="drawer-menu-item active"
-                          onClick={() => handleMenuClick(menu.id)}
+                          onClick={() => handleMenuClick(`week-${menu.weekNum}`)}
                         >
-                          <div className="menu-item-label">{menu.weekLabel}</div>
-                          <div className="menu-item-meta">
-                            {Array.isArray(menu.days) ? `${menu.days.length} jours • ${Array.isArray(menu.meals) ? menu.meals.length : 0} repas` : 'Menu incomplet'}
-                          </div>
+                          <div className="menu-item-label">Semaine {menu.weekNum} ({menu.year})</div>
                         </button>
                       ))}
                     </>
@@ -319,16 +319,13 @@ export default function MenuDrawer() {
                       <div style={{ marginTop: '12px', marginBottom: '8px', paddingLeft: '8px', fontSize: '0.85em', fontWeight: '600', color: '#3b82f6' }}>
                         🔮 Semaines futures
                       </div>
-                      {futureMenus.map((menu) => (
+                      {futureMenus.map((menu, idx) => (
                         <button
-                          key={menu.id}
+                          key={`menu-${menu.year}-${menu.weekNum}-${idx}`}
                           className="drawer-menu-item"
-                          onClick={() => handleMenuClick(menu.id)}
+                          onClick={() => handleMenuClick(`week-${menu.weekNum}`)}
                         >
-                          <div className="menu-item-label">{menu.weekLabel}</div>
-                          <div className="menu-item-meta">
-                            {Array.isArray(menu.days) ? `${menu.days.length} jours • ${Array.isArray(menu.meals) ? menu.meals.length : 0} repas` : 'Menu incomplet'}
-                          </div>
+                          <div className="menu-item-label">Semaine {menu.weekNum} ({menu.year})</div>
                         </button>
                       ))}
                     </>
