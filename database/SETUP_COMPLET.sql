@@ -332,7 +332,7 @@ CREATE POLICY "meals_dishes_admin_write"
 -- automatiquement ADMIN à sa première connexion.
 INSERT INTO public.admin_whitelist (email) VALUES
   ('raphael.schmutz@orif.ch'),
-  ('aayyyyeesh@gmail.com')
+  ('aayyyeesh@gmail.com')
 ON CONFLICT (email) DO NOTHING;
 
 -- PARTIE B : Profils pour les comptes EXISTANTS
