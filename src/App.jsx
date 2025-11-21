@@ -9,6 +9,7 @@ import MenuTable from "./components/MenuTable";
 import Footer from "./components/Footer";
 import UserStatus from "./components/UserStatus";
 import { AuthProvider } from "./contexts/AuthContext";
+import { normalizeMenu, filterWeekdays } from "./utils/menuNormalizer";
 import WeekMenuPage from "./pages/WeekMenuPage";
 import DateMenuPage from "./pages/DateMenuPage";
 import AdminPage from "./pages/AdminPage";
@@ -20,6 +21,8 @@ import AuthCallbackDebug from './pages/AuthCallbackDebug';
 import WeekMenuPage2 from './pages/WeekMenuPage2';
 import ImportLocalMenuPage from './pages/ImportLocalMenuPage';
 import ImportMenuPage from './pages/ImportMenuPage';
+import StyleDemo from './pages/StyleDemo';
+import EmojiDemo from './pages/EmojiDemo';
 import "./styles.css";
 
 /**
@@ -37,15 +40,7 @@ function HomePage() {
     const [menuData, setMenuData] = React.useState(null);
     const [loading, setLoading] = React.useState(true);
 
-    // Debug : affiche l'état de menuData
-    const debugInfo = (
-      <div style={{ background: '#fff3cd', color: '#856404', padding: '1rem', borderRadius: 8, marginBottom: '1rem', fontSize: '0.95rem' }}>
-        <strong>DEBUG</strong><br />
-        <div>menuData : <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', fontSize: '0.9rem', background: '#f8f9fa', padding: '0.5rem', borderRadius: 4 }}>{JSON.stringify(menuData, null, 2)}</pre></div>
-        <div>loading : {String(loading)}</div>
-      </div>
-    );
-  const currentYear = getCurrentYear();
+    const currentYear = getCurrentYear();
   const currentWeekNumber = getCurrentWeekNumber();
   // ...hooks déjà déclarés plus haut...
   React.useEffect(() => {
@@ -53,11 +48,13 @@ function HomePage() {
     // Vérifie d'abord le localStorage
     const localMenu = LocalMenuService.getMenuByWeek(currentYear, currentWeekNumber);
     if (localMenu && localMenu.days && localMenu.days.length > 0) {
-      setMenuData({
+      // Filtrer pour afficher uniquement Lundi-Vendredi
+      const filtered = filterWeekdays({
         meals: localMenu.meals,
         days: localMenu.days,
         data: localMenu.data
       });
+      setMenuData(filtered);
       setLoading(false);
       return;
     }
@@ -84,12 +81,11 @@ function HomePage() {
       if (error) {
         setMenuData(null);
       } else {
-        setMenuData({
-          meals: ["Midi", "Soir"],
-          days: weekDates,
-          items: data || [],
-          data: {}
-        });
+        // IMPORTANT: Normaliser les données Supabase AVANT de filtrer
+        const normalized = normalizeMenu({ items: data || [] }, currentWeekNumber);
+        // Filtrer pour afficher uniquement Lundi-Vendredi
+        const filtered = filterWeekdays(normalized);
+        setMenuData(filtered);
       }
       setLoading(false);
     })();
@@ -116,20 +112,6 @@ function HomePage() {
         title="Cafétéria ORIF"
         actions={<UserStatus />}
       >
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem', gap: '1rem' }}>
-          <button
-            style={{ padding: '0.7rem 1.5rem', background: '#007bff', color: 'white', border: 'none', borderRadius: 8, fontWeight: 'bold', cursor: 'pointer' }}
-            onClick={() => navigate(`/week/${currentWeekNumber}`)}
-          >
-            Menu de la semaine
-          </button>
-          <button
-            style={{ padding: '0.7rem 1.5rem', background: '#28a745', color: 'white', border: 'none', borderRadius: 8, fontWeight: 'bold', cursor: 'pointer' }}
-            onClick={() => navigate('/import-local')}
-          >
-            Importation locale (robuste)
-          </button>
-        </div>
         {/* Bouton déroulant pour choisir une autre semaine */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '1rem' }}>
           <select
@@ -171,8 +153,6 @@ function HomePage() {
             Aucun menu disponible pour cette semaine.
           </div>
         )}
-        {/* DEBUG block en bas du tableau */}
-        {debugInfo}
         <Footer />
       </PageLayout>
     </main>
@@ -202,6 +182,10 @@ export default function App() {
           <Route path="/week2/:weekNumber" element={<WeekMenuPage2 />} />
           {/* Route pour l'importation locale robuste */}
           <Route path="/import-local" element={<ImportLocalMenuPage />} />
+          {/* Route pour la démonstration des styles d'affichage */}
+          <Route path="/styles" element={<StyleDemo />} />
+          {/* Route pour la démonstration des émojis */}
+          <Route path="/emoji-demo" element={<EmojiDemo />} />
           {/* Route pour afficher le menu d'une date spécifique */}
           <Route path="/date/:date" element={<DateMenuPage />} />
           {/* Route pour la page d'administration */}

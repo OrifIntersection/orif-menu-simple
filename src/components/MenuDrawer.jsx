@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { getCurrentWeekNumber, getCurrentYear } from "../utils/dateUtils";
 import UserStatus from "./UserStatus";
 import { useAuth } from "../hooks/useAuth";
+import { startOfISOWeek, endOfISOWeek, addWeeks } from 'date-fns';
 
 /**
  * MenuDrawer - Composant complètement autonome sans aucune prop
@@ -17,12 +18,27 @@ export default function MenuDrawer() {
   const currentYear = getCurrentYear();
   const currentWeekNumber = getCurrentWeekNumber();
 
-  // Récupération des semaines disponibles depuis meal_items
+  // Récupération des semaines disponibles depuis localStorage
   const [menusData, setMenusData] = useState([]);
   useEffect(() => {
     async function fetchMenus() {
       try {
-        // Récupérer toutes les dates présentes dans meal_items
+        // D'ABORD : Vérifier localStorage
+        const localMenus = JSON.parse(localStorage.getItem('menus_local') || '[]');
+        if (localMenus.length > 0) {
+          const formattedMenus = localMenus.map(menu => ({
+            id: `week-${menu.week_number}`,
+            year: menu.year,
+            weekNum: menu.week_number,
+            weekLabel: `Semaine ${menu.week_number}`,
+            days: menu.days || [],
+            meals: menu.meals || []
+          }));
+          setMenusData(formattedMenus.sort((a, b) => b.year !== a.year ? b.year - a.year : b.weekNum - a.weekNum));
+          return;
+        }
+
+        // SINON : Essayer Supabase
         const { data, error } = await import("../lib/supabase").then(mod => mod.supabase.from("meal_items").select("date").order("date", { ascending: false }));
         if (error || !data) {
           setMenusData([]);
@@ -226,17 +242,12 @@ export default function MenuDrawer() {
                   <span className="action-icon">📝</span>
                   <span className="action-label">Éditer la semaine</span>
                 </button>
+                <button className="drawer-action-item" onClick={() => handleNavAction(() => navigate('/auth/callback'))}>
+                  <span className="action-icon">🔧</span>
+                  <span className="action-label">Page de debug</span>
+                </button>
               </>
             )}
-            
-            {/* Pages de debug */}
-            <div style={{ marginTop: '12px', marginBottom: '8px', paddingLeft: '8px', fontSize: '0.85em', fontWeight: '600', color: '#9ca3af' }}>
-              Debug
-            </div>
-            <button className="drawer-action-item" onClick={() => handleNavAction(() => navigate('/auth/callback'))}>
-              <span className="action-icon">🔄</span>
-              <span className="action-label">Test Auth Callback</span>
-            </button>
           </div>
 
           {/* Section de la liste des menus disponibles */}
@@ -244,11 +255,34 @@ export default function MenuDrawer() {
             <h4 className="drawer-section-title">Menus des semaines</h4>
             {/* Organiser les menus en catégories: passées, actuelle, futures */}
             {(() => {
-              // Trouver l'index du menu actuel
-              const currentIndex = menusData.findIndex(m => m.id === currentMenuId);
-              const passedMenus = currentIndex > 0 ? menusData.slice(0, currentIndex) : [];
-              const currentMenu = menusData.find(m => m.id === currentMenuId);
-              const futureMenus = currentIndex >= 0 ? menusData.slice(currentIndex + 1) : menusData;
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              
+              // Catégoriser les menus selon leurs dates
+              const passedMenus = [];
+              const currentMenus = [];
+              const futureMenus = [];
+              
+              menusData.forEach((menu) => {
+                // Calculer le début et la fin de la semaine ISO
+                const jan4 = new Date(menu.year, 0, 4); // 4 janvier est toujours dans la semaine ISO 1
+                const week1Start = startOfISOWeek(jan4);
+                const weekStart = addWeeks(week1Start, menu.weekNum - 1);
+                const weekEnd = endOfISOWeek(weekStart);
+                const fridayEnd = addWeeks(weekStart, 0);
+                fridayEnd.setDate(weekStart.getDate() + 4); // Vendredi
+                
+                if (fridayEnd < today) {
+                  // Toutes les dates de travail sont passées
+                  passedMenus.push(menu);
+                } else if (weekStart <= today && today <= fridayEnd) {
+                  // La semaine contient aujourd'hui
+                  currentMenus.push(menu);
+                } else {
+                  // Toutes les dates sont futures
+                  futureMenus.push(menu);
+                }
+              });
 
               return (
                 <>
@@ -274,21 +308,23 @@ export default function MenuDrawer() {
                   )}
 
                   {/* Semaine actuelle */}
-                  {currentMenu && (
+                  {currentMenus.length > 0 && (
                     <>
                       <div style={{ marginTop: '12px', marginBottom: '8px', paddingLeft: '8px', fontSize: '0.85em', fontWeight: '600', color: '#10b981' }}>
                         ⭐ Semaine actuelle
                       </div>
-                      <button
-                        key={currentMenu.id}
-                        className="drawer-menu-item active"
-                        onClick={() => handleMenuClick(currentMenu.id)}
-                      >
-                        <div className="menu-item-label">{currentMenu.weekLabel}</div>
-                        <div className="menu-item-meta">
-                          {Array.isArray(currentMenu.days) ? `${currentMenu.days.length} jours • ${Array.isArray(currentMenu.meals) ? currentMenu.meals.length : 0} repas` : 'Menu incomplet'}
-                        </div>
-                      </button>
+                      {currentMenus.map((menu) => (
+                        <button
+                          key={menu.id}
+                          className="drawer-menu-item active"
+                          onClick={() => handleMenuClick(menu.id)}
+                        >
+                          <div className="menu-item-label">{menu.weekLabel}</div>
+                          <div className="menu-item-meta">
+                            {Array.isArray(menu.days) ? `${menu.days.length} jours • ${Array.isArray(menu.meals) ? menu.meals.length : 0} repas` : 'Menu incomplet'}
+                          </div>
+                        </button>
+                      ))}
                     </>
                   )}
 

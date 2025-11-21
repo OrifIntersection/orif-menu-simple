@@ -1,19 +1,17 @@
-// Page qui affiche uniquement le menu du jour en cours
-// ...existing code...
 import React from "react";
-import PageLayout from "../components/PageLayout";
-import HeaderTable from "../components/HeaderTable";
-import SiderTable from "../components/SiderTable";
+import MenuCell from "../components/MenuCell";
+import ColorLegend from "../components/ColorLegend";
 import { supabase } from "../lib/supabase";
 import { LocalMenuService } from "../services/LocalMenuService";
-import { format } from "date-fns";
+import { format, getISOWeek, getYear } from "date-fns";
+import { normalizeMenu, extractDayFromMenu } from "../utils/menuNormalizer";
 
 export default function DailyMenu(props) {
-  const [menuItems, setMenuItems] = React.useState([]);
+  const [menuData, setMenuData] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
   const date = props.date || format(new Date(), "yyyy-MM-dd");
   const jours = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
-  const jourObj = new Date(date);
+  const jourObj = new Date(date + 'T12:00:00');
   const jourActuel = jours[jourObj.getDay()];
 
   React.useEffect(() => {
@@ -23,72 +21,99 @@ export default function DailyMenu(props) {
       if (supabase) {
         const { data, error } = await supabase
           .from("meal_items")
-          .select(`*, meal_types (id, code, label), dishes (id, name, description)`)
+          .select(`*, meal_types (id, code, label), dishes (id, name, description, dish_type)`)
           .eq("date", date);
         if (!error && data && data.length > 0) {
           items = data;
         }
       }
+      
       // Fallback localStorage si rien dans Supabase
       if (items.length === 0) {
-        // Trouve la semaine correspondant à la date
         const allMenus = LocalMenuService.getAllMenus();
-        const menuSemaine = allMenus.find(menu => menu.days && menu.days.includes(date));
-        if (menuSemaine && Array.isArray(menuSemaine.items)) {
-          items = menuSemaine.items.filter(item => item.date === date);
+        const dateObj = new Date(date + 'T12:00:00');
+        const weekNum = getISOWeek(dateObj);
+        const year = getYear(dateObj);
+        
+        const menuSemaine = allMenus.find(menu => 
+          Number(menu.year) === year && Number(menu.week_number) === weekNum
+        );
+        
+        if (menuSemaine && menuSemaine.data) {
+          // Extraire uniquement le jour demandé du menu hebdomadaire
+          const dayMenu = extractDayFromMenu(menuSemaine, jourActuel);
+          setMenuData(dayMenu);
+        } else {
+          setMenuData(null);
         }
+      } else {
+        // IMPORTANT: Normaliser les données Supabase pour que les émojis s'affichent
+        const dateObj = new Date(date + 'T12:00:00');
+        const weekNum = getISOWeek(dateObj);
+        const normalized = normalizeMenu({ items }, weekNum);
+        // Extraire uniquement le jour demandé
+        const dayMenu = extractDayFromMenu(normalized, jourActuel);
+        setMenuData(dayMenu);
       }
-      setMenuItems(items);
       setLoading(false);
     }
     fetchMenu();
-  }, [date]);
+  }, [date, jourActuel]);
 
-  // Regrouper par type de repas (midi/soir)
-  const mealsGrouped = React.useMemo(() => {
-    const grouped = {};
-    menuItems.forEach(item => {
-      const type = item.meal_types?.label || item.meal_type_id;
-      if (!grouped[type]) grouped[type] = [];
-      grouped[type].push(item);
-    });
-    return grouped;
-  }, [menuItems]);
+  const hasMenu = menuData && menuData.data && Object.keys(menuData.data).length > 0;
+  const meals = menuData?.meals || ['Midi', 'Soir'];
 
   return (
-    <main className="container">
-      <PageLayout title={`Cafétéria ORIF`}>
-        <div className="daily-menu-view">
-          <div className="table-header">
-            <h3 className="table-caption">Menu du {jourActuel} ({date})</h3>
+    <>
+      {loading ? (
+        <div>Chargement du menu...</div>
+      ) : hasMenu ? (
+        <>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th className="corner-cell"></th>
+                  <th>{jourActuel}</th>
+                  <th className="corner-cell"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {meals.map((meal) => {
+                  const cellClass = `cell-jour-${jourActuel.toLowerCase()} cell-repas-${meal.toLowerCase()}`;
+                  const value = (menuData.data[meal] && menuData.data[meal][jourActuel]) || "";
+                  const lines = Array.isArray(value) ? value : [value];
+                  
+                  return (
+                    <tr key={meal}>
+                      <th className="meal-label">{meal}</th>
+                      <MenuCell lines={lines} className={cellClass} />
+                      <th className="meal-label meal-label-right">{meal}</th>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <th className="corner-cell"></th>
+                  <th>{jourActuel}</th>
+                  <th className="corner-cell"></th>
+                </tr>
+              </tfoot>
+            </table>
           </div>
-          {loading ? (
-            <div>Chargement du menu...</div>
-          ) : Object.keys(mealsGrouped).length > 0 ? (
-            Object.entries(mealsGrouped).map(([type, items]) => (
-              <div key={type} style={{ marginBottom: "2rem" }}>
-                <h4>{type}</h4>
-                <table>
-                  <thead>
-                    <HeaderTable days={[jourActuel]} />
-                  </thead>
-                  <tbody>
-                    <SiderTable meal={type} days={[jourActuel]} items={items} data={{}} />
-                  </tbody>
-                </table>
-              </div>
-            ))
-          ) : (
-            <div style={{ color: '#d32f2f', fontWeight: 'bold', margin: '2rem 0', textAlign: 'center' }}>
-              Aucun menu disponible pour ce jour.<br />
-              <span style={{ fontWeight: 'normal', color: '#333', fontSize: '1rem' }}>
-                Vous pouvez importer un menu pour cette date via la page d'importation.<br />
-                <a href="/import-local" style={{ color: '#007bff', textDecoration: 'underline' }}>Importer un menu</a>
-              </span>
-            </div>
-          )}
+          {/* Légende des émojis */}
+          <ColorLegend />
+        </>
+      ) : (
+        <div style={{ color: '#d32f2f', fontWeight: 'bold', margin: '2rem 0', textAlign: 'center' }}>
+          Aucun menu disponible pour ce jour.<br />
+          <span style={{ fontWeight: 'normal', color: '#333', fontSize: '1rem' }}>
+            Vous pouvez importer un menu pour cette date via la page d'importation.<br />
+            <a href="/import-local" style={{ color: '#007bff', textDecoration: 'underline' }}>Importer un menu</a>
+          </span>
         </div>
-      </PageLayout>
-    </main>
+      )}
+    </>
   );
 }

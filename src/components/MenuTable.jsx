@@ -2,6 +2,7 @@
 // Import des sous-composants pour l'en-tête et les lignes de repas
 import HeaderTable from "./HeaderTable";
 import SiderTable from "./SiderTable";
+import ColorLegend from "./ColorLegend";
 
 /**
  * MenuTable - Affiche le tableau hebdomadaire du menu de la cafétéria
@@ -17,21 +18,14 @@ export default function MenuTable({ menu, showToggle, onToggle, toggleLabel }) {
 
   return (
     <>
-      {/* En-tête avec titre et bouton optionnel */}
-      <div className="table-header">
-        {/* Titre indiquant la semaine affichée avec numéro */}
-        {menu.weekNumber && (
-          <h3 className="table-caption">
-            {`Menu la semaine N° ${menu.weekNumber} du ${menu.weekLabel}`}
-          </h3>
-        )}
-        {/* Bouton conditionnel pour basculer entre vue jour/semaine */}
-        {showToggle && (
+      {/* En-tête avec bouton optionnel */}
+      {showToggle && (
+        <div className="table-header">
           <button className="table-toggle-btn" onClick={onToggle}>
             {toggleLabel}
           </button>
-        )}
-      </div>
+        </div>
+      )}
       {/* Conteneur du tableau avec scroll horizontal si nécessaire */}
       <div className="table-wrap">
         <table>
@@ -58,6 +52,8 @@ export default function MenuTable({ menu, showToggle, onToggle, toggleLabel }) {
           </tfoot>
         </table>
       </div>
+      {/* Légende des émojis */}
+      <ColorLegend />
     </>
   );
 }
