@@ -154,8 +154,8 @@ table {
 thead th,
 tfoot th,
 tbody th {
-  background: var(--grid);
-  padding: 12px;
+  background: #a3a5a7;
+  padding: 10px 12px;
   text-align: center;
   font-weight: 600;
 }
@@ -175,7 +175,7 @@ tfoot th + th {
 
 thead th.corner-cell,
 tfoot th.corner-cell {
-  background: #d9dde2;
+  background: #727375;
 }
 
 tbody th {
