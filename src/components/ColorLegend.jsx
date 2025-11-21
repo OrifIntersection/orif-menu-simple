@@ -17,4 +17,4 @@ export default function ColorLegend() {
       <span>✨ Autre</span>
     </div>
   );
-} 
+}

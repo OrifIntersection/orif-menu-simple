@@ -24,7 +24,7 @@ export const DISH_TYPE_CONFIG = {
     darkColor: '#2B8A3E',
     icon: '🥬',
     label: 'Légume'
-  }, 
+  },
   DESSERT: {
     color: '#FFC9C9',
     darkColor: '#E03131',

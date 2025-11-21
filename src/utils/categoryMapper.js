@@ -21,7 +21,7 @@ export function groupMenusByDayAndMoment(menus) {
     grouped[day][moment].push(menu);
   });
   return grouped;
-} 
+}
 
 /**
  * Convertit les IDs de catégories vers les codes

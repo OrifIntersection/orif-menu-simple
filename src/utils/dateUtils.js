@@ -19,7 +19,7 @@ export function getWeekNumber(date) {
   }
   return 1 + Math.ceil((firstThursday - target) / 604800000); // 604800000 = 7 * 24 * 3600 * 1000
 }
- 
+
 /**
  * Obtient la date du lundi d'une semaine donnée
  * @param {number} year - L'année

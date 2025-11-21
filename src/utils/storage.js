@@ -23,7 +23,7 @@ export function loadMenu(fallback) {
     return fallback;
   }
 }
- 
+
 /**
  * Sauvegarde le menu dans localStorage
  * @param {Object} menuObj - L'objet menu à sauvegarder

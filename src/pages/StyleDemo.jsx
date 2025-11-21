@@ -18,7 +18,7 @@ export default function StyleDemo() {
     <PageLayout title="Styles d'affichage des menus">
       <div className="container">
         <h2 style={{ marginBottom: '24px', fontSize: '1.8em' }}>Choisissez votre style préféré</h2>
-         
+        
         <div className="style-selector">
           {styles.map(style => (
             <button

@@ -21,7 +21,7 @@ export const useMenus = (initialYear = null, initialWeek = null) => {
     try {
       setLoading(true)
       setError(null)
-      const { data, error } = await supabase 
+      const { data, error } = await supabase
         .from('meals')
         .select('meal_date')
         .order('meal_date', { ascending: false });
