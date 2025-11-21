@@ -11,8 +11,11 @@ import MenuCell from "./MenuCell";
  * @param {Array} items - Types d'aliments (Entrée, Plat, Accompagnement, Dessert)
  */
 export default function SiderTable({ meal, days, data, items }) {
+  // Ajouter une bordure épaisse après le repas de Midi
+  const rowClass = meal === "Midi" ? "meal-row separator-after" : "meal-row";
+  
   return (
-    <tr>
+    <tr className={rowClass}>
       <th className="meal-label">{meal}</th>
       {days.map((day, idx) => {
         // Classe unique par cellule : cell-jour-<day>-repas-<meal>

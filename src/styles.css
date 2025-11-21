@@ -125,7 +125,7 @@ button:active {
    ======================================== */
 .table-wrap {
   overflow-x: auto;
-  border: 1px solid var(--border);
+  border: 1px solid #000;
   border-radius: 8px;
   background: #fff;
   margin-bottom: 20px;
@@ -180,7 +180,7 @@ tfoot th.corner-cell {
 
 tbody th {
   text-align: left;
-  border-right: 1px solid var(--border);
+  border-right: 1px solid #000;
 }
 
 tbody th.meal-label {
@@ -192,12 +192,12 @@ tbody th.meal-label {
 }
 
 tbody th.meal-label-right {
-  border-left: 1px solid var(--border);
+  border-left: 1px solid #000;
   border-right: none;
 }
 
 td {
-  border: 1px solid var(--border);
+  border: 1px solid #000;
   border-top: none;
   border-right: none;
   padding: 12px;
@@ -236,7 +236,7 @@ td {
 .editor input {
   width: 100%;
   padding: 10px;
-  border: 1px solid var(--border);
+  border: 1px solid #000;
   border-radius: 8px;
   font-size: 1em;
 }
@@ -251,7 +251,7 @@ td {
   font-weight: 600;
   background: var(--grid);
   padding: 10px;
-  border: 1px solid var(--border);
+  border: 1px solid #000;
   border-radius: 6px;
   text-align: center;
   font-size: 0.9em;
