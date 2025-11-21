@@ -141,4 +141,4 @@ export const testConnection = async () => {
   }
 }
 
-export default supabase
+export default supabase 

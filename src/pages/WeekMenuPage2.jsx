@@ -19,7 +19,7 @@ export default function WeekMenuPage2() {
   
   // Filtrer pour afficher uniquement Lundi-Vendredi
   const filteredMenu = menu ? filterWeekdays(menu) : null;
-
+ 
   return (
     <main className="container">
       <PageLayout title={`Menu Semaine ${selectedWeek} (${currentYear})`}>

@@ -109,7 +109,7 @@ export class MenuService {
     } catch (error) {
       console.error('Erreur lors de la récupération du menu de la semaine:', error);
       return null;
-    }
+    } 
   }
 
   /**

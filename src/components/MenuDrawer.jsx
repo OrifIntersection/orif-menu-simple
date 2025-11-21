@@ -36,7 +36,7 @@ export default function MenuDrawer() {
           }));
           setMenusData(formattedMenus.sort((a, b) => b.year !== a.year ? b.year - a.year : b.weekNum - a.weekNum));
           return;
-        }
+        } 
 
         // SINON : Essayer Supabase
         const { data, error } = await import("../lib/supabase").then(mod => mod.supabase.from("meals").select("meal_date").order("meal_date", { ascending: false }));

@@ -25,7 +25,7 @@ import StyleDemo from './pages/StyleDemo';
 import EmojiDemo from './pages/EmojiDemo';
 import "./styles.css";
 
-/**
+/** 
  * HomePage - Page d'accueil
  * Affiche le menu de la semaine par défaut
  */

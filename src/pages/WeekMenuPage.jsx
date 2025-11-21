@@ -23,7 +23,7 @@ export default function WeekMenuPage() {
   React.useEffect(() => {
     async function fetchWeekMenu() {
       setLoading(true);
-      
+       
       // D'ABORD: Vérifier le localStorage
       const localMenu = LocalMenuService.getMenuByWeek(currentYear, weekNum);
       if (localMenu && localMenu.data) {

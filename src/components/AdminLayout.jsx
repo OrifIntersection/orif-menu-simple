@@ -29,6 +29,6 @@ const AdminLayout = ({ children }) => {
       <Footer />
     </main>
   );
-};
+}; 
 
 export default AdminLayout;

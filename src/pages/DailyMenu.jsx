@@ -33,7 +33,7 @@ export default function DailyMenu(props) {
                 name,
                 description,
                 dish_type
-              )
+              ) 
             )
           `)
           .eq("meal_date", date);

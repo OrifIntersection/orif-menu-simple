@@ -20,7 +20,7 @@ export default function ImportLocalMenuPage() {
     if (!week || !menus || menus.length === 0) {
       alert("Aucun plat importé. Vérifiez le fichier Excel.");
       return;
-    }
+    } 
     
     // Support pour le nouveau format avec dates
     const hasNewFormat = menus.some(m => m.date);

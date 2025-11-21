@@ -61,7 +61,7 @@ export default function ImportMenuPage() {
               'Samedi': 5,
               'Dimanche': 6
             };
-
+ 
             const dayIndex = dayMapping[menu.jour];
             if (dayIndex === undefined) {
               throw new Error(`Jour invalide: ${menu.jour}`);

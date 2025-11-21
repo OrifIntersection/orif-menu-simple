@@ -22,7 +22,7 @@ const WeekEditor = () => {
     { code: 'MIDI', label: 'Midi', emoji: '☀️' },
     { code: 'SOIR', label: 'Soir', emoji: '🌙' }
   ];
-
+ 
   const dishTypes = [
     { code: 'ENTREE', label: 'Entrée', emoji: '🥗' },
     { code: 'PLAT', label: 'Plat principal', emoji: '🍽️' },

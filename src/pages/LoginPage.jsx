@@ -20,7 +20,7 @@ const LoginPage = () => {
   const handleLogin = async (values) => {
     setLoading(true)
     setMessage(null)
-    
+     
     try {
       // Vérification de la liste blanche d'emails
       if (!isEmailAllowed(values.email)) {

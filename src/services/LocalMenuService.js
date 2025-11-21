@@ -20,7 +20,7 @@ export const LocalMenuService = {
     }
     localStorage.setItem(LOCAL_KEY, JSON.stringify(menus));
   },
-
+ 
   // Supprimer un menu
   deleteMenu(year, week_number) {
     let menus = LocalMenuService.getAllMenus();

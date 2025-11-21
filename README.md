@@ -10,7 +10,7 @@ npm install
 
 # Démarrage du serveur de développement
 npm run dev
-```
+``` 
 
 ## 📁 Structure du Projet
 

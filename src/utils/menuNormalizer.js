@@ -105,7 +105,7 @@ export function normalizeMenu(menu, weekNumber) {
       if (!mealType) {
         console.warn(`Type de repas inconnu ignoré: "${rawMealType}"`);
         return;
-      }
+      } 
       
       // Traiter les plats de ce meal
       const dishes = mealItem.meals_dishes || [];
