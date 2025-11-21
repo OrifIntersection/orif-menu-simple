@@ -291,7 +291,7 @@ export default function MenuDrawer() {
                         >
                           <div className="menu-item-label">{menu.weekLabel}</div>
                           <div className="menu-item-meta">
-                            {menu.days.length} jours • {menu.meals.length} repas
+                            {Array.isArray(menu.days) ? `${menu.days.length} jours • ${Array.isArray(menu.meals) ? menu.meals.length : 0} repas` : 'Menu incomplet'}
                           </div>
                         </button>
                       ))}
