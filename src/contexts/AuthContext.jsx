@@ -111,12 +111,15 @@ export const AuthProvider = ({ children }) => {
   // Fonction de déconnexion
   const signOut = async () => {
     try {
+      // Déconnexion locale immédiate
+      handleUserSignOut()
+      
       if (!isSupabaseConfigured()) {
-        // Mode simulation - déconnexion locale
-        handleUserSignOut()
+        // Mode simulation - déconnexion complète
         return { success: true }
       }
 
+      // Déconnexion Supabase en arrière-plan
       await authHelpers.signOut()
       return { success: true }
       
