@@ -161,16 +161,16 @@ tbody th {
 }
 
 thead th {
-  border-bottom: 2px solid #c7ccd1;
+  border-bottom: 2px solid #000;
 }
 
 tfoot th {
-  border-top: 2px solid #c7ccd1;
+  border-top: 2px solid #000;
 }
 
 thead th + th,
 tfoot th + th {
-  border-left: 2px solid #e6e9ed;
+  border-left: 2px solid #000;
 }
 
 thead th.corner-cell,
@@ -208,7 +208,7 @@ td {
 
 .meal-row.separator-after th,
 .meal-row.separator-after td {
-  border-bottom: 2px solid #e6e9ed;
+  border-bottom: 2px solid #000;
 }
 
 /* ========================================
@@ -258,7 +258,7 @@ td {
 }
 
 .grid-head + .grid-head {
-  border-left: 2px solid #e6e9ed;
+  border-left: 2px solid #000;
 }
 
 .grid-head.active-day {
