@@ -39,6 +39,7 @@ export default function ImportMenuPage() {
       let errorCount = 0;
       const errors = [];
 
+<<<<<<< HEAD
       // Parcourir chaque plat importé
       // NOTE: On n'efface RIEN avant l'import. assignDishToMealByType() remplacera 
       // automatiquement les plats existants du même type, mais préservera les plats 
@@ -62,6 +63,34 @@ export default function ImportMenuPage() {
               'Dimanche': 6
             };
 
+=======
+      // 1. Supprimer les anciens menus pour chaque jour de la semaine
+      for (const date of weekDates) {
+        const dateStr = date.toISOString().split('T')[0];
+        await MenuService.clearMenuForDate(dateStr);
+      }
+
+      // 2. Parcourir chaque plat importé
+      for (const menu of importedMenus) {
+        try {
+          let dateStr;
+
+          // Support pour NOUVEAU FORMAT (avec date directe)
+          if (menu.date) {
+            dateStr = menu.date.toISOString().split('T')[0];
+          } else if (menu.jour) {
+            // Support pour ANCIEN FORMAT (avec jour de la semaine)
+            const dayMapping = {
+              'Lundi': 0,
+              'Mardi': 1,
+              'Mercredi': 2,
+              'Jeudi': 3,
+              'Vendredi': 4,
+              'Samedi': 5,
+              'Dimanche': 6
+            };
+
+>>>>>>> a114d219dd480109e87a00f11f1e4f5974e9388a
             const dayIndex = dayMapping[menu.jour];
             if (dayIndex === undefined) {
               throw new Error(`Jour invalide: ${menu.jour}`);
@@ -72,6 +101,34 @@ export default function ImportMenuPage() {
           } else {
             throw new Error('Format de données invalide: pas de date ni de jour');
           }
+<<<<<<< HEAD
+=======
+
+          // Normaliser le moment
+          const moment = menu.moment.trim();
+          if (moment !== 'Midi' && moment !== 'Soir') {
+            throw new Error(`Moment invalide: ${moment}`);
+          }
+
+          // Créer ou récupérer le meal (date + moment)
+          const meal = await MenuService.getOrCreateMeal(dateStr, moment);
+
+          // Créer ou récupérer le plat avec son type
+          const dishType = menu.typePlat || 'AUTRE';
+          const dish = await MenuService.getOrCreateDish(menu.plat, dishType);
+
+          // Assigner le plat au meal
+          await MenuService.assignDishToMeal(meal.id, dish.id);
+
+          successCount++;
+        } catch (error) {
+          const identifier = menu.dateStr || menu.jour || 'Date inconnue';
+          console.error(`Erreur pour ${identifier} ${menu.moment} - ${menu.plat}:`, error);
+          errorCount++;
+          errors.push(`${identifier} ${menu.moment} - ${menu.plat}: ${error.message}`);
+        }
+      }
+>>>>>>> a114d219dd480109e87a00f11f1e4f5974e9388a
 
           // Normaliser le moment (MIDI ou SOIR)
           const moment = menu.moment.trim();
