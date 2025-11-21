@@ -1,0 +1,284 @@
+-- =========================================
+-- SCRIPT UNIQUE : RESET + RECREATION MINIMALE
+-- =========================================
+
+-- 0. RESET : supprimer les tables si elles existent
+DROP TABLE IF EXISTS public.meal_items CASCADE;
+DROP TABLE IF EXISTS public.menu_days CASCADE;
+DROP TABLE IF EXISTS public.menus CASCADE;
+DROP TABLE IF EXISTS public.meal_types CASCADE;
+DROP TABLE IF EXISTS public.allergens CASCADE;
+DROP TABLE IF EXISTS public.categories CASCADE;
+DROP TABLE IF EXISTS public.profiles CASCADE;
+
+-- =========================================
+-- 1. TABLE profiles (liee a auth.users)
+-- =========================================
+CREATE TABLE public.profiles (
+  user_id uuid PRIMARY KEY,
+  full_name text,
+  role text NOT NULL DEFAULT 'viewer'
+    CHECK (role IN ('admin', 'cook', 'viewer')),
+  created_at timestamptz DEFAULT now(),
+  CONSTRAINT fk_profiles_user
+    FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+);
+
+-- =========================================
+-- 2. TABLE meal_types
+-- =========================================
+CREATE TABLE public.meal_types (
+  id serial PRIMARY KEY,
+  code text NOT NULL UNIQUE,
+  label text NOT NULL
+);
+
+-- =========================================
+-- 3. TABLE menus (par semaine)
+-- =========================================
+CREATE TABLE public.menus (
+  id bigserial PRIMARY KEY,
+  year int NOT NULL,
+  week_number int NOT NULL CHECK (week_number BETWEEN 1 AND 53),
+  week_label text,
+  start_date date NOT NULL,
+  end_date date NOT NULL,
+  UNIQUE (year, week_number)
+);
+
+-- =========================================
+-- 4. TABLE menu_days (jours d'un menu)
+-- =========================================
+CREATE TABLE public.menu_days (
+  id bigserial PRIMARY KEY,
+  menu_id bigint NOT NULL,
+  day_name text NOT NULL CHECK (day_name IN ('Lundi','Mardi','Mercredi','Jeudi','Vendredi')),
+  day_date date NOT NULL,
+  UNIQUE (menu_id, day_name),
+  CONSTRAINT fk_menu_days_menu
+    FOREIGN KEY (menu_id) REFERENCES public.menus(id) ON DELETE CASCADE
+);
+
+-- =========================================
+-- 5. TABLE allergens
+-- =========================================
+CREATE TABLE public.allergens (
+  id serial PRIMARY KEY,
+  code text NOT NULL UNIQUE,
+  label text NOT NULL
+);
+
+-- =========================================
+-- 6. TABLE categories (facultatif mais attendu par le front)
+-- =========================================
+CREATE TABLE public.categories (
+  id serial PRIMARY KEY,
+  code text NOT NULL UNIQUE,
+  label text NOT NULL,
+  emoji text
+);
+
+-- =========================================
+-- 7. TABLE meal_items (affectation directe des plats)
+--    ⚠ il faut que public.dishes existe deja
+-- =========================================
+CREATE TABLE public.meal_items (
+  id bigserial PRIMARY KEY,
+  date date NOT NULL,
+  meal_type_id int NOT NULL,
+  category_id int,          -- optionnel, peut rester NULL
+  dish_id bigint NOT NULL,
+  meal_label text,          -- DEVient facultatif (plus de NOT NULL)
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+
+  CONSTRAINT fk_meal_items_type
+    FOREIGN KEY (meal_type_id) REFERENCES public.meal_types(id),
+
+  CONSTRAINT fk_meal_items_dish
+    FOREIGN KEY (dish_id) REFERENCES public.dishes(id),
+
+  CONSTRAINT fk_meal_items_category
+    FOREIGN KEY (category_id) REFERENCES public.categories(id),
+
+  -- ⚠ correspond au on_conflict=date,meal_type_id,dish_id
+  CONSTRAINT unique_meal_assignment
+    UNIQUE (date, meal_type_id, dish_id)
+);
+
+-- =========================================
+-- INDEX
+-- =========================================
+CREATE INDEX idx_meal_items_date  ON public.meal_items (date);
+CREATE INDEX idx_menus_year_week  ON public.menus (year, week_number);
+CREATE INDEX idx_menu_days_date   ON public.menu_days (day_date);
+
+-- =========================================
+-- DONNEES DE BASE
+-- =========================================
+INSERT INTO public.meal_types (code, label) VALUES
+  ('MIDI', 'Midi'),
+  ('SOIR', 'Soir')
+ON CONFLICT (code) DO NOTHING;
+
+-- (optionnel) categories de base
+INSERT INTO public.categories (code, label, emoji) VALUES
+  ('ENTREE',  'Entree', '🥗'),
+  ('PLAT',    'Plat principal', '🍽️'),
+  ('GARNIT',  'Garniture', '🥔'),
+  ('LEGUMES', 'Legumes', '🥬'),
+  ('DESSERT', 'Dessert', '🍰'),
+  ('AUTRE',   'Autre', '✨')
+ON CONFLICT (code) DO NOTHING;
+
+-- =========================================
+-- RLS
+-- =========================================
+ALTER TABLE public.profiles    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.meal_types  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.menus       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.menu_days   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.meal_items  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.allergens   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.categories  ENABLE ROW LEVEL SECURITY;
+
+-- Nettoyage des anciennes policies
+DROP POLICY IF EXISTS "public_read_menus"        ON public.menus;
+DROP POLICY IF EXISTS "public_read_menu_days"    ON public.menu_days;
+DROP POLICY IF EXISTS "public_read_meal_items"   ON public.meal_items;
+DROP POLICY IF EXISTS "admin_write_meal_items"   ON public.meal_items;
+DROP POLICY IF EXISTS "public_read_meal_types"   ON public.meal_types;
+DROP POLICY IF EXISTS "public_read_allergens"    ON public.allergens;
+DROP POLICY IF EXISTS "public_read_categories"   ON public.categories;
+DROP POLICY IF EXISTS "profiles_read_own"        ON public.profiles;
+DROP POLICY IF EXISTS "profiles_update_own"      ON public.profiles;
+DROP POLICY IF EXISTS "profiles_insert_own"      ON public.profiles;
+
+-- Politiques de lecture publiques
+CREATE POLICY "public_read_menus"
+  ON public.menus
+  AS PERMISSIVE
+  FOR SELECT
+  TO public
+  USING (true);
+
+CREATE POLICY "public_read_menu_days"
+  ON public.menu_days
+  AS PERMISSIVE
+  FOR SELECT
+  TO public
+  USING (true);
+
+CREATE POLICY "public_read_meal_items"
+  ON public.meal_items
+  AS PERMISSIVE
+  FOR SELECT
+  TO public
+  USING (true);
+
+CREATE POLICY "public_read_meal_types"
+  ON public.meal_types
+  AS PERMISSIVE
+  FOR SELECT
+  TO public
+  USING (true);
+
+CREATE POLICY "public_read_allergens"
+  ON public.allergens
+  AS PERMISSIVE
+  FOR SELECT
+  TO public
+  USING (true);
+
+CREATE POLICY "public_read_categories"
+  ON public.categories
+  AS PERMISSIVE
+  FOR SELECT
+  TO public
+  USING (true);
+
+-- Ecriture libre sur meal_items (a securiser plus tard)
+CREATE POLICY "admin_write_meal_items"
+  ON public.meal_items
+  AS PERMISSIVE
+  FOR ALL
+  TO public
+  USING (true);
+
+-- =========================================
+-- RLS sur profiles
+-- =========================================
+
+-- Lecture : l'utilisateur voit son profil, l'admin voit tout
+CREATE POLICY "profiles_read_own"
+  ON public.profiles
+  AS PERMISSIVE
+  FOR SELECT
+  TO public
+  USING (
+    auth.uid() = user_id
+    OR exists (
+      select 1
+      from public.profiles p
+      where p.user_id = auth.uid()
+        and p.role = 'admin'
+    )
+  );
+
+-- Update : meme logique (own + admin)
+CREATE POLICY "profiles_update_own"
+  ON public.profiles
+  AS PERMISSIVE
+  FOR UPDATE
+  TO public
+  USING (
+    auth.uid() = user_id
+    OR exists (
+      select 1
+      from public.profiles p
+      where p.user_id = auth.uid()
+        and p.role = 'admin'
+    )
+  );
+
+-- Insert : chaque utilisateur cree son propre profil
+CREATE POLICY "profiles_insert_own"
+  ON public.profiles
+  AS PERMISSIVE
+  FOR INSERT
+  TO public
+  WITH CHECK (auth.uid() = user_id);
+
+
+
+-- Nettoyer les anciennes policies qui posent probleme
+DROP POLICY IF EXISTS "profiles_read_own"   ON public.profiles;
+DROP POLICY IF EXISTS "profiles_update_own" ON public.profiles;
+
+-- Lecture : chaque user lit uniquement SON profil
+DROP POLICY IF EXISTS "profiles_read_own" ON public.profiles;
+
+CREATE POLICY "profiles_read_own"
+  ON public.profiles
+  FOR SELECT
+  USING (user_id = auth.uid());
+
+-- Update : chaque user modifie uniquement SON profil
+CREATE POLICY "profiles_update_own"
+  ON public.profiles
+  AS PERMISSIVE
+  FOR UPDATE
+  TO public
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+-- =========================================
+-- PROFILS ADMIN
+-- =========================================
+INSERT INTO public.profiles (user_id, full_name, role)
+VALUES 
+  ('1ebb59cc-e034-4f09-b8a5-68e07015d11d', 'Admin ORIF', 'admin'),
+  ('98057cf8-066c-4d97-b363-2db5aae00364', 'Admin 2',     'admin')
+ON CONFLICT (user_id) DO UPDATE
+SET full_name = EXCLUDED.full_name,
+    role      = 'admin';
