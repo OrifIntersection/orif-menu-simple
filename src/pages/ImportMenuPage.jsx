@@ -39,13 +39,10 @@ export default function ImportMenuPage() {
       let errorCount = 0;
       const errors = [];
 
-      // 1. Supprimer les anciens menus pour chaque jour de la semaine
-      for (const date of weekDates) {
-        const dateStr = date.toISOString().split('T')[0];
-        await MenuService.clearMenuForDate(dateStr);
-      }
-
-      // 2. Parcourir chaque plat importé
+      // Parcourir chaque plat importé
+      // NOTE: On n'efface RIEN avant l'import. assignDishToMealByType() remplacera 
+      // automatiquement les plats existants du même type, mais préservera les plats 
+      // non mentionnés dans l'Excel (évite la perte de données).
       for (const menu of importedMenus) {
         try {
           let dateStr;
@@ -76,21 +73,19 @@ export default function ImportMenuPage() {
             throw new Error('Format de données invalide: pas de date ni de jour');
           }
 
-          // Normaliser le moment
+          // Normaliser le moment (MIDI ou SOIR)
           const moment = menu.moment.trim();
-          if (moment !== 'Midi' && moment !== 'Soir') {
+          const mealType = moment === 'Midi' ? 'MIDI' : moment === 'Soir' ? 'SOIR' : null;
+          if (!mealType) {
             throw new Error(`Moment invalide: ${moment}`);
           }
-
-          // Créer ou récupérer le meal (date + moment)
-          const meal = await MenuService.getOrCreateMeal(dateStr, moment);
 
           // Créer ou récupérer le plat avec son type
           const dishType = menu.typePlat || 'AUTRE';
           const dish = await MenuService.getOrCreateDish(menu.plat, dishType);
 
-          // Assigner le plat au meal
-          await MenuService.assignDishToMeal(meal.id, dish.id);
+          // Assigner le plat au meal (via la méthode basée sur les ENUMs)
+          await MenuService.assignDishToMealByType(dateStr, mealType, dishType, dish.id);
 
           successCount++;
         } catch (error) {
@@ -101,6 +96,7 @@ export default function ImportMenuPage() {
         }
       }
 
+      // Afficher le résultat
       setImportResult({
         success: true,
         successCount,
@@ -108,10 +104,14 @@ export default function ImportMenuPage() {
         errors
       });
 
+      // Navigation automatique vers l'éditeur de semaine après un import réussi
       if (errorCount === 0) {
+        console.log('✅ Import réussi, redirection vers l\'éditeur de semaine...');
         setTimeout(() => {
           navigate(`/admin/week/${week}`);
         }, 2000);
+      } else {
+        console.warn(`⚠️ Import terminé avec ${errorCount} erreur(s)`);
       }
 
     } catch (error) {

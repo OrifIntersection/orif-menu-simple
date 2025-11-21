@@ -100,12 +100,16 @@ CREATE INDEX idx_meals_date ON public.meals (meal_date);
 -- ÉTAPE 6 : TABLE MEALS_DISHES (LIAISON)
 -- =========================================
 -- Liaison entre les repas et les plats
+-- IMPORTANT: dish_type est dénormalisé ici pour permettre la contrainte UNIQUE (meal_id, dish_type)
+-- Cela garantit qu'un repas ne peut avoir qu'un seul plat de chaque type
 CREATE TABLE public.meals_dishes (
   meal_id bigint NOT NULL,
   dish_id bigint NOT NULL,
+  dish_type dish_type NOT NULL,  -- Dénormalisé pour contrainte UNIQUE
   position int,
   created_at timestamptz DEFAULT now(),
   PRIMARY KEY (meal_id, dish_id),
+  UNIQUE (meal_id, dish_type),  -- Garantit l'unicité par type de plat
   CONSTRAINT fk_meals_dishes_meal
     FOREIGN KEY (meal_id) REFERENCES public.meals(id) ON DELETE CASCADE,
   CONSTRAINT fk_meals_dishes_dish

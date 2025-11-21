@@ -311,6 +311,7 @@ export class MenuService {
    * @param {number} dishId - ID du plat
    * @param {number} position - Position du plat dans le meal
    * @returns {Promise<Object>} Lien créé
+   * @deprecated Utiliser assignDishToMealByType() qui garantit l'unicité par type
    */
   static async assignDishToMeal(mealId, dishId, position = null) {
     if (!supabase) {
@@ -319,14 +320,24 @@ export class MenuService {
     }
 
     try {
+      // Récupérer le dish_type pour la contrainte UNIQUE
+      const { data: dish, error: dishError } = await supabase
+        .from('dishes')
+        .select('dish_type')
+        .eq('id', dishId)
+        .single();
+
+      if (dishError) throw dishError;
+
       const { data, error } = await supabase
         .from('meals_dishes')
         .upsert({
           meal_id: mealId,
           dish_id: dishId,
+          dish_type: dish.dish_type,  // Obligatoire pour la contrainte
           position: position
         }, {
-          onConflict: 'meal_id,dish_id'
+          onConflict: 'meal_id,dish_type'  // Basé sur la contrainte UNIQUE
         })
         .select();
 
@@ -366,8 +377,10 @@ export class MenuService {
 
   /**
    * Supprimer tous les plats d'un meal pour une date spécifique
+   * ⚠️ ATTENTION: Cette méthode supprime TOUS les meals (MIDI + SOIR) de la journée
    * @param {string} mealDate - Date au format YYYY-MM-DD
    * @returns {Promise<void>}
+   * @deprecated Utiliser clearMealByType() pour éviter la perte de données
    */
   static async clearMenuForDate(mealDate) {
     if (!supabase) {
@@ -404,6 +417,163 @@ export class MenuService {
       }
     } catch (error) {
       console.error('Erreur lors du vidage du menu pour la date:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Supprimer tous les plats d'un meal spécifique (par type)
+   * Cette méthode supprime UNIQUEMENT le meal du type spécifié (MIDI ou SOIR)
+   * @param {string} mealDate - Date au format YYYY-MM-DD
+   * @param {string} mealType - Type de repas (MIDI ou SOIR)
+   * @returns {Promise<void>}
+   */
+  static async clearMealByType(mealDate, mealType) {
+    if (!supabase) {
+      console.warn('Supabase non configuré, simulation du vidage du meal');
+      return Promise.resolve();
+    }
+    
+    try {
+      // Récupérer le meal spécifique
+      const { data: meal, error: mealError } = await supabase
+        .from('meals')
+        .select('id')
+        .eq('meal_date', mealDate)
+        .eq('meal_type', mealType)
+        .maybeSingle();
+
+      if (mealError) throw mealError;
+
+      if (meal) {
+        // Supprimer toutes les associations meals_dishes pour ce meal
+        const { error: deleteError } = await supabase
+          .from('meals_dishes')
+          .delete()
+          .eq('meal_id', meal.id);
+
+        if (deleteError) throw deleteError;
+
+        // Supprimer le meal lui-même
+        const { error: deleteMealError } = await supabase
+          .from('meals')
+          .delete()
+          .eq('id', meal.id);
+
+        if (deleteMealError) throw deleteMealError;
+
+        console.log(`🗑️ Menu ${mealType} supprimé pour le ${mealDate}`);
+      }
+    } catch (error) {
+      console.error(`Erreur lors du vidage du meal ${mealType} pour la date:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Assigner un plat à un meal basé sur les types (ENUM)
+   * Cette méthode garantit qu'un seul plat d'un type donné est assigné à un repas
+   * 
+   * GESTION DE L'UNICITÉ :
+   * L'unicité par (meal_type, dish_type) est garantie au niveau applicatif via delete+insert atomique.
+   * Une contrainte UNIQUE au niveau base de données nécessiterait :
+   *   - Soit d'ajouter dish_type dans meals_dishes (dénormalisation)
+   *   - Soit d'utiliser un trigger PostgreSQL (complexe)
+   * La solution actuelle (gestion applicative) est suffisante pour éviter les doublons.
+   * 
+   * @param {string} mealDate - Date au format YYYY-MM-DD
+   * @param {string} mealType - Type de repas (MIDI ou SOIR)
+   * @param {string} dishType - Type de plat (ENTREE, PLAT, GARNITURE, LEGUME, DESSERT, AUTRE)
+   * @param {number} dishId - ID du plat à assigner
+   * @returns {Promise<void>}
+   */
+  static async assignDishToMealByType(mealDate, mealType, dishType, dishId) {
+    if (!supabase) {
+      console.warn('Supabase non configuré, simulation de l\'assignation');
+      return Promise.resolve();
+    }
+
+    try {
+      // 1. Créer ou récupérer le meal
+      const meal = await this.getOrCreateMeal(mealDate, mealType);
+
+      // 2. Vérifier le dish
+      const { data: dish, error: dishError } = await supabase
+        .from('dishes')
+        .select('*')
+        .eq('id', dishId)
+        .single();
+
+      if (dishError) throw dishError;
+
+      // 3. Vérifier que le plat a bien le bon type
+      if (dish.dish_type !== dishType) {
+        throw new Error(`Le plat ${dish.name} (${dish.dish_type}) ne correspond pas au type demandé (${dishType})`);
+      }
+
+      // 4. UPSERT basé sur la contrainte UNIQUE (meal_id, dish_type)
+      // Remplace automatiquement le plat existant de ce type s'il y en a un
+      const { error: upsertError } = await supabase
+        .from('meals_dishes')
+        .upsert({
+          meal_id: meal.id,
+          dish_id: dishId,
+          dish_type: dishType,  // Nécessaire pour la contrainte UNIQUE
+          position: null
+        }, {
+          onConflict: 'meal_id,dish_type'  // Clé de conflit = contrainte UNIQUE
+        });
+
+      if (upsertError) throw upsertError;
+
+      console.log(`✅ Plat assigné: ${dish.name} (${dishType}) pour ${mealType} le ${mealDate}`);
+    } catch (error) {
+      console.error('Erreur lors de l\'assignation du plat par type:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Supprimer un plat d'un meal basé sur les types (ENUM)
+   * Cette méthode supprime UNIQUEMENT le plat de ce type, sans toucher aux autres
+   * @param {string} mealDate - Date au format YYYY-MM-DD
+   * @param {string} mealType - Type de repas (MIDI ou SOIR)
+   * @param {string} dishType - Type de plat (ENTREE, PLAT, GARNITURE, LEGUME, DESSERT, AUTRE)
+   * @returns {Promise<void>}
+   */
+  static async removeDishFromMealByType(mealDate, mealType, dishType) {
+    if (!supabase) {
+      console.warn('Supabase non configuré, simulation de la suppression');
+      return Promise.resolve();
+    }
+
+    try {
+      // 1. Récupérer le meal
+      const { data: meal, error: mealError } = await supabase
+        .from('meals')
+        .select('id')
+        .eq('meal_date', mealDate)
+        .eq('meal_type', mealType)
+        .maybeSingle();
+
+      if (mealError) throw mealError;
+      if (!meal) {
+        console.log(`Aucun meal trouvé pour ${mealType} le ${mealDate}`);
+        return;
+      }
+
+      // 2. Supprimer directement basé sur la contrainte UNIQUE (meal_id, dish_type)
+      const { error: deleteError } = await supabase
+        .from('meals_dishes')
+        .delete()
+        .eq('meal_id', meal.id)
+        .eq('dish_type', dishType);
+
+      if (deleteError) throw deleteError;
+      
+      console.log(`🗑️ Plat ${dishType} supprimé pour ${mealType} le ${mealDate}`);
+    } catch (error) {
+      console.error('Erreur lors de la suppression du plat par type:', error);
       throw error;
     }
   }

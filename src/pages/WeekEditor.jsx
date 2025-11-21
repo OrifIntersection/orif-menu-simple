@@ -1,4 +1,3 @@
-// Éditeur de semaine simple - inspiré du DateEditor
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MenuService } from '../services/MenuService';
@@ -10,17 +9,28 @@ const WeekEditor = () => {
   const navigate = useNavigate();
   const weekNum = parseInt(weekNumber);
   
-  const [selectedDay, setSelectedDay] = useState(0); // Index du jour sélectionné (0-6)
-  const [mealTypes, setMealTypes] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [selectedDay, setSelectedDay] = useState(0);
   const [dishes, setDishes] = useState([]);
-  const [weekMenus, setWeekMenus] = useState({}); // Menus pour chaque jour de la semaine
+  const [weekMenus, setWeekMenus] = useState({});
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Calculer les dates de la semaine - mémorisé pour éviter le recalcul constant
   const weekDates = useMemo(() => getWeekDates(2025, weekNum), [weekNum]);
   const dayNames = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+
+  const mealTypes = [
+    { code: 'MIDI', label: 'Midi', emoji: '☀️' },
+    { code: 'SOIR', label: 'Soir', emoji: '🌙' }
+  ];
+
+  const dishTypes = [
+    { code: 'ENTREE', label: 'Entrée', emoji: '🥗' },
+    { code: 'PLAT', label: 'Plat principal', emoji: '🍽️' },
+    { code: 'GARNITURE', label: 'Garniture', emoji: '🥔' },
+    { code: 'LEGUME', label: 'Légume', emoji: '🥬' },
+    { code: 'DESSERT', label: 'Dessert', emoji: '🍰' },
+    { code: 'AUTRE', label: 'Autre', emoji: '✨' }
+  ];
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -28,68 +38,49 @@ const WeekEditor = () => {
     try {
       console.log('🔄 Chargement des données pour WeekEditor...');
       
-      const [mealTypesData, categoriesData, dishesData] = await Promise.all([
-        MenuService.getMealTypes(),
-        MenuService.getCategories(),
-        MenuService.getAllDishes()
-      ]);
-
-      console.log('✅ Données chargées:', { mealTypesData, categoriesData, dishesData });
-      
-      setMealTypes(mealTypesData);
-      setCategories(categoriesData);
+      const dishesData = await MenuService.getAllDishes();
       setDishes(dishesData);
 
-      // Charger les menus pour chaque jour de la semaine
       const weekMenusData = {};
       for (let i = 0; i < weekDates.length; i++) {
         const date = weekDates[i];
         try {
-          const { supabase } = await import('../lib/supabase');
-          const { data, error } = await supabase
-            .from('meals')
-            .select(`
-              id,
-              meal_date,
-              meal_type,
-              meals_dishes (
-                dish_id,
-                position,
-                dishes (
-                  id,
-                  name,
-                  description,
-                  dish_type
-                )
-              )
-            `)
-            .eq('meal_date', date);
-          weekMenusData[i] = data || [];
+          const mealsData = await MenuService.getMenuForDate(date);
+          
+          const dayMenu = {};
+          if (mealsData && mealsData.length > 0) {
+            mealsData.forEach(meal => {
+              const mealType = meal.meal_type;
+              const dishes = meal.meals_dishes || [];
+              
+              dishes.forEach(mealDish => {
+                const dish = mealDish.dishes;
+                if (!dish) return;
+                
+                const dishType = dish.dish_type;
+                const key = `${mealType}_${dishType}`;
+                
+                dayMenu[key] = {
+                  dish_id: dish.id,
+                  dish_name: dish.name,
+                  meal_type: mealType,
+                  dish_type: dishType
+                };
+              });
+            });
+          }
+          
+          weekMenusData[i] = dayMenu;
         } catch (err) {
           console.warn(`Menu vide pour le jour ${i}:`, err.message);
-          weekMenusData[i] = [];
+          weekMenusData[i] = {};
         }
       }
       setWeekMenus(weekMenusData);
 
     } catch (err) {
       console.warn('Utilisation des données de fallback:', err.message);
-      // En cas d'erreur complète, utiliser des données vides
-      setMealTypes([
-        { id: 1, name: 'Entrée' },
-        { id: 2, name: 'Plat principal' },
-        { id: 3, name: 'Dessert' }
-      ]);
-      setCategories([
-        { id: 1, name: 'Viandes', color: '#e74c3c' },
-        { id: 2, name: 'Légumes', color: '#27ae60' },
-        { id: 3, name: 'Desserts', color: '#f39c12' }
-      ]);
-      setDishes([
-        { id: 1, name: 'Salade verte', category_id: 2 },
-        { id: 2, name: 'Poulet rôti', category_id: 1 },
-        { id: 3, name: 'Tarte aux pommes', category_id: 3 }
-      ]);
+      setDishes([]);
       setWeekMenus({});
       setError('Mode hors ligne activé - données d\'exemple');
     } finally {
@@ -101,7 +92,6 @@ const WeekEditor = () => {
     loadData();
   }, [loadData]);
 
-  // Validation du numéro de semaine
   if (isNaN(weekNum) || weekNum < 1 || weekNum > 53) {
     return (
       <AdminLayout title="Erreur">
@@ -116,19 +106,18 @@ const WeekEditor = () => {
 
   const currentMenu = weekMenus[selectedDay] || {};
 
-  const getAssignedDish = (mealTypeId, categoryId) => {
-    const key = `${mealTypeId}_${categoryId}`;
+  const getAssignedDish = (mealType, dishType) => {
+    const key = `${mealType}_${dishType}`;
     return currentMenu[key];
   };
 
-  const handleDishAssignment = async (mealTypeId, categoryId, dishId) => {
+  const handleDishAssignment = async (mealType, dishType, dishId) => {
     try {
       const currentDate = weekDates[selectedDay];
       
-      console.log('🔄 Modification du menu:', { currentDate, mealTypeId, categoryId, dishId });
+      console.log('🔄 Modification du menu:', { currentDate, mealType, dishType, dishId });
       
-      // Mise à jour locale immédiate pour éviter le clignotement
-      const key = `${mealTypeId}_${categoryId}`;
+      const key = `${mealType}_${dishType}`;
       const dishName = dishId ? dishes.find(d => d.id === dishId)?.name : null;
       
       setWeekMenus(prev => ({
@@ -138,21 +127,20 @@ const WeekEditor = () => {
           [key]: dishId ? {
             dish_id: dishId,
             dish_name: dishName,
-            meal_type: mealTypes.find(m => m.id === mealTypeId)?.name,
-            category: categories.find(c => c.id === categoryId)?.name
+            meal_type: mealType,
+            dish_type: dishType
           } : undefined
         }
       }));
       
-      // Ensuite, tenter la synchronisation avec Supabase en arrière-plan
       if (dishId) {
-        await MenuService.assignDishToMenu(currentDate, mealTypeId, categoryId, dishId);
+        await MenuService.assignDishToMealByType(currentDate, mealType, dishType, dishId);
       } else {
-        await MenuService.removeDishFromMenu(currentDate, mealTypeId, categoryId);
+        await MenuService.removeDishFromMealByType(currentDate, mealType, dishType);
       }
       
       console.log('✅ Menu mis à jour avec succès');
-      setError(''); // Effacer l'erreur si la synchronisation réussit
+      setError('');
       
     } catch (err) {
       console.warn('⚠️ Mode hors ligne - modification locale conservée:', err.message);
@@ -175,7 +163,6 @@ const WeekEditor = () => {
       
       console.log('🔄 Copie du menu:', sourceMenu);
       
-      // Mise à jour locale immédiate pour éviter le clignotement
       const newWeekMenus = { ...weekMenus };
       for (let i = 0; i < weekDates.length; i++) {
         if (i !== fromDayIndex) {
@@ -184,32 +171,44 @@ const WeekEditor = () => {
       }
       setWeekMenus(newWeekMenus);
       
-      // Tenter la synchronisation avec Supabase en arrière-plan
       for (let i = 0; i < weekDates.length; i++) {
-        if (i === fromDayIndex) continue; // Skip the source day
+        if (i === fromDayIndex) continue;
         
         const targetDate = weekDates[i];
         
         try {
-          // Clear existing menu for target date
-          await MenuService.clearMenuForDate(targetDate);
-          
-          // Copy each dish assignment
+          // Identifier les types de meals à copier (MIDI et/ou SOIR)
+          const mealTypesInSource = new Set();
           for (const [key, menuItem] of Object.entries(sourceMenu)) {
             if (menuItem && menuItem.dish_id) {
-              const [mealTypeId, categoryId] = key.split('_').map(Number);
-              await MenuService.assignDishToMenu(targetDate, mealTypeId, categoryId, menuItem.dish_id);
+              const [mealType] = key.split('_');
+              mealTypesInSource.add(mealType);
+            }
+          }
+
+          // Supprimer UNIQUEMENT les meals qui seront copiés (préserve les autres)
+          for (const mealType of mealTypesInSource) {
+            await MenuService.clearMealByType(targetDate, mealType);
+          }
+          
+          // Copier les plats
+          for (const [key, menuItem] of Object.entries(sourceMenu)) {
+            if (menuItem && menuItem.dish_id) {
+              const [mealType, dishType] = key.split('_');
+              await MenuService.assignDishToMealByType(targetDate, mealType, dishType, menuItem.dish_id);
             }
           }
         } catch (err) {
           console.warn(`Mode hors ligne - copie locale pour le jour ${i}:`, err.message);
-          // La copie locale a déjà été faite, continuer
         }
       }
       
+      // Rafraîchir les données depuis Supabase pour garantir la cohérence
+      await loadData();
+      
       alert('Menu copié avec succès sur tous les jours !');
       console.log('✅ Copie terminée');
-      setError(''); // Effacer l'erreur si la synchronisation réussit
+      setError('');
     } catch (err) {
       console.warn('⚠️ Erreur lors de la copie, mode hors ligne activé:', err.message);
       setError('Mode hors ligne - copie temporaire uniquement');
@@ -245,7 +244,6 @@ const WeekEditor = () => {
           </div>
         )}
 
-        {/* Sélecteur de jour */}
         <div style={{ marginBottom: '2rem' }}>
           <h3>Sélectionner un jour à éditer :</h3>
           <div style={{ 
@@ -274,200 +272,100 @@ const WeekEditor = () => {
               </button>
             ))}
           </div>
-          
-          {/* Bouton de copie */}
+
           <button
             onClick={() => copyDayToOtherDays(selectedDay)}
-            disabled={!weekMenus[selectedDay] || Object.keys(weekMenus[selectedDay]).length === 0}
             style={{
-              padding: '0.5rem 1rem',
+              padding: '0.75rem 1.5rem',
               backgroundColor: '#28a745',
               color: 'white',
               border: 'none',
               borderRadius: '5px',
               cursor: 'pointer',
-              fontSize: '0.9rem'
+              fontSize: '1rem',
+              fontWeight: 'bold',
+              width: '100%'
             }}
           >
-            📋 Copier ce jour sur toute la semaine
+            📋 Copier ce jour sur tous les autres jours
           </button>
         </div>
 
-        {/* Interface d'édition pour le jour sélectionné */}
-        <div style={{
-          backgroundColor: 'white',
-          padding: '1.5rem',
-          borderRadius: '8px',
-          border: '1px solid #dee2e6'
-        }}>
-          <h3>📅 Édition du {dayNames[selectedDay]} ({formatDate(weekDates[selectedDay])})</h3>
-          
-          {/* Table d'édition - identique au DateEditor */}
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '1rem' }}>
-              <thead>
-                <tr style={{ backgroundColor: '#f8f9fa' }}>
-                  <th style={{ padding: '0.75rem', border: '1px solid #dee2e6', textAlign: 'left' }}>
-                    Type de repas
-                  </th>
-                  {categories.map(category => (
-                    <th key={category.id} style={{ 
-                      padding: '0.75rem', 
-                      border: '1px solid #dee2e6',
-                      backgroundColor: category.color,
-                      color: 'white',
-                      textAlign: 'center'
-                    }}>
-                      {category.name}
+        <h2>🗓️ Éditer le menu du {dayNames[selectedDay]} ({formatDate(weekDates[selectedDay])})</h2>
+
+        <div style={{ marginTop: '2rem' }}>
+          {mealTypes.map(mealType => (
+            <div key={mealType.code} style={{ marginBottom: '3rem' }}>
+              <h3>{mealType.emoji} {mealType.label}</h3>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: 'left', padding: '0.75rem', backgroundColor: '#f8f9fa', border: '1px solid #dee2e6' }}>
+                      Type de plat
                     </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {mealTypes.map(mealType => (
-                  <tr key={mealType.id}>
-                    <td style={{ 
-                      padding: '0.75rem', 
-                      border: '1px solid #dee2e6',
-                      fontWeight: 'bold',
-                      backgroundColor: '#f8f9fa'
-                    }}>
-                      {mealType.name}
-                    </td>
-                    {categories.map(category => {
-                      const assignedDish = getAssignedDish(mealType.id, category.id);
-                      return (
-                        <td key={category.id} style={{ 
-                          padding: '0.5rem', 
-                          border: '1px solid #dee2e6',
-                          textAlign: 'center'
-                        }}>
+                    <th style={{ textAlign: 'left', padding: '0.75rem', backgroundColor: '#f8f9fa', border: '1px solid #dee2e6' }}>
+                      Plat sélectionné
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {dishTypes.map(dishType => {
+                    const assignedDish = getAssignedDish(mealType.code, dishType.code);
+                    const filteredDishes = dishes.filter(d => d.dish_type === dishType.code);
+                    
+                    return (
+                      <tr key={dishType.code}>
+                        <td style={{ padding: '0.75rem', border: '1px solid #dee2e6', fontWeight: 'bold' }}>
+                          {dishType.emoji} {dishType.label}
+                        </td>
+                        <td style={{ padding: '0.75rem', border: '1px solid #dee2e6' }}>
                           <select
                             value={assignedDish?.dish_id || ''}
                             onChange={(e) => handleDishAssignment(
-                              mealType.id, 
-                              category.id, 
+                              mealType.code,
+                              dishType.code,
                               e.target.value ? parseInt(e.target.value) : null
                             )}
                             style={{
                               width: '100%',
                               padding: '0.5rem',
-                              border: '1px solid #ddd',
-                              borderRadius: '4px'
+                              border: '1px solid #ced4da',
+                              borderRadius: '4px',
+                              fontSize: '0.9rem'
                             }}
                           >
-                            <option value="">-- Choisir un plat --</option>
-                            {dishes
-                              .filter(dish => dish.category_id === category.id)
-                              .map(dish => (
-                                <option key={dish.id} value={dish.id}>
-                                  {dish.name}
-                                </option>
-                              ))
-                            }
+                            <option value="">-- Aucun plat --</option>
+                            {filteredDishes.map(dish => (
+                              <option key={dish.id} value={dish.id}>
+                                {dish.name}
+                              </option>
+                            ))}
                           </select>
                         </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ))}
         </div>
 
-        {/* Navigation */}
-        <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+        <div style={{ marginTop: '2rem', textAlign: 'center' }}>
           <button
             onClick={() => navigate('/admin')}
             style={{
-              padding: '1rem 2rem',
-              fontSize: '1rem',
+              padding: '0.75rem 2rem',
               backgroundColor: '#6c757d',
               color: 'white',
               border: 'none',
               borderRadius: '5px',
               cursor: 'pointer',
-              marginRight: '1rem'
+              fontSize: '1rem'
             }}
           >
-            🏠 Retour à l'administration
+            ← Retour à l'administration
           </button>
-          
-          <button
-            onClick={() => navigate(`/week/${weekNum}`)}
-            style={{
-              padding: '1rem 2rem',
-              fontSize: '1rem',
-              backgroundColor: '#17a2b8',
-              color: 'white',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer'
-            }}
-          >
-            👁️ Voir le menu public
-          </button>
-        </div>
-
-        {/* Navigation rapide */}
-        <div style={{ 
-          marginTop: '2rem',
-          padding: '1.5rem',
-          backgroundColor: '#f8f9fa',
-          borderRadius: '8px',
-          textAlign: 'center'
-        }}>
-          <h4 style={{ margin: '0 0 1rem 0', color: '#495057' }}>🧭 Navigation rapide</h4>
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            gap: '1rem', 
-            flexWrap: 'wrap' 
-          }}>
-            <button
-              onClick={() => navigate(`/admin/week/${weekNum > 1 ? weekNum - 1 : 52}`)}
-              style={{
-                padding: '0.5rem 1rem',
-                fontSize: '0.9rem',
-                backgroundColor: '#007bff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '5px',
-                cursor: 'pointer'
-              }}
-            >
-              ⬅️ Semaine précédente
-            </button>
-            <button
-              onClick={() => navigate(`/admin/week/${weekNum < 52 ? weekNum + 1 : 1}`)}
-              style={{
-                padding: '0.5rem 1rem',
-                fontSize: '0.9rem',
-                backgroundColor: '#007bff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '5px',
-                cursor: 'pointer'
-              }}
-            >
-              ➡️ Semaine suivante
-            </button>
-            <button
-              onClick={() => navigate(`/admin/week/${getCurrentWeekNumber()}`)}
-              style={{
-                padding: '0.5rem 1rem',
-                fontSize: '0.9rem',
-                backgroundColor: '#28a745',
-                color: 'white',
-                border: 'none',
-                borderRadius: '5px',
-                cursor: 'pointer'
-              }}
-            >
-              📅 Semaine courante
-            </button>
-          </div>
         </div>
       </div>
     </AdminLayout>
