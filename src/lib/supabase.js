@@ -28,13 +28,8 @@ export const isSupabaseConfigured = () => {
 
 // Helper pour obtenir l'URL de redirection selon l'environnement
 export const getRedirectUrl = (path = '/auth/callback') => {
-  const isDev = import.meta.env.DEV
-  
-  // En développement local: port 5173 (Vite par défaut)
-  // En production: utilise le domaine actuel (Replit ou autre)
-  const baseUrl = isDev 
-    ? 'http://localhost:5173' 
-    : window.location.origin
+  // Toujours utiliser l'origine actuelle (fonctionne sur Replit et en production)
+  const baseUrl = window.location.origin
   
   return `${baseUrl}${path}`
 }
