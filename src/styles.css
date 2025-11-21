@@ -85,10 +85,9 @@ body {
 
 .toolbar-buttons {
   display: flex;
-  flex-direction: row;
-  gap: 12px;
-  align-items: center;
-  justify-content: flex-end;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
 }
 
 /* ========================================
