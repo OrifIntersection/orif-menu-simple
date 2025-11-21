@@ -36,14 +36,10 @@ export default function MenuDrawer() {
           }));
           setMenusData(formattedMenus.sort((a, b) => b.year !== a.year ? b.year - a.year : b.weekNum - a.weekNum));
           return;
-        } 
+        }
 
         // SINON : Essayer Supabase
-<<<<<<< HEAD
         const { data, error } = await import("../lib/supabase").then(mod => mod.supabase.from("meals").select("meal_date").order("meal_date", { ascending: false }));
-=======
-        const { data, error } = await import("../lib/supabase").then(mod => mod.supabase.from("meal_items").select("date").order("date", { ascending: false }));
->>>>>>> a114d219dd480109e87a00f11f1e4f5974e9388a
         if (error || !data) {
           setMenusData([]);
         } else {
@@ -295,7 +291,7 @@ export default function MenuDrawer() {
                         >
                           <div className="menu-item-label">{menu.weekLabel}</div>
                           <div className="menu-item-meta">
-                            {menu.days.length} jours • {menu.meals.length} repas
+                            {Array.isArray(menu.days) ? `${menu.days.length} jours • ${Array.isArray(menu.meals) ? menu.meals.length : 0} repas` : 'Menu incomplet'}
                           </div>
                         </button>
                       ))}

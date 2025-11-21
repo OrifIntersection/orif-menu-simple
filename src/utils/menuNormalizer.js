@@ -64,10 +64,7 @@ function normalizeDishType(type) {
 export function normalizeMenu(menu, weekNumber) {
   if (!menu) return null;
   
-<<<<<<< HEAD
   // Déjà normalisé (localStorage format)
-=======
->>>>>>> a114d219dd480109e87a00f11f1e4f5974e9388a
   if (menu.days && menu.data) {
     return {
       weekNumber: menu.week_number || weekNumber,
@@ -79,7 +76,6 @@ export function normalizeMenu(menu, weekNumber) {
     };
   }
   
-<<<<<<< HEAD
   // NOUVELLE STRUCTURE: Array de meals avec jointures
   if (Array.isArray(menu) && menu.length > 0 && menu[0].meal_date) {
     const days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
@@ -109,7 +105,7 @@ export function normalizeMenu(menu, weekNumber) {
       if (!mealType) {
         console.warn(`Type de repas inconnu ignoré: "${rawMealType}"`);
         return;
-      } 
+      }
       
       // Traiter les plats de ce meal
       const dishes = mealItem.meals_dishes || [];
@@ -139,8 +135,6 @@ export function normalizeMenu(menu, weekNumber) {
   }
   
   // ANCIENNE STRUCTURE: items array (meal_items)
-=======
->>>>>>> a114d219dd480109e87a00f11f1e4f5974e9388a
   if (menu.items && Array.isArray(menu.items)) {
     const days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
     const meals = ['Midi', 'Soir'];
