@@ -189,7 +189,7 @@ export default function App() {
           {/* Route pour la page de connexion */}
           <Route path="/login" element={<LoginPage />} />
           {/* Route pour le callback d'authentification Magic Link */}
-          <Route path="/auth/callback" element={<AuthCallbackDebug />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           {/* Route pour afficher le menu d'une semaine spécifique */}
           <Route path="/week/:weekNumber" element={<WeekMenuPage />} />
           {/* Route pour la version alternative du menu de la semaine */}
