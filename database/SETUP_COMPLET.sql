@@ -327,12 +327,16 @@ CREATE POLICY "meals_dishes_admin_write"
 -- ÉTAPE 10 : DONNÉES INITIALES
 -- =========================================
 
--- Ajouter vos emails admin à la whitelist
--- IMPORTANT : Remplacez par vos vrais emails !
+-- ⚠️ IMPORTANT : Remplacez par vos vrais emails !
+-- Toute personne avec un email dans cette liste deviendra
+-- automatiquement ADMIN à sa première connexion.
 INSERT INTO public.admin_whitelist (email) VALUES
-  ('admin@orif.ch'),
-  ('votre-email@exemple.com')
+  ('admin@orif.ch')
 ON CONFLICT (email) DO NOTHING;
+
+-- Pour ajouter d'autres admins, ajoutez-les ici :
+-- ('autre-admin@orif.ch'),
+-- ('votre-email@exemple.com')
 
 -- Exemples de plats pour tester (optionnel)
 INSERT INTO public.dishes (name, dish_type, is_active) VALUES

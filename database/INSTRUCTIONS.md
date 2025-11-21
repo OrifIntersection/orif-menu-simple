@@ -18,16 +18,29 @@ Le fichier `SETUP_COMPLET.sql` configure toute votre base de données en une seu
 
 ### **Étape 1 : Modifier la whitelist admin**
 
-Ouvrez le fichier `SETUP_COMPLET.sql` et allez à la **ligne 306** :
+Ouvrez le fichier `SETUP_COMPLET.sql` et allez aux **lignes 336-342** :
 
 ```sql
 INSERT INTO public.admin_whitelist (email) VALUES
-  ('admin@orif.ch'),                    -- ⬅️ Remplacez par votre email
-  ('votre-email@exemple.com')           -- ⬅️ Remplacez par votre email
+  ('admin@orif.ch')                     -- ⬅️ Remplacez par votre email
 ON CONFLICT (email) DO NOTHING;
+
+-- Pour ajouter d'autres admins, ajoutez-les ici :
+-- ('autre-admin@orif.ch'),            -- ⬅️ Décommentez et ajoutez vos emails
+-- ('votre-email@exemple.com')
 ```
 
-**Remplacez ces emails** par vos vraies adresses email que vous utiliserez pour vous connecter.
+**Remplacez `admin@orif.ch`** par votre vraie adresse email.
+
+**Pour ajouter plusieurs admins**, décommentez les lignes et modifiez :
+
+```sql
+INSERT INTO public.admin_whitelist (email) VALUES
+  ('votre-email@orif.ch'),
+  ('collegue@orif.ch'),
+  ('autre-admin@orif.ch')
+ON CONFLICT (email) DO NOTHING;
+```
 
 ---
 
