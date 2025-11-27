@@ -23,6 +23,7 @@ import ImportLocalMenuPage from './pages/ImportLocalMenuPage';
 import ImportMenuPage from './pages/ImportMenuPage';
 import StyleDemo from './pages/StyleDemo';
 import EmojiDemo from './pages/EmojiDemo';
+import { ProtectedRoute } from './components/ProtectedRoute';
 import "./styles.css";
 
 /**
@@ -190,6 +191,8 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           {/* Route pour le callback d'authentification Magic Link */}
           <Route path="/auth/callback" element={<AuthCallback />} />
+          {/* Route debug pour diagnostiquer les erreurs d'authentification */}
+          <Route path="/debug" element={<AuthCallbackDebug />} />
           {/* Route pour afficher le menu d'une semaine spécifique */}
           <Route path="/week/:weekNumber" element={<WeekMenuPage />} />
           {/* Route pour la version alternative du menu de la semaine */}
@@ -202,14 +205,17 @@ export default function App() {
           <Route path="/emoji-demo" element={<EmojiDemo />} />
           {/* Route pour afficher le menu d'une date spécifique */}
           <Route path="/date/:date" element={<DateMenuPage />} />
+          
+          {/* ROUTES ADMIN PROTÉGÉES - Authentification requise */}
           {/* Route pour la page d'administration */}
-          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/admin" element={<ProtectedRoute element={<AdminPage />} />} />
           {/* Route pour l'import de menus Excel */}
-          <Route path="/admin/import" element={<ImportMenuPage />} />
+          <Route path="/admin/import" element={<ProtectedRoute element={<ImportMenuPage />} />} />
           {/* Route pour éditer le menu d'une semaine */}
-          <Route path="/admin/week/:weekNumber" element={<WeekEditor />} />
+          <Route path="/admin/week/:weekNumber" element={<ProtectedRoute element={<WeekEditor />} />} />
           {/* Route pour éditer le menu d'une date */}
-          <Route path="/admin/date/:date" element={<DateEditor />} />
+          <Route path="/admin/date/:date" element={<ProtectedRoute element={<DateEditor />} />} />
+          
           {/* Route catch-all pour toutes les URLs non définies */}
           <Route path="*" element={<HomePage />} />
         </Routes>

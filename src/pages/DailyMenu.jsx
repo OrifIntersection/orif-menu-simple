@@ -121,11 +121,7 @@ export default function DailyMenu(props) {
         </>
       ) : (
         <div style={{ color: '#d32f2f', fontWeight: 'bold', margin: '2rem 0', textAlign: 'center' }}>
-          Aucun menu disponible pour ce jour.<br />
-          <span style={{ fontWeight: 'normal', color: '#333', fontSize: '1rem' }}>
-            Vous pouvez importer un menu pour cette date via la page d'importation.<br />
-            <a href="/import-local" style={{ color: '#007bff', textDecoration: 'underline' }}>Importer un menu</a>
-          </span>
+          Aucun menu disponible pour ce jour.
         </div>
       )}
     </>

@@ -192,10 +192,19 @@ export default function MenuDrawer() {
 
           {/* Section de test des pages */}
           <div className="drawer-section">
-            <h4 className="drawer-section-title">🧪 Test des pages</h4>
+            <h4 className="drawer-section-title">🧪 Test & Debug</h4>
+            
+            {/* Debug - accessible à tous */}
+            <div style={{ marginBottom: '8px', paddingLeft: '8px', fontSize: '0.85em', fontWeight: '600', color: '#9ca3af' }}>
+              Diagnostic
+            </div>
+            <button className="drawer-action-item" onClick={() => handleNavAction(() => navigate('/debug'))}>
+              <span className="action-icon">🔧</span>
+              <span className="action-label">Debug Authentification</span>
+            </button>
             
             {/* Pages principales */}
-            <div style={{ marginBottom: '8px', paddingLeft: '8px', fontSize: '0.85em', fontWeight: '600', color: '#9ca3af' }}>
+            <div style={{ marginBottom: '8px', paddingLeft: '8px', fontSize: '0.85em', fontWeight: '600', color: '#9ca3af', marginTop: '12px' }}>
               Pages principales
             </div>
             <button className="drawer-action-item" onClick={() => handleNavAction(() => navigate('/login'))}>
