@@ -312,12 +312,15 @@ export class MenuService {
         return existingMeal;
       }
 
-      // Créer un nouveau meal
+      // Créer un nouveau meal avec UPSERT pour éviter les conflits 409
+      // quand plusieurs requêtes se font simultanément pour le même (date, type)
       const { data, error } = await supabase
         .from('meals')
-        .insert({ 
+        .upsert({ 
           meal_date: mealDate, 
           meal_type: normalizedMealType
+        }, {
+          onConflict: 'meal_date,meal_type'
         })
         .select()
         .single();
