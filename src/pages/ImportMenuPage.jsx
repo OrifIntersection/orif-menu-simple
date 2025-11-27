@@ -126,7 +126,10 @@ export default function ImportMenuPage() {
 
   // Enregistre les menus dans Supabase
   const handleConfirmImport = async () => {
+    console.log('🚀 DÉBUT handleConfirmImport - pendingMenus:', pendingMenus);
+    
     if (!pendingMenus || pendingMenus.length === 0) {
+      console.error('❌ Pas de menus en attente');
       alert("Aucun menu à importer. Veuillez d'abord importer un fichier Excel.");
       return;
     }
@@ -134,15 +137,29 @@ export default function ImportMenuPage() {
     console.log('💾 Sauvegarde des menus dans Supabase...', pendingMenus);
     
     try {
+      let totalPlats = 0;
+      let successPlats = 0;
+      
       for (const menu of pendingMenus) {
+        console.log(`📋 Traitement menu semaine ${menu.week_number}...`);
+        
         if (menu && menu.year && menu.week_number && menu.originalMenus) {
+          totalPlats += menu.originalMenus.length;
+          
           // Importer chaque plat dans Supabase
           for (const item of menu.originalMenus) {
             try {
+              console.log(`📝 Traitement plat: "${item.plat}"`);
+              
               let dateStr;
               
-              if (item.date) {
-                // Nouveau format avec date
+              if (item.dateStr) {
+                // Nouveau format avec dateStr (déjà formaté en DD.MM.YYYY par ExcelImportMenu)
+                const [day, month, year] = item.dateStr.split('.');
+                dateStr = `${year}-${month}-${day}`;
+                console.log(`  → dateStr reçue: ${item.dateStr} → convertie en: ${dateStr}`);
+              } else if (item.date) {
+                // Fallback si date est un objet Date (ne devrait pas arriver)
                 const year = item.date.getFullYear();
                 const month = String(item.date.getMonth() + 1).padStart(2, '0');
                 const day = String(item.date.getDate()).padStart(2, '0');
@@ -170,37 +187,50 @@ export default function ImportMenuPage() {
                 const mealType = item.moment.toLowerCase() === 'midi' ? 'MIDI' : 'SOIR';
                 const dishType = item.typePlat || 'AUTRE';
                 
+                console.log(`  → Date: ${dateStr}, Moment: ${mealType}, Type: ${dishType}`);
+                
                 // Créer ou récupérer le plat
+                console.log(`  → Création du plat...`);
                 const dish = await MenuService.getOrCreateDish(item.plat, dishType);
+                console.log(`  → Plat créé/récupéré: ID=${dish.id}`);
                 
                 // Assigner le plat au meal
+                console.log(`  → Assignation au meal...`);
                 await MenuService.assignDishToMealByType(dateStr, mealType, dishType, dish.id);
                 
-                console.log(`✅ ${item.plat} sauvegardé`);
+                successPlats++;
+                console.log(`✅ ${item.plat} sauvegardé (${successPlats}/${totalPlats})`);
+              } else {
+                console.warn(`⚠️ Pas de date pour ${item.plat}`);
               }
             } catch (error) {
-              console.error(`⚠️ Erreur pour ${item.plat}:`, error.message);
-              // Continuer même en cas d'erreur
+              console.error(`⚠️ Erreur pour ${item.plat}:`, error);
+              console.error(`   Message: ${error.message}`);
+              console.error(`   Stack: ${error.stack}`);
             }
           }
           
-          console.log(`✅ Menu semaine ${menu.week_number} sauvegardé avec succès`);
+          console.log(`✅ Menu semaine ${menu.week_number} traité: ${successPlats}/${totalPlats} plats`);
         }
       }
+      
+      console.log(`🎉 Import terminé: ${successPlats}/${totalPlats} plats importés`);
       
       // Redirection vers la semaine importée
       if (pendingMenus[0] && pendingMenus[0].week_number) {
         const weekNum = pendingMenus[0].week_number;
-        alert(`Menu de la semaine ${weekNum} importé avec succès ! Redirection...`);
+        alert(`Menu de la semaine ${weekNum} importé avec succès ! (${successPlats}/${totalPlats} plats)\nRedirection...`);
         navigate("/admin/week/" + weekNum);
       } else {
-        alert("Importation réussie !");
+        alert(`Importation réussie ! (${successPlats}/${totalPlats} plats)`);
         navigate("/admin");
       }
       
       setPendingMenus(null);
     } catch (error) {
-      console.error('❌ Erreur lors de l\'import Supabase:', error);
+      console.error('❌ Erreur FATALE lors de l\'import Supabase:', error);
+      console.error(`   Message: ${error.message}`);
+      console.error(`   Stack: ${error.stack}`);
       alert(`Erreur lors de l'import: ${error.message}`);
     }
   };
