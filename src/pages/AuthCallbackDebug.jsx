@@ -93,8 +93,7 @@ const AuthCallbackDebug = () => {
             </>
           ) : (
             <div style={{ textAlign: 'center', color: '#d32f2f', fontWeight: 'bold', padding: '2rem' }}>
-              Aucun menu de la semaine disponible.<br />
-              <a href="/import-local" style={{ color: '#007bff', textDecoration: 'underline' }}>Importer un menu</a>
+              Aucun menu de la semaine disponible.
             </div>
           )}
         </div>
@@ -166,8 +165,7 @@ const AuthCallbackDebug = () => {
             </>
           ) : (
             <div style={{ textAlign: 'center', color: '#d32f2f', fontWeight: 'bold', padding: '2rem' }}>
-              Aucun menu disponible pour {jourActuel}.<br />
-              <a href="/import-local" style={{ color: '#007bff', textDecoration: 'underline' }}>Importer un menu</a>
+              Aucun menu disponible pour {jourActuel}.
             </div>
           )}
         </div>
