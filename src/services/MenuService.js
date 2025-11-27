@@ -154,9 +154,6 @@ export class MenuService {
       }
       
       console.log('📆 Chargement menu pour date:', date);
-      const nextDate = new Date(date + 'T00:00:00');
-      nextDate.setDate(nextDate.getDate() + 1);
-      const nextDateStr = nextDate.toISOString().slice(0, 10);
       
       const { data, error } = await supabase
         .from('meals')
@@ -175,8 +172,7 @@ export class MenuService {
             )
           )
         `)
-        .gte('meal_date', date + 'T00:00:00')
-        .lt('meal_date', nextDateStr + 'T00:00:00')
+        .eq('meal_date', date)
         .order('meal_type');
 
       if (error) throw error;
@@ -309,15 +305,11 @@ export class MenuService {
 
       // Chercher si le meal existe déjà
       console.log('🔍 Cherche meal existant:', mealDate, normalizedMealType);
-      const nextDate = new Date(mealDate + 'T00:00:00');
-      nextDate.setDate(nextDate.getDate() + 1);
-      const nextDateStr = nextDate.toISOString().slice(0, 10);
       
       const { data: existingMeal, error: searchError } = await supabase
         .from('meals')
         .select('*')
-        .gte('meal_date', mealDate + 'T00:00:00')
-        .lt('meal_date', nextDateStr + 'T00:00:00')
+        .eq('meal_date', mealDate)
         .eq('meal_type', normalizedMealType)
         .maybeSingle();
 
@@ -594,15 +586,10 @@ export class MenuService {
 
     try {
       // 1. Récupérer le meal
-      const nextDate = new Date(mealDate + 'T00:00:00');
-      nextDate.setDate(nextDate.getDate() + 1);
-      const nextDateStr = nextDate.toISOString().slice(0, 10);
-      
       const { data: meal, error: mealError } = await supabase
         .from('meals')
         .select('id')
-        .gte('meal_date', mealDate + 'T00:00:00')
-        .lt('meal_date', nextDateStr + 'T00:00:00')
+        .eq('meal_date', mealDate)
         .eq('meal_type', mealType)
         .maybeSingle();
 

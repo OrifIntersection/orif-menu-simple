@@ -1,0 +1,896 @@
+-- =========================================
+-- SCRIPT SQL SIMPLE - MENU CAFÉTÉRIA ORIF
+-- =========================================
+-- 3 tables de menu + 1 table profiles (ce qui marchait avant)
+-- =========================================
+
+-- =========================================
+-- ÉTAPE 1 : NETTOYAGE COMPLET
+-- =========================================
+
+DROP TABLE IF EXISTS public.meals_dishes CASCADE;
+DROP TABLE IF EXISTS public.meals CASCADE;
+DROP TABLE IF EXISTS public.dishes CASCADE;
+DROP TABLE IF EXISTS public.profiles CASCADE;
+DROP TABLE IF EXISTS public.admin_whitelist CASCADE;
+
+-- Supprimer les anciennes tables (legacy)
+DROP TABLE IF EXISTS public.meal_items CASCADE;
+DROP TABLE IF EXISTS public.menu_days CASCADE;
+DROP TABLE IF EXISTS public.menus CASCADE;
+DROP TABLE IF EXISTS public.meal_types CASCADE;
+DROP TABLE IF EXISTS public.categories CASCADE;
+DROP TABLE IF EXISTS public.allergens CASCADE;
+
+-- Supprimer les types ENUM existants
+DROP TYPE IF EXISTS meal_type CASCADE;
+DROP TYPE IF EXISTS dish_type CASCADE;
+
+-- Supprimer les triggers
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
+
+-- =========================================
+-- ÉTAPE 2 : CRÉATION DES TYPES ENUM
+-- =========================================
+
+CREATE TYPE meal_type AS ENUM ('MIDI', 'SOIR');
+
+CREATE TYPE dish_type AS ENUM (
+  'ENTREE',      -- 🥗 Entrée
+  'PLAT',        -- 🍽️ Plat principal
+  'GARNITURE',   -- 🥔 Garniture
+  'LEGUME',      -- 🥬 Légume
+  'DESSERT',     -- 🍰 Dessert
+  'AUTRE'        -- ✨ Autre
+);
+
+-- =========================================
+-- ÉTAPE 3 : TABLE PROFILES
+-- =========================================
+
+CREATE TABLE public.profiles (
+  user_id uuid PRIMARY KEY,
+  full_name text,
+  role text NOT NULL DEFAULT 'viewer'
+    CHECK (role IN ('admin', 'cook', 'viewer')),
+  created_at timestamptz DEFAULT now(),
+  CONSTRAINT fk_profiles_user
+    FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+);
+
+-- =========================================
+-- ÉTAPE 4 : TABLE DISHES (PLATS)
+-- =========================================
+
+CREATE TABLE public.dishes (
+  id bigserial PRIMARY KEY,
+  name text NOT NULL,
+  description text,
+  dish_type dish_type NOT NULL DEFAULT 'AUTRE',
+  is_active boolean DEFAULT true,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+CREATE INDEX idx_dishes_type ON public.dishes (dish_type) WHERE is_active = true;
+CREATE INDEX idx_dishes_name ON public.dishes (name) WHERE is_active = true;
+
+-- =========================================
+-- ÉTAPE 5 : TABLE MEALS (REPAS)
+-- =========================================
+
+CREATE TABLE public.meals (
+  id bigserial PRIMARY KEY,
+  meal_date date NOT NULL,
+  meal_type meal_type NOT NULL,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  UNIQUE (meal_date, meal_type)
+);
+
+CREATE INDEX idx_meals_date ON public.meals (meal_date);
+
+-- =========================================
+-- ÉTAPE 6 : TABLE MEALS_DISHES (LIAISON)
+-- =========================================
+
+CREATE TABLE public.meals_dishes (
+  meal_id bigint NOT NULL,
+  dish_id bigint NOT NULL,
+  dish_type dish_type NOT NULL,
+  position int,
+  created_at timestamptz DEFAULT now(),
+  PRIMARY KEY (meal_id, dish_id),
+  UNIQUE (meal_id, dish_type),
+  CONSTRAINT fk_meals_dishes_meal
+    FOREIGN KEY (meal_id) REFERENCES public.meals(id) ON DELETE CASCADE,
+  CONSTRAINT fk_meals_dishes_dish
+    FOREIGN KEY (dish_id) REFERENCES public.dishes(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_meals_dishes_meal ON public.meals_dishes (meal_id);
+CREATE INDEX idx_meals_dishes_dish ON public.meals_dishes (dish_id);
+
+-- =========================================
+-- ÉTAPE 7 : ROW LEVEL SECURITY (RLS)
+-- =========================================
+
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.dishes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.meals ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.meals_dishes ENABLE ROW LEVEL SECURITY;
+
+-- POLICIES : PROFILES
+CREATE POLICY "profiles_read_own"
+  ON public.profiles
+  FOR SELECT
+  USING (user_id = auth.uid());
+
+CREATE POLICY "profiles_update_own"
+  ON public.profiles
+  FOR UPDATE
+  USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY "profiles_insert_own"
+  ON public.profiles
+  FOR INSERT
+  WITH CHECK (user_id = auth.uid());
+
+-- POLICIES : DISHES (PLATS)
+CREATE POLICY "dishes_public_read"
+  ON public.dishes
+  FOR SELECT
+  TO public
+  USING (is_active = true);
+
+CREATE POLICY "dishes_admin_write"
+  ON public.dishes
+  FOR ALL
+  TO public
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.user_id = auth.uid()
+        AND profiles.role = 'admin'
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.user_id = auth.uid()
+        AND profiles.role = 'admin'
+    )
+  );
+
+-- POLICIES : MEALS (REPAS)
+CREATE POLICY "meals_public_read"
+  ON public.meals
+  FOR SELECT
+  TO public
+  USING (true);
+
+CREATE POLICY "meals_admin_write"
+  ON public.meals
+  FOR ALL
+  TO public
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.user_id = auth.uid()
+        AND profiles.role = 'admin'
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.user_id = auth.uid()
+        AND profiles.role = 'admin'
+    )
+  );
+
+-- POLICIES : MEALS_DISHES (LIAISONS)
+CREATE POLICY "meals_dishes_public_read"
+  ON public.meals_dishes
+  FOR SELECT
+  TO public
+  USING (true);
+
+CREATE POLICY "meals_dishes_admin_write"
+  ON public.meals_dishes
+  FOR ALL
+  TO public
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.user_id = auth.uid()
+        AND profiles.role = 'admin'
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.user_id = auth.uid()
+        AND profiles.role = 'admin'
+    )
+  );
+
+-- =========================================
+-- ÉTAPE 8 : PROFILS ADMIN
+-- =========================================
+
+-- Créer les profils admin pour les comptes existants
+INSERT INTO public.profiles (user_id, full_name, role)
+VALUES 
+  ('1ebb59cc-e034-4f09-b8a5-68e07015d11d', 'Admin ORIF', 'admin'),
+  ('98057cf8-066c-4d97-b363-2db5aae00364', 'Raphael Schmutz', 'admin')
+ON CONFLICT (user_id) DO UPDATE
+SET role = 'admin',
+    full_name = EXCLUDED.full_name;
+
+-- =========================================
+-- ÉTAPE 9 : PLATS D'EXEMPLE
+-- =========================================
+
+INSERT INTO public.dishes (name, dish_type, is_active) VALUES
+  ('Salade verte', 'ENTREE', true),
+  ('Salade de tomates', 'ENTREE', true),
+  ('Carottes râpées', 'ENTREE', true),
+  
+  ('Poulet rôti', 'PLAT', true),
+  ('Saumon grillé', 'PLAT', true),
+  ('Steak haché', 'PLAT', true),
+  ('Pâtes bolognaise', 'PLAT', true),
+  
+  ('Riz', 'GARNITURE', true),
+  ('Pommes de terre', 'GARNITURE', true),
+  ('Pâtes', 'GARNITURE', true),
+  ('Frites', 'GARNITURE', true),
+  
+  ('Brocoli', 'LEGUME', true),
+  ('Haricots verts', 'LEGUME', true),
+  ('Carottes', 'LEGUME', true),
+  ('Ratatouille', 'LEGUME', true),
+  
+  ('Tarte aux pommes', 'DESSERT', true),
+  ('Mousse au chocolat', 'DESSERT', true),
+  ('Yaourt', 'DESSERT', true),
+  ('Fruit de saison', 'DESSERT', true),
+  
+  ('Pain', 'AUTRE', true),
+  ('Salade de fruits', 'AUTRE', true)
+ON CONFLICT DO NOTHING;
+
+-- =========================================
+-- FIN DU SCRIPT
+-- =========================================
+
+DO $$
+BEGIN
+  RAISE NOTICE '✅ Base de données configurée avec succès !';
+  RAISE NOTICE '';
+  RAISE NOTICE '📋 Tables créées :';
+  RAISE NOTICE '   - profiles (1 table)';
+  RAISE NOTICE '   - dishes, meals, meals_dishes (3 tables de menu)';
+  RAISE NOTICE '';
+  RAISE NOTICE '👤 Profils admin créés pour :';
+  RAISE NOTICE '   - 1ebb59cc-e034-4f09-b8a5-68e07015d11d (Admin ORIF)';
+  RAISE NOTICE '   - 98057cf8-066c-4d97-b363-2db5aae00364 (Raphael Schmutz)';
+  RAISE NOTICE '';
+  RAISE NOTICE '🔍 Pour vérifier :';
+  RAISE NOTICE '   SELECT * FROM public.profiles;';
+  RAISE NOTICE '   SELECT * FROM public.dishes;';
+END $$;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- =========================================
+-- AJOUTER DES MENUS DE TEST POUR LA SEMAINE 1
+-- (6-10 janvier 2025 - Lundi à Vendredi)
+-- =========================================
+-- Ce script ajoute des menus complets avec des plats
+-- pour voir les emojis en action !
+-- =========================================
+
+-- Semaine 1 : 6 au 10 janvier 2025
+-- On crée seulement les jours de travail (Lundi-Vendredi)
+
+-- =========================================
+-- LUNDI 6 JANVIER 2025
+-- =========================================
+
+-- MIDI
+INSERT INTO public.meals (meal_date, meal_type)
+VALUES ('2025-01-06', 'MIDI')
+ON CONFLICT (meal_date, meal_type) DO NOTHING;
+
+INSERT INTO public.meals_dishes (meal_id, dish_id, dish_type, position)
+VALUES 
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-06' AND meal_type = 'MIDI'),
+   (SELECT id FROM public.dishes WHERE name = 'Salade verte' LIMIT 1),
+   'ENTREE', 1),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-06' AND meal_type = 'MIDI'),
+   (SELECT id FROM public.dishes WHERE name = 'Poulet rôti' LIMIT 1),
+   'PLAT', 2),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-06' AND meal_type = 'MIDI'),
+   (SELECT id FROM public.dishes WHERE name = 'Frites' LIMIT 1),
+   'GARNITURE', 3),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-06' AND meal_type = 'MIDI'),
+   (SELECT id FROM public.dishes WHERE name = 'Haricots verts' LIMIT 1),
+   'LEGUME', 4),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-06' AND meal_type = 'MIDI'),
+   (SELECT id FROM public.dishes WHERE name = 'Tarte aux pommes' LIMIT 1),
+   'DESSERT', 5)
+ON CONFLICT (meal_id, dish_id) DO NOTHING;
+
+-- SOIR
+INSERT INTO public.meals (meal_date, meal_type)
+VALUES ('2025-01-06', 'SOIR')
+ON CONFLICT (meal_date, meal_type) DO NOTHING;
+
+INSERT INTO public.meals_dishes (meal_id, dish_id, dish_type, position)
+VALUES 
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-06' AND meal_type = 'SOIR'),
+   (SELECT id FROM public.dishes WHERE name = 'Salade de tomates' LIMIT 1),
+   'ENTREE', 1),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-06' AND meal_type = 'SOIR'),
+   (SELECT id FROM public.dishes WHERE name = 'Saumon grillé' LIMIT 1),
+   'PLAT', 2),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-06' AND meal_type = 'SOIR'),
+   (SELECT id FROM public.dishes WHERE name = 'Riz' LIMIT 1),
+   'GARNITURE', 3),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-06' AND meal_type = 'SOIR'),
+   (SELECT id FROM public.dishes WHERE name = 'Brocoli' LIMIT 1),
+   'LEGUME', 4),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-06' AND meal_type = 'SOIR'),
+   (SELECT id FROM public.dishes WHERE name = 'Yaourt' LIMIT 1),
+   'DESSERT', 5)
+ON CONFLICT (meal_id, dish_id) DO NOTHING;
+
+-- =========================================
+-- MARDI 7 JANVIER 2025
+-- =========================================
+
+-- MIDI
+INSERT INTO public.meals (meal_date, meal_type)
+VALUES ('2025-01-07', 'MIDI')
+ON CONFLICT (meal_date, meal_type) DO NOTHING;
+
+INSERT INTO public.meals_dishes (meal_id, dish_id, dish_type, position)
+VALUES 
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-07' AND meal_type = 'MIDI'),
+   (SELECT id FROM public.dishes WHERE name = 'Carottes râpées' LIMIT 1),
+   'ENTREE', 1),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-07' AND meal_type = 'MIDI'),
+   (SELECT id FROM public.dishes WHERE name = 'Pâtes bolognaise' LIMIT 1),
+   'PLAT', 2),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-07' AND meal_type = 'MIDI'),
+   (SELECT id FROM public.dishes WHERE name = 'Pain' LIMIT 1),
+   'AUTRE', 3),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-07' AND meal_type = 'MIDI'),
+   (SELECT id FROM public.dishes WHERE name = 'Carottes' LIMIT 1),
+   'LEGUME', 4),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-07' AND meal_type = 'MIDI'),
+   (SELECT id FROM public.dishes WHERE name = 'Mousse au chocolat' LIMIT 1),
+   'DESSERT', 5)
+ON CONFLICT (meal_id, dish_id) DO NOTHING;
+
+-- SOIR
+INSERT INTO public.meals (meal_date, meal_type)
+VALUES ('2025-01-07', 'SOIR')
+ON CONFLICT (meal_date, meal_type) DO NOTHING;
+
+INSERT INTO public.meals_dishes (meal_id, dish_id, dish_type, position)
+VALUES 
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-07' AND meal_type = 'SOIR'),
+   (SELECT id FROM public.dishes WHERE name = 'Salade verte' LIMIT 1),
+   'ENTREE', 1),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-07' AND meal_type = 'SOIR'),
+   (SELECT id FROM public.dishes WHERE name = 'Steak haché' LIMIT 1),
+   'PLAT', 2),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-07' AND meal_type = 'SOIR'),
+   (SELECT id FROM public.dishes WHERE name = 'Pommes de terre' LIMIT 1),
+   'GARNITURE', 3),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-07' AND meal_type = 'SOIR'),
+   (SELECT id FROM public.dishes WHERE name = 'Ratatouille' LIMIT 1),
+   'LEGUME', 4),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-07' AND meal_type = 'SOIR'),
+   (SELECT id FROM public.dishes WHERE name = 'Fruit de saison' LIMIT 1),
+   'DESSERT', 5)
+ON CONFLICT (meal_id, dish_id) DO NOTHING;
+
+-- =========================================
+-- MERCREDI 8 JANVIER 2025
+-- =========================================
+
+-- MIDI
+INSERT INTO public.meals (meal_date, meal_type)
+VALUES ('2025-01-08', 'MIDI')
+ON CONFLICT (meal_date, meal_type) DO NOTHING;
+
+INSERT INTO public.meals_dishes (meal_id, dish_id, dish_type, position)
+VALUES 
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-08' AND meal_type = 'MIDI'),
+   (SELECT id FROM public.dishes WHERE name = 'Salade de tomates' LIMIT 1),
+   'ENTREE', 1),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-08' AND meal_type = 'MIDI'),
+   (SELECT id FROM public.dishes WHERE name = 'Poulet rôti' LIMIT 1),
+   'PLAT', 2),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-08' AND meal_type = 'MIDI'),
+   (SELECT id FROM public.dishes WHERE name = 'Pâtes' LIMIT 1),
+   'GARNITURE', 3),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-08' AND meal_type = 'MIDI'),
+   (SELECT id FROM public.dishes WHERE name = 'Brocoli' LIMIT 1),
+   'LEGUME', 4),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-08' AND meal_type = 'MIDI'),
+   (SELECT id FROM public.dishes WHERE name = 'Yaourt' LIMIT 1),
+   'DESSERT', 5)
+ON CONFLICT (meal_id, dish_id) DO NOTHING;
+
+-- SOIR
+INSERT INTO public.meals (meal_date, meal_type)
+VALUES ('2025-01-08', 'SOIR')
+ON CONFLICT (meal_date, meal_type) DO NOTHING;
+
+INSERT INTO public.meals_dishes (meal_id, dish_id, dish_type, position)
+VALUES 
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-08' AND meal_type = 'SOIR'),
+   (SELECT id FROM public.dishes WHERE name = 'Carottes râpées' LIMIT 1),
+   'ENTREE', 1),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-08' AND meal_type = 'SOIR'),
+   (SELECT id FROM public.dishes WHERE name = 'Saumon grillé' LIMIT 1),
+   'PLAT', 2),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-08' AND meal_type = 'SOIR'),
+   (SELECT id FROM public.dishes WHERE name = 'Riz' LIMIT 1),
+   'GARNITURE', 3),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-08' AND meal_type = 'SOIR'),
+   (SELECT id FROM public.dishes WHERE name = 'Haricots verts' LIMIT 1),
+   'LEGUME', 4),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-08' AND meal_type = 'SOIR'),
+   (SELECT id FROM public.dishes WHERE name = 'Salade de fruits' LIMIT 1),
+   'AUTRE', 5)
+ON CONFLICT (meal_id, dish_id) DO NOTHING;
+
+-- =========================================
+-- JEUDI 9 JANVIER 2025
+-- =========================================
+
+-- MIDI
+INSERT INTO public.meals (meal_date, meal_type)
+VALUES ('2025-01-09', 'MIDI')
+ON CONFLICT (meal_date, meal_type) DO NOTHING;
+
+INSERT INTO public.meals_dishes (meal_id, dish_id, dish_type, position)
+VALUES 
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-09' AND meal_type = 'MIDI'),
+   (SELECT id FROM public.dishes WHERE name = 'Salade verte' LIMIT 1),
+   'ENTREE', 1),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-09' AND meal_type = 'MIDI'),
+   (SELECT id FROM public.dishes WHERE name = 'Steak haché' LIMIT 1),
+   'PLAT', 2),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-09' AND meal_type = 'MIDI'),
+   (SELECT id FROM public.dishes WHERE name = 'Frites' LIMIT 1),
+   'GARNITURE', 3),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-09' AND meal_type = 'MIDI'),
+   (SELECT id FROM public.dishes WHERE name = 'Carottes' LIMIT 1),
+   'LEGUME', 4),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-09' AND meal_type = 'MIDI'),
+   (SELECT id FROM public.dishes WHERE name = 'Tarte aux pommes' LIMIT 1),
+   'DESSERT', 5)
+ON CONFLICT (meal_id, dish_id) DO NOTHING;
+
+-- SOIR
+INSERT INTO public.meals (meal_date, meal_type)
+VALUES ('2025-01-09', 'SOIR')
+ON CONFLICT (meal_date, meal_type) DO NOTHING;
+
+INSERT INTO public.meals_dishes (meal_id, dish_id, dish_type, position)
+VALUES 
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-09' AND meal_type = 'SOIR'),
+   (SELECT id FROM public.dishes WHERE name = 'Salade de tomates' LIMIT 1),
+   'ENTREE', 1),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-09' AND meal_type = 'SOIR'),
+   (SELECT id FROM public.dishes WHERE name = 'Pâtes bolognaise' LIMIT 1),
+   'PLAT', 2),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-09' AND meal_type = 'SOIR'),
+   (SELECT id FROM public.dishes WHERE name = 'Pain' LIMIT 1),
+   'AUTRE', 3),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-09' AND meal_type = 'SOIR'),
+   (SELECT id FROM public.dishes WHERE name = 'Ratatouille' LIMIT 1),
+   'LEGUME', 4),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-09' AND meal_type = 'SOIR'),
+   (SELECT id FROM public.dishes WHERE name = 'Mousse au chocolat' LIMIT 1),
+   'DESSERT', 5)
+ON CONFLICT (meal_id, dish_id) DO NOTHING;
+
+-- =========================================
+-- VENDREDI 10 JANVIER 2025
+-- =========================================
+
+-- MIDI
+INSERT INTO public.meals (meal_date, meal_type)
+VALUES ('2025-01-10', 'MIDI')
+ON CONFLICT (meal_date, meal_type) DO NOTHING;
+
+INSERT INTO public.meals_dishes (meal_id, dish_id, dish_type, position)
+VALUES 
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-10' AND meal_type = 'MIDI'),
+   (SELECT id FROM public.dishes WHERE name = 'Carottes râpées' LIMIT 1),
+   'ENTREE', 1),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-10' AND meal_type = 'MIDI'),
+   (SELECT id FROM public.dishes WHERE name = 'Saumon grillé' LIMIT 1),
+   'PLAT', 2),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-10' AND meal_type = 'MIDI'),
+   (SELECT id FROM public.dishes WHERE name = 'Pommes de terre' LIMIT 1),
+   'GARNITURE', 3),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-10' AND meal_type = 'MIDI'),
+   (SELECT id FROM public.dishes WHERE name = 'Brocoli' LIMIT 1),
+   'LEGUME', 4),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-10' AND meal_type = 'MIDI'),
+   (SELECT id FROM public.dishes WHERE name = 'Fruit de saison' LIMIT 1),
+   'DESSERT', 5)
+ON CONFLICT (meal_id, dish_id) DO NOTHING;
+
+-- SOIR
+INSERT INTO public.meals (meal_date, meal_type)
+VALUES ('2025-01-10', 'SOIR')
+ON CONFLICT (meal_date, meal_type) DO NOTHING;
+
+INSERT INTO public.meals_dishes (meal_id, dish_id, dish_type, position)
+VALUES 
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-10' AND meal_type = 'SOIR'),
+   (SELECT id FROM public.dishes WHERE name = 'Salade verte' LIMIT 1),
+   'ENTREE', 1),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-10' AND meal_type = 'SOIR'),
+   (SELECT id FROM public.dishes WHERE name = 'Poulet rôti' LIMIT 1),
+   'PLAT', 2),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-10' AND meal_type = 'SOIR'),
+   (SELECT id FROM public.dishes WHERE name = 'Riz' LIMIT 1),
+   'GARNITURE', 3),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-10' AND meal_type = 'SOIR'),
+   (SELECT id FROM public.dishes WHERE name = 'Haricots verts' LIMIT 1),
+   'LEGUME', 4),
+  ((SELECT id FROM public.meals WHERE meal_date = '2025-01-10' AND meal_type = 'SOIR'),
+   (SELECT id FROM public.dishes WHERE name = 'Yaourt' LIMIT 1),
+   'DESSERT', 5)
+ON CONFLICT (meal_id, dish_id) DO NOTHING;
+
+-- =========================================
+-- FIN DU SCRIPT
+-- =========================================
+
+DO $$
+BEGIN
+  RAISE NOTICE '✅ Menus de test ajoutés pour la semaine 1 !';
+  RAISE NOTICE '';
+  RAISE NOTICE '📅 Dates : 6-10 janvier 2025 (Lundi-Vendredi)';
+  RAISE NOTICE '🍽️ Repas : 2 par jour (MIDI + SOIR)';
+  RAISE NOTICE '🥗 Chaque repas contient : Entrée, Plat, Garniture, Légume, Dessert';
+  RAISE NOTICE '';
+  RAISE NOTICE '🎯 Rafraîchissez la page web pour voir les emojis ! 🎉';
+  RAISE NOTICE '';
+  RAISE NOTICE '🔍 Pour vérifier :';
+  RAISE NOTICE '   SELECT * FROM public.meals WHERE meal_date >= ''2025-11-17'' AND meal_date <= ''2025-01-10'';';
+END $$;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- =========================================
+-- ancienne version
+-- =========================================
+
+-- =========================================
+-- SCRIPT UNIQUE : RESET + RECREATION MINIMALE
+-- =========================================
+
+-- 0. RESET : supprimer les tables si elles existent
+DROP TABLE IF EXISTS public.meal_items CASCADE;
+DROP TABLE IF EXISTS public.menu_days CASCADE;
+DROP TABLE IF EXISTS public.menus CASCADE;
+DROP TABLE IF EXISTS public.meal_types CASCADE;
+DROP TABLE IF EXISTS public.allergens CASCADE;
+DROP TABLE IF EXISTS public.categories CASCADE;
+DROP TABLE IF EXISTS public.profiles CASCADE;
+
+-- =========================================
+-- 1. TABLE profiles (liee a auth.users)
+-- =========================================
+CREATE TABLE public.profiles (
+  user_id uuid PRIMARY KEY,
+  full_name text,
+  role text NOT NULL DEFAULT 'viewer'
+    CHECK (role IN ('admin', 'cook', 'viewer')),
+  created_at timestamptz DEFAULT now(),
+  CONSTRAINT fk_profiles_user
+    FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+);
+
+-- =========================================
+-- 2. TABLE meal_types
+-- =========================================
+CREATE TABLE public.meal_types (
+  id serial PRIMARY KEY,
+  code text NOT NULL UNIQUE,
+  label text NOT NULL
+);
+
+-- =========================================
+-- 3. TABLE menus (par semaine)
+-- =========================================
+CREATE TABLE public.menus (
+  id bigserial PRIMARY KEY,
+  year int NOT NULL,
+  week_number int NOT NULL CHECK (week_number BETWEEN 1 AND 53),
+  week_label text,
+  start_date date NOT NULL,
+  end_date date NOT NULL,
+  UNIQUE (year, week_number)
+);
+
+-- =========================================
+-- 4. TABLE menu_days (jours d'un menu)
+-- =========================================
+CREATE TABLE public.menu_days (
+  id bigserial PRIMARY KEY,
+  menu_id bigint NOT NULL,
+  day_name text NOT NULL CHECK (day_name IN ('Lundi','Mardi','Mercredi','Jeudi','Vendredi')),
+  day_date date NOT NULL,
+  UNIQUE (menu_id, day_name),
+  CONSTRAINT fk_menu_days_menu
+    FOREIGN KEY (menu_id) REFERENCES public.menus(id) ON DELETE CASCADE
+);
+
+-- =========================================
+-- 5. TABLE allergens
+-- =========================================
+CREATE TABLE public.allergens (
+  id serial PRIMARY KEY,
+  code text NOT NULL UNIQUE,
+  label text NOT NULL
+);
+
+-- =========================================
+-- 6. TABLE categories (facultatif mais attendu par le front)
+-- =========================================
+CREATE TABLE public.categories (
+  id serial PRIMARY KEY,
+  code text NOT NULL UNIQUE,
+  label text NOT NULL
+);
+
+-- =========================================
+-- 7. TABLE meal_items (affectation directe des plats)
+--    ⚠ il faut que public.dishes existe deja
+-- =========================================
+CREATE TABLE public.meal_items (
+  id bigserial PRIMARY KEY,
+  date date NOT NULL,
+  meal_type_id int NOT NULL,
+  category_id int,          -- optionnel, peut rester NULL
+  dish_id bigint NOT NULL,
+  meal_label text,          -- DEVient facultatif (plus de NOT NULL)
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+
+  CONSTRAINT fk_meal_items_type
+    FOREIGN KEY (meal_type_id) REFERENCES public.meal_types(id),
+
+  CONSTRAINT fk_meal_items_dish
+    FOREIGN KEY (dish_id) REFERENCES public.dishes(id),
+
+  CONSTRAINT fk_meal_items_category
+    FOREIGN KEY (category_id) REFERENCES public.categories(id),
+
+  -- ⚠ correspond au on_conflict=date,meal_type_id,dish_id
+  CONSTRAINT unique_meal_assignment
+    UNIQUE (date, meal_type_id, dish_id)
+);
+
+-- =========================================
+-- INDEX
+-- =========================================
+CREATE INDEX idx_meal_items_date  ON public.meal_items (date);
+CREATE INDEX idx_menus_year_week  ON public.menus (year, week_number);
+CREATE INDEX idx_menu_days_date   ON public.menu_days (day_date);
+
+-- =========================================
+-- DONNEES DE BASE
+-- =========================================
+INSERT INTO public.meal_types (code, label) VALUES
+  ('MIDI', 'Midi'),
+  ('SOIR', 'Soir')
+ON CONFLICT (code) DO NOTHING;
+
+-- (optionnel) categories de base
+INSERT INTO public.categories (code, label) VALUES
+  ('ENTREE',  'Entree'),
+  ('PLAT',    'Plat principal'),
+  ('GARNIT',  'Garniture'),
+  ('LEGUMES', 'Legumes'),
+  ('DESSERT', 'Dessert')
+ON CONFLICT (code) DO NOTHING;
+
+-- =========================================
+-- RLS
+-- =========================================
+ALTER TABLE public.profiles    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.meal_types  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.menus       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.menu_days   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.meal_items  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.allergens   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.categories  ENABLE ROW LEVEL SECURITY;
+
+-- Nettoyage des anciennes policies
+DROP POLICY IF EXISTS "public_read_menus"        ON public.menus;
+DROP POLICY IF EXISTS "public_read_menu_days"    ON public.menu_days;
+DROP POLICY IF EXISTS "public_read_meal_items"   ON public.meal_items;
+DROP POLICY IF EXISTS "admin_write_meal_items"   ON public.meal_items;
+DROP POLICY IF EXISTS "public_read_meal_types"   ON public.meal_types;
+DROP POLICY IF EXISTS "public_read_allergens"    ON public.allergens;
+DROP POLICY IF EXISTS "public_read_categories"   ON public.categories;
+DROP POLICY IF EXISTS "profiles_read_own"        ON public.profiles;
+DROP POLICY IF EXISTS "profiles_update_own"      ON public.profiles;
+DROP POLICY IF EXISTS "profiles_insert_own"      ON public.profiles;
+
+-- Politiques de lecture publiques
+CREATE POLICY "public_read_menus"
+  ON public.menus
+  AS PERMISSIVE
+  FOR SELECT
+  TO public
+  USING (true);
+
+CREATE POLICY "public_read_menu_days"
+  ON public.menu_days
+  AS PERMISSIVE
+  FOR SELECT
+  TO public
+  USING (true);
+
+CREATE POLICY "public_read_meal_items"
+  ON public.meal_items
+  AS PERMISSIVE
+  FOR SELECT
+  TO public
+  USING (true);
+
+CREATE POLICY "public_read_meal_types"
+  ON public.meal_types
+  AS PERMISSIVE
+  FOR SELECT
+  TO public
+  USING (true);
+
+CREATE POLICY "public_read_allergens"
+  ON public.allergens
+  AS PERMISSIVE
+  FOR SELECT
+  TO public
+  USING (true);
+
+CREATE POLICY "public_read_categories"
+  ON public.categories
+  AS PERMISSIVE
+  FOR SELECT
+  TO public
+  USING (true);
+
+-- Ecriture libre sur meal_items (a securiser plus tard)
+CREATE POLICY "admin_write_meal_items"
+  ON public.meal_items
+  AS PERMISSIVE
+  FOR ALL
+  TO public
+  USING (true);
+
+-- =========================================
+-- RLS sur profiles
+-- =========================================
+
+-- Lecture : l'utilisateur voit son profil, l'admin voit tout
+CREATE POLICY "profiles_read_own"
+  ON public.profiles
+  AS PERMISSIVE
+  FOR SELECT
+  TO public
+  USING (
+    auth.uid() = user_id
+    OR exists (
+      select 1
+      from public.profiles p
+      where p.user_id = auth.uid()
+        and p.role = 'admin'
+    )
+  );
+
+-- Update : meme logique (own + admin)
+CREATE POLICY "profiles_update_own"
+  ON public.profiles
+  AS PERMISSIVE
+  FOR UPDATE
+  TO public
+  USING (
+    auth.uid() = user_id
+    OR exists (
+      select 1
+      from public.profiles p
+      where p.user_id = auth.uid()
+        and p.role = 'admin'
+    )
+  );
+
+-- Insert : chaque utilisateur cree son propre profil
+CREATE POLICY "profiles_insert_own"
+  ON public.profiles
+  AS PERMISSIVE
+  FOR INSERT
+  TO public
+  WITH CHECK (auth.uid() = user_id);
+
+
+
+-- Nettoyer les anciennes policies qui posent probleme
+DROP POLICY IF EXISTS "profiles_read_own"   ON public.profiles;
+DROP POLICY IF EXISTS "profiles_update_own" ON public.profiles;
+
+-- Lecture : chaque user lit uniquement SON profil
+DROP POLICY IF EXISTS "profiles_read_own" ON public.profiles;
+
+CREATE POLICY "profiles_read_own"
+  ON public.profiles
+  FOR SELECT
+  USING (user_id = auth.uid());
+
+-- Update : chaque user modifie uniquement SON profil
+CREATE POLICY "profiles_update_own"
+  ON public.profiles
+  AS PERMISSIVE
+  FOR UPDATE
+  TO public
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);

@@ -68,13 +68,14 @@ function HomePage() {
         return d;
       };
       const start = monday(currentYear, currentWeekNumber);
-      const startStr = start.toISOString().slice(0, 10);
-      const endDate = new Date(start);
-      endDate.setDate(start.getDate() + 7);
-      const endStr = endDate.toISOString().slice(0, 10);
+      const weekDates = Array.from({ length: 5 }, (_, i) => {
+        const date = new Date(start);
+        date.setDate(start.getDate() + i);
+        return date.toISOString().slice(0, 10);
+      });
       
       const { supabase } = await import('./lib/supabase');
-      console.log('📅 Chargement menu Supabase du', startStr, 'au', endStr);
+      console.log('📅 Chargement menu Supabase pour dates:', weekDates);
       
       const { data, error } = await supabase
         .from('meals')
@@ -93,8 +94,7 @@ function HomePage() {
             )
           )
         `)
-        .gte('meal_date', startStr + 'T00:00:00')
-        .lt('meal_date', endStr + 'T00:00:00');
+        .in('meal_date', weekDates);
       if (error) {
         setMenuData(null);
       } else {
