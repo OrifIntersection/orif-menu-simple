@@ -1,22 +1,29 @@
 import { supabase } from '../lib/supabase.js'
+import { LocalMenuService } from './LocalMenuService'
 
 /**
  * Service pour gérer les données de menu avec Supabase
- * NOUVELLE STRUCTURE : meals, dishes, meals_dishes avec ENUMs
+ * AVEC FALLBACK localStorage en cas d'indisponibilité
  */
 export class MenuService {
 
   /**
-   * Vérifier si Supabase est disponible
+   * Vérifier si Supabase est disponible et configuré
    */
   static async isSupabaseAvailable() {
     if (!supabase) {
+      console.warn('⚠️ Supabase non configuré - utilisation du mode fallback localStorage')
       return false;
     }
     try {
       const { error } = await supabase.from('dishes').select('count').limit(1);
-      return !error;
-    } catch {
+      if (error) {
+        console.warn('⚠️ Supabase indisponible:', error.message, '- utilisation du mode fallback localStorage')
+        return false
+      }
+      return true;
+    } catch (err) {
+      console.warn('⚠️ Erreur Supabase:', err.message, '- utilisation du mode fallback localStorage')
       return false;
     }
   }
@@ -31,6 +38,15 @@ export class MenuService {
    */
   static async getAllMenus() {
     try {
+      // Vérifier si Supabase est disponible
+      const isAvailable = await this.isSupabaseAvailable();
+      
+      if (!isAvailable) {
+        // Fallback: utiliser localStorage
+        console.log('📚 Chargement des menus depuis localStorage');
+        return LocalMenuService.getAllMenus();
+      }
+
       const { data, error } = await supabase
         .from('meals')
         .select('meal_date')
@@ -53,8 +69,8 @@ export class MenuService {
 
       return Object.values(weeks);
     } catch (error) {
-      console.error('Erreur lors de la récupération des menus:', error);
-      return [];
+      console.error('❌ Erreur lors de la récupération des menus, fallback localStorage:', error);
+      return LocalMenuService.getAllMenus();
     }
   }
 
@@ -66,6 +82,15 @@ export class MenuService {
    */
   static async getMenuByWeek(year, week) {
     try {
+      // Vérifier si Supabase est disponible
+      const isAvailable = await this.isSupabaseAvailable();
+      
+      if (!isAvailable) {
+        console.log('📅 Chargement du menu de la semaine depuis localStorage');
+        const menu = LocalMenuService.getMenuByWeek(year, week);
+        return menu ? [menu] : [];
+      }
+
       // Calculer les dates de la semaine
       const monday = (y, w) => {
         const d = new Date(y, 0, 1 + (w - 1) * 7);
@@ -107,8 +132,9 @@ export class MenuService {
 
       return data || [];
     } catch (error) {
-      console.error('Erreur lors de la récupération du menu de la semaine:', error);
-      return null;
+      console.error('❌ Erreur lors de la récupération du menu de la semaine, fallback localStorage:', error);
+      const menu = LocalMenuService.getMenuByWeek(year, week);
+      return menu ? [menu] : [];
     }
   }
 
@@ -118,12 +144,15 @@ export class MenuService {
    * @returns {Promise<Array>} Meals de la journée avec plats
    */
   static async getMenuForDate(date) {
-    if (!supabase) {
-      console.warn('Supabase non configuré, retour d\'un menu vide');
-      return [];
-    }
-    
     try {
+      // Vérifier si Supabase est disponible
+      const isAvailable = await this.isSupabaseAvailable();
+      
+      if (!isAvailable) {
+        console.log('📆 Chargement du menu pour la date depuis localStorage');
+        return [];
+      }
+      
       const { data, error } = await supabase
         .from('meals')
         .select(`
@@ -147,7 +176,7 @@ export class MenuService {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Erreur lors de la récupération du menu pour la date:', error);
+      console.error('❌ Erreur lors de la récupération du menu pour la date, fallback localStorage:', error);
       return [];
     }
   }
