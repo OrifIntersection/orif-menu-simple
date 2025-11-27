@@ -143,6 +143,12 @@ export default function MenuDrawer() {
         
         {/* Contenu scrollable du drawer */}
         <div className="drawer-content">
+          {/* Section du statut utilisateur */}
+          <div className="drawer-section">
+            <h4 className="drawer-section-title">Statut</h4>
+            <UserStatus />
+          </div>
+
           {/* Section des actions de navigation */}
           {navigationActions.length > 0 && (
             <div className="drawer-section">
@@ -150,44 +156,16 @@ export default function MenuDrawer() {
               {/* Boucle sur chaque action pour créer un bouton */}
               {navigationActions.map((action, index) => (
                 <button
-                  key={index} // Clé unique pour chaque élément de la liste
+                  key={index}
                   className="drawer-action-item"
-                  onClick={() => handleNavAction(action.onClick)} // Exécute l'action au clic
+                  onClick={() => handleNavAction(action.onClick)}
                 >
-                  {/* Icône emoji de l'action */}
                   <span className="action-icon">{action.icon}</span>
-                  {/* Label textuel de l'action */}
                   <span className="action-label">{action.label}</span>
                 </button>
               ))}
             </div>
           )}
-
-          {/* Section des menus */}
-          {menuActions.length > 0 && (
-            <div className="drawer-section">
-              <h4 className="drawer-section-title">Menus</h4>
-              {/* Boucle sur chaque action de menu pour créer un bouton */}
-              {menuActions.map((action, index) => (
-                <button
-                  key={index} // Clé unique pour chaque élément de la liste
-                  className="drawer-action-item"
-                  onClick={() => handleNavAction(action.onClick)} // Exécute l'action au clic
-                >
-                  {/* Icône emoji de l'action */}
-                  <span className="action-icon">{action.icon}</span>
-                  {/* Label textuel de l'action */}
-                  <span className="action-label">{action.label}</span>
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Section du statut utilisateur */}
-          <div className="drawer-section">
-            <h4 className="drawer-section-title">Statut</h4>
-            <UserStatus />
-          </div>
 
           {/* Section de consultation */}
           <div className="drawer-section">
@@ -201,6 +179,24 @@ export default function MenuDrawer() {
               <span className="action-label">Menu de la semaine</span>
             </button>
           </div>
+
+          {/* Section des menus */}
+          {menuActions.length > 0 && (
+            <div className="drawer-section">
+              <h4 className="drawer-section-title">Menus</h4>
+              {/* Boucle sur chaque action de menu pour créer un bouton */}
+              {menuActions.map((action, index) => (
+                <button
+                  key={index}
+                  className="drawer-action-item"
+                  onClick={() => handleNavAction(action.onClick)}
+                >
+                  <span className="action-icon">{action.icon}</span>
+                  <span className="action-label">{action.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Section de la liste des menus disponibles */}
           <div className="drawer-section">
