@@ -2,7 +2,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { parseDate, getDayName, isWeekday } from '../utils/dateUtils';
 import PageLayout from '../components/PageLayout';
-import UserStatus from '../components/UserStatus';
 import Footer from '../components/Footer';
 import DailyMenu from './DailyMenu';
 import DatePicker from '../components/DatePicker';
@@ -66,7 +65,6 @@ export default function DateMenuPage() {
     <main className="container">
       <PageLayout 
         title="Cafétéria ORIF"
-        actions={<UserStatus />}
       >
         <div className="table-header">
           <h3 className="table-caption">{dayTitle}</h3>

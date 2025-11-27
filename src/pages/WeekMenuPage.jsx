@@ -1,7 +1,6 @@
 import React from "react";
 import { useParams } from 'react-router-dom';
 import PageLayout from '../components/PageLayout';
-import UserStatus from '../components/UserStatus';
 import MenuTable from '../components/MenuTable';
 import WeekPicker from '../components/WeekPicker';
 import Footer from '../components/Footer';
@@ -82,7 +81,6 @@ export default function WeekMenuPage() {
     <main className="container">
       <PageLayout 
         title="Cafétéria ORIF"
-        actions={<UserStatus />}
       >
         <div style={{ maxWidth: '400px', margin: '0 auto 20px' }}>
           <WeekPicker />
