@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+﻿﻿import React, { useState, useEffect, useCallback } from 'react';
 import { MenuService } from '../services/MenuService';
 import AdminLayout from '../components/AdminLayout';
 import { formatDateForDisplay, getWeekNumber } from '../utils/dateUtils';
@@ -25,21 +25,45 @@ const DateEditor = () => {
     setLoading(true);
     setError('');
     try {
-      const [mealTypesData, categoriesData, dishesData] = await Promise.all([
-        MenuService.getMealTypes(),
-        MenuService.getCategories(),
-        MenuService.getAllDishes()
-      ]);
-      const { supabase } = await import('../lib/supabase');
-      const dateStr = selectedDate instanceof Date ? selectedDate.toISOString().slice(0, 10) : selectedDate;
-      const { data } = await supabase
-        .from('meal_items')
-        .select(`*, meal_types (id, code, label), dishes (id, name, description)`)
-        .eq('date', dateStr);
-      setMealTypes(mealTypesData);
-      setCategories(categoriesData);
+      // Charger tous les plats
+      const dishesData = await MenuService.getAllDishes();
       setDishes(dishesData);
-      setCurrentMenu(data || []);
+      
+      // Types de repas (MIDI, SOIR) - hardcodés pour le nouveau schéma
+      setMealTypes([
+        { id: 'MIDI', code: 'MIDI', label: 'Midi', emoji: '☀️' },
+        { id: 'SOIR', code: 'SOIR', label: 'Soir', emoji: '🌙' }
+      ]);
+      
+      // Catégories de plats (types de plats) - depuis le schéma SQL
+      setCategories([
+        { id: 'ENTREE', code: 'ENTREE', label: 'Entrée', emoji: '🥗' },
+        { id: 'PLAT', code: 'PLAT', label: 'Plat principal', emoji: '🍽️' },
+        { id: 'GARNITURE', code: 'GARNITURE', label: 'Garniture', emoji: '🥔' },
+        { id: 'LEGUME', code: 'LEGUME', label: 'Légume', emoji: '🥬' },
+        { id: 'DESSERT', code: 'DESSERT', label: 'Dessert', emoji: '🍰' },
+        { id: 'AUTRE', code: 'AUTRE', label: 'Autre', emoji: '✨' }
+      ]);
+      
+      // Charger le menu pour cette date
+      const dateStr = selectedDate instanceof Date ? selectedDate.toISOString().slice(0, 10) : selectedDate;
+      const mealsData = await MenuService.getMenuForDate(dateStr);
+      
+      // Convertir le format Supabase en structure DateEditor
+      const menuMap = {};
+      mealsData.forEach(meal => {
+        meal.meals_dishes?.forEach(link => {
+          const key = `${meal.meal_type}_${link.dishes.dish_type}`;
+          menuMap[key] = {
+            dish_id: link.dish_id,
+            dish_name: link.dishes.name,
+            meal_type: meal.meal_type,
+            dish_type: link.dishes.dish_type
+          };
+        });
+      });
+      
+      setCurrentMenu(menuMap);
     } catch (err) {
       setError('Erreur lors du chargement des données: ' + err.message);
     } finally {
@@ -61,6 +85,7 @@ const DateEditor = () => {
     if (!dishName || !dishName.trim()) return;
 
     const trimmedName = dishName.trim();
+    const dateStr = selectedDate instanceof Date ? selectedDate.toISOString().slice(0, 10) : selectedDate;
     
     // Recherche de plats similaires (tolérant aux erreurs)
     const similarDishes = dishes.filter(dish => 
@@ -80,8 +105,8 @@ const DateEditor = () => {
       
       const choiceNum = parseInt(choice);
       if (choiceNum > 0 && choiceNum <= similarDishes.length) {
-        // Utiliser un plat existant
-        await MenuService.assignDishToMenu(selectedDate, mealTypeId, categoryId, similarDishes[choiceNum - 1].id);
+        // Utiliser un plat existant - NOUVEAU SCHEMA
+        await MenuService.assignDishToMealByType(dateStr, mealTypeId, categoryId, similarDishes[choiceNum - 1].id);
         await loadData();
         return;
       } else if (choiceNum === 0) {
@@ -105,21 +130,22 @@ const DateEditor = () => {
         return;
       }
 
-      // Créer le nouveau plat
-      const newDish = await MenuService.createDish(newDishData.name, newDishData.selectedCategory);
+      const dateStr = selectedDate instanceof Date ? selectedDate.toISOString().slice(0, 10) : selectedDate;
+      
+      // Créer le nouveau plat - NOUVEAU SCHEMA
+      const newDish = await MenuService.getOrCreateDish(newDishData.name, newDishData.selectedCategory);
+      
+      // Assigner le nouveau plat au menu - NOUVEAU SCHEMA
+      await MenuService.assignDishToMealByType(dateStr, newDishData.mealTypeId, newDishData.selectedCategory, newDish.id);
       
       // Recharger les plats
-      await loadData();
-      
-      // Assigner le nouveau plat au menu
-      await MenuService.assignDishToMenu(selectedDate, newDishData.mealTypeId, newDishData.categoryId, newDish.id);
       await loadData();
       
       // Fermer le modal et réinitialiser
       setShowCategoryModal(false);
       setNewDishData({ name: '', mealTypeId: null, categoryId: null, selectedCategory: '' });
       
-      alert(` Nouveau plat "${newDishData.name}" créé et ajouté au menu !`);
+      alert(`Nouveau plat "${newDishData.name}" créé et ajouté au menu !`);
     } catch (err) {
       setError('Erreur lors de la création du plat: ' + err.message);
     }
@@ -149,7 +175,9 @@ const DateEditor = () => {
     const confirmRemove = window.confirm('Voulez-vous vraiment supprimer ce plat du menu ?');
     if (confirmRemove) {
       try {
-        await MenuService.removeDishFromMenu(selectedDate, mealTypeId, categoryId);
+        const dateStr = selectedDate instanceof Date ? selectedDate.toISOString().slice(0, 10) : selectedDate;
+        // NOUVEAU SCHEMA - removeDishFromMealByType()
+        await MenuService.removeDishFromMealByType(dateStr, mealTypeId, categoryId);
         await loadData();
       } catch (err) {
         setError('Erreur lors de la suppression: ' + err.message);
