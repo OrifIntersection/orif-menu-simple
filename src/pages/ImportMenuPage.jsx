@@ -153,8 +153,13 @@ export default function ImportMenuPage() {
               
               let dateStr;
               
-              if (item.date) {
-                // Nouveau format avec date
+              if (item.dateStr) {
+                // Nouveau format avec dateStr (déjà formaté en DD.MM.YYYY par ExcelImportMenu)
+                const [day, month, year] = item.dateStr.split('.');
+                dateStr = `${year}-${month}-${day}`;
+                console.log(`  → dateStr reçue: ${item.dateStr} → convertie en: ${dateStr}`);
+              } else if (item.date) {
+                // Fallback si date est un objet Date (ne devrait pas arriver)
                 const year = item.date.getFullYear();
                 const month = String(item.date.getMonth() + 1).padStart(2, '0');
                 const day = String(item.date.getDate()).padStart(2, '0');
