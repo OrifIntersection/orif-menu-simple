@@ -277,17 +277,6 @@ export default function AdminPage() {
             </button>
           </div>
           
-          <div style={{ 
-            marginTop: '1.5rem', 
-            padding: '1rem', 
-            backgroundColor: '#f8f9fa', 
-            borderRadius: '8px',
-            borderLeft: '4px solid #17a2b8'
-          }}>
-            <p style={{ margin: 0, fontSize: '0.9rem', color: '#666' }}>
-              💡 <strong>Astuce :</strong> Ces outils vous aident à diagnostiquer les problèmes et vérifier l'état du système.
-            </p>
-          </div>
         </div>
       </div>
     </AdminLayout>

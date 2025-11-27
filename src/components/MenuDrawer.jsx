@@ -86,7 +86,7 @@ export default function MenuDrawer() {
     setIsOpen(false); // Ferme automatiquement le drawer après action
   };
 
-  // Actions de navigation contextuelles (masque l'action de la page actuelle)
+  // Actions de navigation principales
   const navigationActions = [
     {
       icon: "🏠",
@@ -94,7 +94,6 @@ export default function MenuDrawer() {
       onClick: () => navigate('/'),
       hidden: location.pathname === '/'
     },
-    // Administration - visible seulement pour les utilisateurs connectés
     {
       icon: "⚙️",
       label: "Administration",
@@ -103,12 +102,12 @@ export default function MenuDrawer() {
     }
   ].filter(action => !action.hidden);
 
-  // Actions pour la section Menus - Suppression des doublons
+  // Actions pour la section Menus
   const menuActions = [
     {
       icon: "📋",
       label: "Calendrier des événements spéciaux",
-      onClick: () => navigate('/'), // Pour l'instant redirige vers l'accueil
+      onClick: () => navigate('/'),
       hidden: false
     }
   ].filter(action => !action.hidden);
@@ -190,23 +189,9 @@ export default function MenuDrawer() {
             <UserStatus />
           </div>
 
-          {/* Section de test des pages */}
+          {/* Section de consultation */}
           <div className="drawer-section">
             <h4 className="drawer-section-title">🧪 Consultation</h4>
-            
-            {/* Pages principales */}
-            <div style={{ marginBottom: '8px', paddingLeft: '8px', fontSize: '0.85em', fontWeight: '600', color: '#9ca3af' }}>
-              Se connecter
-            </div>
-            <button className="drawer-action-item" onClick={() => handleNavAction(() => navigate('/login'))}>
-              <span className="action-icon">🔐</span>
-              <span className="action-label">Connexion</span>
-            </button>
-            
-            {/* Pages de consultation */}
-            <div style={{ marginTop: '12px', marginBottom: '8px', paddingLeft: '8px', fontSize: '0.85em', fontWeight: '600', color: '#9ca3af' }}>
-              Consulter les menus
-            </div>
             <button className="drawer-action-item" onClick={() => handleNavAction(() => navigate(`/date/${new Date().toISOString().split('T')[0]}`))}>
               <span className="action-icon">📅</span>
               <span className="action-label">Menu du jour</span>
@@ -215,27 +200,6 @@ export default function MenuDrawer() {
               <span className="action-icon">📋</span>
               <span className="action-label">Menu de la semaine</span>
             </button>
-            
-            {/* Pages d'administration - visible seulement pour utilisateurs connectés */}
-            {isAuthenticated && userRole !== 'guest' && (
-              <>
-                <div style={{ marginTop: '12px', marginBottom: '8px', paddingLeft: '8px', fontSize: '0.85em', fontWeight: '600', color: '#9ca3af' }}>
-                  Administration
-                </div>
-                <button className="drawer-action-item" onClick={() => handleNavAction(() => navigate('/admin'))}>
-                  <span className="action-icon">⚙️</span>
-                  <span className="action-label">Tableau de bord</span>
-                </button>
-                <button className="drawer-action-item" onClick={() => handleNavAction(() => navigate(`/admin/date/${new Date().toISOString().split('T')[0]}`))}>
-                  <span className="action-icon">✏️</span>
-                  <span className="action-label">Éditer le jour</span>
-                </button>
-                <button className="drawer-action-item" onClick={() => handleNavAction(() => navigate(`/admin/week/${currentWeekNumber}`))}>
-                  <span className="action-icon">📝</span>
-                  <span className="action-label">Éditer la semaine</span>
-                </button>
-              </>
-            )}
           </div>
 
           {/* Section de la liste des menus disponibles */}
