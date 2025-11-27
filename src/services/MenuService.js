@@ -153,6 +153,8 @@ export class MenuService {
         return [];
       }
       
+      console.log('📆 Chargement menu pour date:', date);
+      
       const { data, error } = await supabase
         .from('meals')
         .select(`
@@ -174,6 +176,7 @@ export class MenuService {
         .order('meal_type');
 
       if (error) throw error;
+      console.log('✅ Menu trouvé:', data?.length || 0, 'repas');
       return data || [];
     } catch (error) {
       console.error('❌ Erreur lors de la récupération du menu pour la date, fallback localStorage:', error);
@@ -301,6 +304,8 @@ export class MenuService {
       const normalizedMealType = mealType.toUpperCase() === 'MIDI' ? 'MIDI' : 'SOIR';
 
       // Chercher si le meal existe déjà
+      console.log('🔍 Cherche meal existant:', mealDate, normalizedMealType);
+      
       const { data: existingMeal, error: searchError } = await supabase
         .from('meals')
         .select('*')

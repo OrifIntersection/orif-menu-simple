@@ -68,12 +68,15 @@ function HomePage() {
         return d;
       };
       const start = monday(currentYear, currentWeekNumber);
-      const weekDates = Array.from({ length: 7 }, (_, i) => {
+      const weekDates = Array.from({ length: 5 }, (_, i) => {
         const date = new Date(start);
         date.setDate(start.getDate() + i);
         return date.toISOString().slice(0, 10);
       });
+      
       const { supabase } = await import('./lib/supabase');
+      console.log('📅 Chargement menu Supabase pour dates:', weekDates);
+      
       const { data, error } = await supabase
         .from('meals')
         .select(`
