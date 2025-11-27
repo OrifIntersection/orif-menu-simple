@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { getCurrentWeekNumber, getCurrentYear } from "../utils/dateUtils";
-import UserStatus from "./UserStatus";
 import { useAuth } from "../hooks/useAuth";
 import { startOfISOWeek, addWeeks } from 'date-fns';
 
@@ -143,12 +142,6 @@ export default function MenuDrawer() {
         
         {/* Contenu scrollable du drawer */}
         <div className="drawer-content">
-          {/* Section du statut utilisateur */}
-          <div className="drawer-section">
-            <h4 className="drawer-section-title">Statut</h4>
-            <UserStatus />
-          </div>
-
           {/* Section des actions de navigation */}
           {navigationActions.length > 0 && (
             <div className="drawer-section">
