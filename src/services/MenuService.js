@@ -153,6 +153,11 @@ export class MenuService {
         return [];
       }
       
+      console.log('📆 Chargement menu pour date:', date);
+      const nextDate = new Date(date + 'T00:00:00');
+      nextDate.setDate(nextDate.getDate() + 1);
+      const nextDateStr = nextDate.toISOString().slice(0, 10);
+      
       const { data, error } = await supabase
         .from('meals')
         .select(`
@@ -170,10 +175,12 @@ export class MenuService {
             )
           )
         `)
-        .eq('meal_date', date)
+        .gte('meal_date', date + 'T00:00:00')
+        .lt('meal_date', nextDateStr + 'T00:00:00')
         .order('meal_type');
 
       if (error) throw error;
+      console.log('✅ Menu trouvé:', data?.length || 0, 'repas');
       return data || [];
     } catch (error) {
       console.error('❌ Erreur lors de la récupération du menu pour la date, fallback localStorage:', error);
@@ -301,10 +308,16 @@ export class MenuService {
       const normalizedMealType = mealType.toUpperCase() === 'MIDI' ? 'MIDI' : 'SOIR';
 
       // Chercher si le meal existe déjà
+      console.log('🔍 Cherche meal existant:', mealDate, normalizedMealType);
+      const nextDate = new Date(mealDate + 'T00:00:00');
+      nextDate.setDate(nextDate.getDate() + 1);
+      const nextDateStr = nextDate.toISOString().slice(0, 10);
+      
       const { data: existingMeal, error: searchError } = await supabase
         .from('meals')
         .select('*')
-        .eq('meal_date', mealDate)
+        .gte('meal_date', mealDate + 'T00:00:00')
+        .lt('meal_date', nextDateStr + 'T00:00:00')
         .eq('meal_type', normalizedMealType)
         .maybeSingle();
 
@@ -581,10 +594,15 @@ export class MenuService {
 
     try {
       // 1. Récupérer le meal
+      const nextDate = new Date(mealDate + 'T00:00:00');
+      nextDate.setDate(nextDate.getDate() + 1);
+      const nextDateStr = nextDate.toISOString().slice(0, 10);
+      
       const { data: meal, error: mealError } = await supabase
         .from('meals')
         .select('id')
-        .eq('meal_date', mealDate)
+        .gte('meal_date', mealDate + 'T00:00:00')
+        .lt('meal_date', nextDateStr + 'T00:00:00')
         .eq('meal_type', mealType)
         .maybeSingle();
 
