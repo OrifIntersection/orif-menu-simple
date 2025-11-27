@@ -1,322 +1,267 @@
-// Page d'import de menus depuis Excel
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '../components/AdminLayout';
 import ExcelImportMenu from '../components/ExcelImportMenu';
-import { groupMenusByDayAndMoment } from '../utils/categoryMapper';
 import { MenuService } from '../services/MenuService';
-import { getWeekDates } from '../utils/dateUtils';
+import { LocalMenuService } from '../services/LocalMenuService';
 
 export default function ImportMenuPage() {
   const navigate = useNavigate();
-  const [importedMenus, setImportedMenus] = useState(null);
-  const [weekNumber, setWeekNumber] = useState(null);
-  const [importing, setImporting] = useState(false);
-  const [importResult, setImportResult] = useState(null);
+  const [pendingMenus, setPendingMenus] = useState(null);
 
-  // Gérer l'import du fichier Excel
-  function handleImport(week, menus) {
-    setWeekNumber(week);
-    setImportedMenus(menus);
-    setImportResult(null);
-  }
+  // Réinitialiser l'import et le formulaire
+  const handleReset = () => {
+    setPendingMenus(null);
+    window.location.reload();
+  };
 
-  // Confirmer et sauvegarder en base de données
-  async function handleConfirmImport() {
-    if (!importedMenus || !weekNumber) return;
+  // Prépare les menus à importer et demande confirmation
+  const handleImportFromExcel = (week, menus) => {
+    if (!week || !menus || menus.length === 0) {
+      alert("Aucun plat importé. Vérifiez le fichier Excel.");
+      return;
+    }
+    
+    // Support pour le nouveau format avec dates
+    const hasNewFormat = menus.some(m => m.date);
+    
+    if (hasNewFormat) {
+      // Nouveau format : grouper par date et moment
+      const joursSemaine = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
+      const moments = ["Midi", "Soir"];
+      const data = {};
+      
+      // Fonction helper pour formater date en YYYY-MM-DD sans problème de timezone
+      const formatDateLocal = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+      
+      // Récupère toutes les dates uniques
+      const uniqueDates = [...new Set(menus.map(m => m.date ? formatDateLocal(m.date) : null).filter(Boolean))].sort();
+      
+      console.log('📅 Dates uniques trouvées:', uniqueDates);
+      
+      moments.forEach((meal) => {
+        data[meal] = {};
+        uniqueDates.forEach((dateStr) => {
+          // Parser la date en restant en timezone locale
+          const [year, month, day] = dateStr.split('-').map(Number);
+          const date = new Date(year, month - 1, day, 12, 0, 0);
+          const dayIndex = date.getDay();
+          const dayName = joursSemaine[dayIndex === 0 ? 6 : dayIndex - 1];
+          
+          console.log(`📅 ${dateStr} → jour ${dayIndex} → ${dayName}`);
+          
+          const plats = menus
+            .filter((m) => {
+              if (!m.date) return false;
+              const mDateStr = formatDateLocal(m.date);
+              const momentMatch = m.moment.toLowerCase() === meal.toLowerCase();
+              return mDateStr === dateStr && momentMatch;
+            })
+            .map((m) => `${m.typePlat}: ${m.plat}`)
+            .filter(Boolean);
+          
+          data[meal][dayName] = plats.length > 0 ? plats.join(" / ") : "";
+          
+          console.log(`  ${dayName} ${meal}: ${plats.length} plats`);
+        });
+      });
+      
+      console.log('📦 Structure de données créée:', data);
+      
+      const menuToImport = {
+        year: Number(week.split("-")[0]),
+        week_number: Number(week.split("-")[1]),
+        week_label: week,
+        days: joursSemaine,
+        meals: moments,
+        data,
+        originalMenus: menus
+      };
+      
+      console.log('📋 Menu à importer:', menuToImport);
+      setPendingMenus([menuToImport]);
+    } else {
+      // Ancien format : grouper par jour et moment
+      const joursSemaine = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"];
+      const moments = ["Midi", "Soir"];
+      const data = {};
+      
+      moments.forEach((meal) => {
+        data[meal] = {};
+        joursSemaine.forEach((day) => {
+          const plats = menus
+            .filter((m) => m.jour === day && m.moment === meal)
+            .map((m) => m.plat)
+            .filter(Boolean);
+          data[meal][day] = plats.length > 0 ? plats.join(" / ") : "";
+        });
+      });
+      
+      const platsSemaine = Object.values(data)
+        .flatMap((obj) => Object.values(obj))
+        .filter(Boolean);
+      
+      if (platsSemaine.length === 0) {
+        alert(`Semaine ${week}: Aucun plat importé.`);
+        return;
+      }
+      
+      const menuToImport = {
+        year: Number(week.split("-")[0]),
+        week_number: Number(week.split("-")[1]),
+        week_label: week,
+        days: joursSemaine,
+        meals: moments,
+        data,
+        originalMenus: menus
+      };
+      setPendingMenus([menuToImport]);
+    }
+  };
 
-    setImporting(true);
-    setImportResult(null);
-
+  // Enregistre les menus dans Supabase
+  const handleConfirmImport = async () => {
+    if (!pendingMenus || pendingMenus.length === 0) {
+      alert("Aucun menu à importer. Veuillez d'abord importer un fichier Excel.");
+      return;
+    }
+    
+    console.log('💾 Sauvegarde des menus dans Supabase...', pendingMenus);
+    
     try {
-      // Extraire l'année et le numéro de semaine depuis "2025-49"
-      const [year, week] = weekNumber.split('-').map(Number);
-
-      // Obtenir les dates de la semaine
-      const weekDates = getWeekDates(year, week);
-
-      let successCount = 0;
-      let errorCount = 0;
-      const errors = [];
-
-      // Parcourir chaque plat importé
-      // NOTE: On n'efface RIEN avant l'import. assignDishToMealByType() remplacera 
-      // automatiquement les plats existants du même type, mais préservera les plats 
-      // non mentionnés dans l'Excel (évite la perte de données).
-      for (const menu of importedMenus) {
-        try {
-          let dateStr;
-
-          // Support pour NOUVEAU FORMAT (avec date directe)
-          if (menu.date) {
-            dateStr = menu.date.toISOString().split('T')[0];
-          } else if (menu.jour) {
-            // Support pour ANCIEN FORMAT (avec jour de la semaine)
-            const dayMapping = {
-              'Lundi': 0,
-              'Mardi': 1,
-              'Mercredi': 2,
-              'Jeudi': 3,
-              'Vendredi': 4,
-              'Samedi': 5,
-              'Dimanche': 6
-            };
-
-            const dayIndex = dayMapping[menu.jour];
-            if (dayIndex === undefined) {
-              throw new Error(`Jour invalide: ${menu.jour}`);
+      for (const menu of pendingMenus) {
+        if (menu && menu.year && menu.week_number && menu.originalMenus) {
+          // Importer chaque plat dans Supabase
+          for (const item of menu.originalMenus) {
+            try {
+              let dateStr;
+              
+              if (item.date) {
+                // Nouveau format avec date
+                const year = item.date.getFullYear();
+                const month = String(item.date.getMonth() + 1).padStart(2, '0');
+                const day = String(item.date.getDate()).padStart(2, '0');
+                dateStr = `${year}-${month}-${day}`;
+              } else if (item.jour) {
+                // Ancien format - calculer la date
+                const joursSemaine = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"];
+                const dayIndex = joursSemaine.indexOf(item.jour);
+                
+                if (dayIndex >= 0) {
+                  // Calculer la date du jour dans la semaine
+                  const mondayDate = new Date(menu.year, 0, 1 + (menu.week_number - 1) * 7);
+                  const day = mondayDate.getDay();
+                  const mondayOffset = day <= 4 ? day - 1 : day - 8;
+                  mondayDate.setDate(mondayDate.getDate() - mondayOffset + dayIndex);
+                  
+                  const year = mondayDate.getFullYear();
+                  const month = String(mondayDate.getMonth() + 1).padStart(2, '0');
+                  const date = String(mondayDate.getDate()).padStart(2, '0');
+                  dateStr = `${year}-${month}-${date}`;
+                }
+              }
+              
+              if (dateStr) {
+                const mealType = item.moment.toLowerCase() === 'midi' ? 'MIDI' : 'SOIR';
+                const dishType = item.typePlat || 'AUTRE';
+                
+                // Créer ou récupérer le plat
+                const dish = await MenuService.getOrCreateDish(item.plat, dishType);
+                
+                // Assigner le plat au meal
+                await MenuService.assignDishToMealByType(dateStr, mealType, dishType, dish.id);
+                
+                console.log(`✅ ${item.plat} sauvegardé`);
+              }
+            } catch (error) {
+              console.error(`⚠️ Erreur pour ${item.plat}:`, error.message);
+              // Continuer même en cas d'erreur
             }
-
-            const date = weekDates[dayIndex];
-            dateStr = date.toISOString().split('T')[0];
-          } else {
-            throw new Error('Format de données invalide: pas de date ni de jour');
           }
-
-          // Normaliser le moment (MIDI ou SOIR)
-          const moment = menu.moment.trim();
-          const mealType = moment === 'Midi' ? 'MIDI' : moment === 'Soir' ? 'SOIR' : null;
-          if (!mealType) {
-            throw new Error(`Moment invalide: ${moment}`);
-          }
-
-          // Créer ou récupérer le plat avec son type
-          const dishType = menu.typePlat || 'AUTRE';
-          const dish = await MenuService.getOrCreateDish(menu.plat, dishType);
-
-          // Assigner le plat au meal (via la méthode basée sur les ENUMs)
-          await MenuService.assignDishToMealByType(dateStr, mealType, dishType, dish.id);
-
-          successCount++;
-        } catch (error) {
-          const identifier = menu.dateStr || menu.jour || 'Date inconnue';
-          console.error(`Erreur pour ${identifier} ${menu.moment} - ${menu.plat}:`, error);
-          errorCount++;
-          errors.push(`${identifier} ${menu.moment} - ${menu.plat}: ${error.message}`);
+          
+          console.log(`✅ Menu semaine ${menu.week_number} sauvegardé avec succès`);
         }
       }
-
-      // Afficher le résultat
-      setImportResult({
-        success: true,
-        successCount,
-        errorCount,
-        errors
-      });
-
-      // Navigation automatique vers l'éditeur de semaine après un import réussi
-      if (errorCount === 0) {
-        console.log('✅ Import réussi, redirection vers l\'éditeur de semaine...');
-        setTimeout(() => {
-          navigate(`/admin/week/${week}`);
-        }, 2000);
+      
+      // Redirection vers la semaine importée
+      if (pendingMenus[0] && pendingMenus[0].week_number) {
+        const weekNum = pendingMenus[0].week_number;
+        alert(`Menu de la semaine ${weekNum} importé avec succès ! Redirection...`);
+        navigate("/admin/week/" + weekNum);
       } else {
-        console.warn(`⚠️ Import terminé avec ${errorCount} erreur(s)`);
+        alert("Importation réussie !");
+        navigate("/admin");
       }
-
+      
+      setPendingMenus(null);
     } catch (error) {
-      console.error('Erreur lors de l\'import:', error);
-      setImportResult({
-        success: false,
-        error: error.message
-      });
-    } finally {
-      setImporting(false);
+      console.error('❌ Erreur lors de l\'import Supabase:', error);
+      alert(`Erreur lors de l'import: ${error.message}`);
     }
-  }
-
-  // Réinitialiser l'import
-  function handleReset() {
-    setImportedMenus(null);
-    setWeekNumber(null);
-    setImportResult(null);
-  }
-
-  // Grouper les menus par jour et moment pour l'affichage
-  const groupedMenus = importedMenus ? groupMenusByDayAndMoment(importedMenus) : null;
+  };
 
   return (
-    <AdminLayout title="Import de menus Excel">
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        
-        {/* Composant d'import */}
-        {!importedMenus && (
-          <ExcelImportMenu onImport={handleImport} />
-        )}
-
-        {/* Prévisualisation et validation */}
-        {importedMenus && (
-          <div>
-            <div style={{ 
-              backgroundColor: '#f8f9fa', 
-              padding: '1rem', 
-              borderRadius: '8px',
-              marginBottom: '1.5rem'
-            }}>
-              <h3 style={{ marginTop: 0 }}>📊 Résumé de l'import</h3>
-              <p><strong>Semaine :</strong> {weekNumber}</p>
-              <p><strong>Total de plats :</strong> {importedMenus.length}</p>
-            </div>
-
-            {/* Aperçu des menus */}
-            <div style={{ 
-              border: '2px solid #28a745',
-              borderRadius: '8px',
-              padding: '1.5rem',
-              marginBottom: '1.5rem',
-              backgroundColor: 'white'
-            }}>
-              <h3 style={{ marginTop: 0, color: '#28a745' }}>👁️ Aperçu des menus</h3>
-              
-              {Object.keys(groupedMenus).map(jour => (
-                <div key={jour} style={{ marginBottom: '1.5rem' }}>
-                  <h4 style={{ 
-                    backgroundColor: '#007bff', 
-                    color: 'white', 
-                    padding: '0.5rem 1rem',
-                    borderRadius: '4px',
-                    marginBottom: '0.75rem'
-                  }}>
-                    {jour}
-                  </h4>
-                  
-                  {Object.keys(groupedMenus[jour]).map(moment => (
-                    <div key={moment} style={{ marginBottom: '1rem', marginLeft: '1rem' }}>
-                      <h5 style={{ 
-                        color: '#495057',
-                        marginBottom: '0.5rem',
-                        borderBottom: '1px solid #dee2e6',
-                        paddingBottom: '0.25rem'
-                      }}>
-                        {moment}
-                      </h5>
-                      <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                        {groupedMenus[jour][moment].map((menu, idx) => (
-                          <li key={idx} style={{ padding: '0.25rem 0', color: '#000' }}>
-                            {menu.plat}
-                          </li>
+    <AdminLayout title="Import de menus Excel (Supabase)">
+      <div style={{ maxWidth: 600, margin: "2rem auto", padding: "2rem", background: "white", borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
+        <h2 style={{ color: "#007bff" }}>Importer des menus Excel (Supabase)</h2>
+        <ExcelImportMenu onImport={handleImportFromExcel} />
+        {pendingMenus && (
+          <div style={{ marginTop: "2rem", background: "#f8f9fa", padding: "1rem", borderRadius: 8 }}>
+            <h4>Menus à importer :</h4>
+            {pendingMenus.map((menu, idx) => (
+              <div key={idx} style={{ marginBottom: '1rem' }}>
+                <strong>Semaine {menu.week_label}</strong>
+                <table style={{ width: '100%', marginTop: '0.5rem', borderCollapse: 'collapse', fontSize: '0.95rem' }}>
+                  <thead>
+                    <tr style={{ background: '#e9ecef' }}>
+                      <th style={{ padding: '0.3rem', border: '1px solid #dee2e6' }}>Jour</th>
+                      {menu.meals.map((meal) => (
+                        <th key={meal} style={{ padding: '0.3rem', border: '1px solid #dee2e6' }}>{meal}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {menu.days.map((day) => (
+                      <tr key={day}>
+                        <td style={{ padding: '0.3rem', border: '1px solid #dee2e6', fontWeight: 'bold' }}>{day}</td>
+                        {menu.meals.map((meal) => (
+                          <td key={meal} style={{ padding: '0.3rem', border: '1px solid #dee2e6' }}>
+                            {menu.data[meal][day] || <span style={{ color: '#dc3545' }}>—</span>}
+                          </td>
                         ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-
-            {/* Résultat de l'import */}
-            {importResult && (
-              <div style={{ 
-                padding: '1rem',
-                borderRadius: '8px',
-                marginBottom: '1.5rem',
-                backgroundColor: importResult.success ? '#d4edda' : '#f8d7da',
-                border: `1px solid ${importResult.success ? '#c3e6cb' : '#f5c6cb'}`,
-                color: importResult.success ? '#155724' : '#721c24'
-              }}>
-                {importResult.success ? (
-                  <>
-                    <h4 style={{ marginTop: 0 }}>✅ Import réussi !</h4>
-                    <p><strong>{importResult.successCount} plats</strong> importés avec succès.</p>
-                    {importResult.errorCount > 0 && (
-                      <>
-                        <p><strong>{importResult.errorCount} erreur(s)</strong> rencontrée(s) :</p>
-                        <ul style={{ fontSize: '0.9rem' }}>
-                          {importResult.errors.map((error, idx) => (
-                            <li key={idx}>{error}</li>
-                          ))}
-                        </ul>
-                      </>
-                    )}
-                    {importResult.errorCount === 0 && (
-                      <p>Redirection vers l'éditeur de semaine...</p>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <h4 style={{ marginTop: 0 }}>❌ Erreur lors de l'import</h4>
-                    <p>{importResult.error}</p>
-                  </>
-                )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            )}
-
-            {/* Boutons d'action */}
-            <div style={{ 
-              display: 'flex', 
-              gap: '1rem',
-              justifyContent: 'center',
-              marginTop: '2rem'
-            }}>
-              <button
-                onClick={handleConfirmImport}
-                disabled={importing}
-                style={{
-                  padding: '1rem 2rem',
-                  fontSize: '1rem',
-                  backgroundColor: importing ? '#6c757d' : '#28a745',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: importing ? 'not-allowed' : 'pointer',
-                  fontWeight: 'bold'
-                }}
-              >
-                {importing ? '⏳ Import en cours...' : `✅ Confirmer l'import (${importedMenus.length} plats)`}
-              </button>
-
-              <button
-                onClick={handleReset}
-                disabled={importing}
-                style={{
-                  padding: '1rem 2rem',
-                  fontSize: '1rem',
-                  backgroundColor: '#6c757d',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: importing ? 'not-allowed' : 'pointer',
-                  fontWeight: 'bold'
-                }}
-              >
-                🔄 Recommencer
-              </button>
-
-              <button
-                onClick={() => navigate('/admin')}
-                disabled={importing}
-                style={{
-                  padding: '1rem 2rem',
-                  fontSize: '1rem',
-                  backgroundColor: '#dc3545',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: importing ? 'not-allowed' : 'pointer',
-                  fontWeight: 'bold'
-                }}
-              >
-                ❌ Annuler
-              </button>
-
-              <button
-                onClick={() => navigate('/import-local')}
-                disabled={importing}
-                style={{
-                  padding: '1rem 2rem',
-                  fontSize: '1rem',
-                  backgroundColor: '#007bff',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: importing ? 'not-allowed' : 'pointer',
-                  fontWeight: 'bold'
-                }}
-              >
-                🛠️ Importation locale (robuste)
-              </button>
-            </div>
+            ))}
           </div>
         )}
+        <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem', justifyContent: 'center' }}>
+          <button
+            style={{ background: "#28a745", color: "white", padding: "0.5rem 1.2rem", border: "none", borderRadius: 6, fontWeight: "bold" }}
+            onClick={handleConfirmImport}
+          >
+            Confirmer
+          </button>
+          <button
+            style={{ background: "#6c757d", color: "white", padding: "0.5rem 1.2rem", border: "none", borderRadius: 6, fontWeight: "bold" }}
+            onClick={handleReset}
+          >
+            Recommencer
+          </button>
+          <button
+            style={{ background: "#dc3545", color: "white", padding: "0.5rem 1.2rem", border: "none", borderRadius: 6, fontWeight: "bold" }}
+            onClick={() => { setPendingMenus(null); }}
+          >
+            Annuler
+          </button>
+        </div>
       </div>
     </AdminLayout>
   );

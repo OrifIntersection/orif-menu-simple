@@ -7,7 +7,6 @@ import PageLayout from "./components/PageLayout";
 import { LocalMenuService } from "./services/LocalMenuService";
 import MenuTable from "./components/MenuTable";
 import Footer from "./components/Footer";
-import UserStatus from "./components/UserStatus";
 import { AuthProvider } from "./contexts/AuthContext";
 import { normalizeMenu, filterWeekdays } from "./utils/menuNormalizer";
 import WeekMenuPage from "./pages/WeekMenuPage";
@@ -125,7 +124,6 @@ function HomePage() {
     <main className="container">
       <PageLayout 
         title="Cafétéria ORIF"
-        actions={<UserStatus />}
       >
         {/* Bouton déroulant pour choisir une autre semaine */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '1rem' }}>

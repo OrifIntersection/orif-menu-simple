@@ -227,23 +227,56 @@ export default function AdminPage() {
           
           <div style={{ 
             display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
             gap: '1rem'
           }}>
-            {/* Boutons non fonctionnels supprimés */}
+            <button 
+              onClick={() => navigate('/debug')}
+              style={{ 
+                padding: '1.5rem',
+                fontSize: '1rem',
+                backgroundColor: '#17a2b8',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                textAlign: 'left'
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#0e5a70'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = '#17a2b8'}
+            >
+              <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>🔍</div>
+              <strong>Diagnostic Système</strong>
+              <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.9rem', opacity: 0.9 }}>
+                Vérifier l'état du système et du localStorage
+              </p>
+            </button>
+            
+            <button 
+              onClick={() => navigate('/auth/callback')}
+              style={{ 
+                padding: '1.5rem',
+                fontSize: '1rem',
+                backgroundColor: '#6c63ff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                textAlign: 'left'
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#504ee2'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = '#6c63ff'}
+            >
+              <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>📋</div>
+              <strong>Historique de Connexion</strong>
+              <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.9rem', opacity: 0.9 }}>
+                Afficher l'état de la session actuelle
+              </p>
+            </button>
           </div>
           
-          <div style={{ 
-            marginTop: '1.5rem', 
-            padding: '1rem', 
-            backgroundColor: '#f8f9fa', 
-            borderRadius: '8px',
-            borderLeft: '4px solid #17a2b8'
-          }}>
-            <p style={{ margin: 0, fontSize: '0.9rem', color: '#666' }}>
-              💡 <strong>Astuce :</strong> Utilisez les raccourcis clavier pour naviguer plus rapidement dans l'interface d'administration.
-            </p>
-          </div>
         </div>
       </div>
     </AdminLayout>

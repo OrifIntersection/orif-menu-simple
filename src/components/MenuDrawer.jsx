@@ -86,7 +86,7 @@ export default function MenuDrawer() {
     setIsOpen(false); // Ferme automatiquement le drawer après action
   };
 
-  // Actions de navigation contextuelles (masque l'action de la page actuelle)
+  // Actions de navigation principales
   const navigationActions = [
     {
       icon: "🏠",
@@ -94,7 +94,6 @@ export default function MenuDrawer() {
       onClick: () => navigate('/'),
       hidden: location.pathname === '/'
     },
-    // Administration - visible seulement pour les utilisateurs connectés
     {
       icon: "⚙️",
       label: "Administration",
@@ -103,12 +102,12 @@ export default function MenuDrawer() {
     }
   ].filter(action => !action.hidden);
 
-  // Actions pour la section Menus - Suppression des doublons
+  // Actions pour la section Menus
   const menuActions = [
     {
       icon: "📋",
       label: "Calendrier des événements spéciaux",
-      onClick: () => navigate('/'), // Pour l'instant redirige vers l'accueil
+      onClick: () => navigate('/'),
       hidden: false
     }
   ].filter(action => !action.hidden);
@@ -144,6 +143,12 @@ export default function MenuDrawer() {
         
         {/* Contenu scrollable du drawer */}
         <div className="drawer-content">
+          {/* Section du statut utilisateur */}
+          <div className="drawer-section">
+            <h4 className="drawer-section-title">Statut</h4>
+            <UserStatus />
+          </div>
+
           {/* Section des actions de navigation */}
           {navigationActions.length > 0 && (
             <div className="drawer-section">
@@ -151,71 +156,20 @@ export default function MenuDrawer() {
               {/* Boucle sur chaque action pour créer un bouton */}
               {navigationActions.map((action, index) => (
                 <button
-                  key={index} // Clé unique pour chaque élément de la liste
+                  key={index}
                   className="drawer-action-item"
-                  onClick={() => handleNavAction(action.onClick)} // Exécute l'action au clic
+                  onClick={() => handleNavAction(action.onClick)}
                 >
-                  {/* Icône emoji de l'action */}
                   <span className="action-icon">{action.icon}</span>
-                  {/* Label textuel de l'action */}
                   <span className="action-label">{action.label}</span>
                 </button>
               ))}
             </div>
           )}
 
-          {/* Section des menus */}
-          {menuActions.length > 0 && (
-            <div className="drawer-section">
-              <h4 className="drawer-section-title">Menus</h4>
-              {/* Boucle sur chaque action de menu pour créer un bouton */}
-              {menuActions.map((action, index) => (
-                <button
-                  key={index} // Clé unique pour chaque élément de la liste
-                  className="drawer-action-item"
-                  onClick={() => handleNavAction(action.onClick)} // Exécute l'action au clic
-                >
-                  {/* Icône emoji de l'action */}
-                  <span className="action-icon">{action.icon}</span>
-                  {/* Label textuel de l'action */}
-                  <span className="action-label">{action.label}</span>
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Section du statut utilisateur */}
+          {/* Section de consultation */}
           <div className="drawer-section">
-            <h4 className="drawer-section-title">Statut</h4>
-            <UserStatus />
-          </div>
-
-          {/* Section de test des pages */}
-          <div className="drawer-section">
-            <h4 className="drawer-section-title">🧪 Test & Debug</h4>
-            
-            {/* Debug - accessible à tous */}
-            <div style={{ marginBottom: '8px', paddingLeft: '8px', fontSize: '0.85em', fontWeight: '600', color: '#9ca3af' }}>
-              Diagnostic
-            </div>
-            <button className="drawer-action-item" onClick={() => handleNavAction(() => navigate('/debug'))}>
-              <span className="action-icon">🔧</span>
-              <span className="action-label">Debug Authentification</span>
-            </button>
-            
-            {/* Pages principales */}
-            <div style={{ marginBottom: '8px', paddingLeft: '8px', fontSize: '0.85em', fontWeight: '600', color: '#9ca3af', marginTop: '12px' }}>
-              Pages principales
-            </div>
-            <button className="drawer-action-item" onClick={() => handleNavAction(() => navigate('/login'))}>
-              <span className="action-icon">🔐</span>
-              <span className="action-label">Connexion</span>
-            </button>
-            
-            {/* Pages de consultation */}
-            <div style={{ marginTop: '12px', marginBottom: '8px', paddingLeft: '8px', fontSize: '0.85em', fontWeight: '600', color: '#9ca3af' }}>
-              Pages de consultation
-            </div>
+            <h4 className="drawer-section-title">🧪 Consultation</h4>
             <button className="drawer-action-item" onClick={() => handleNavAction(() => navigate(`/date/${new Date().toISOString().split('T')[0]}`))}>
               <span className="action-icon">📅</span>
               <span className="action-label">Menu du jour</span>
@@ -224,32 +178,25 @@ export default function MenuDrawer() {
               <span className="action-icon">📋</span>
               <span className="action-label">Menu de la semaine</span>
             </button>
-            
-            {/* Pages d'administration - visible seulement pour utilisateurs connectés */}
-            {isAuthenticated && userRole !== 'guest' && (
-              <>
-                <div style={{ marginTop: '12px', marginBottom: '8px', paddingLeft: '8px', fontSize: '0.85em', fontWeight: '600', color: '#9ca3af' }}>
-                  Administration
-                </div>
-                <button className="drawer-action-item" onClick={() => handleNavAction(() => navigate('/admin'))}>
-                  <span className="action-icon">⚙️</span>
-                  <span className="action-label">Tableau de bord</span>
-                </button>
-                <button className="drawer-action-item" onClick={() => handleNavAction(() => navigate(`/admin/date/${new Date().toISOString().split('T')[0]}`))}>
-                  <span className="action-icon">✏️</span>
-                  <span className="action-label">Éditer le jour</span>
-                </button>
-                <button className="drawer-action-item" onClick={() => handleNavAction(() => navigate(`/admin/week/${currentWeekNumber}`))}>
-                  <span className="action-icon">📝</span>
-                  <span className="action-label">Éditer la semaine</span>
-                </button>
-                <button className="drawer-action-item" onClick={() => handleNavAction(() => navigate('/auth/callback'))}>
-                  <span className="action-icon">🔧</span>
-                  <span className="action-label">Page de debug</span>
-                </button>
-              </>
-            )}
           </div>
+
+          {/* Section des menus */}
+          {menuActions.length > 0 && (
+            <div className="drawer-section">
+              <h4 className="drawer-section-title">Menus</h4>
+              {/* Boucle sur chaque action de menu pour créer un bouton */}
+              {menuActions.map((action, index) => (
+                <button
+                  key={index}
+                  className="drawer-action-item"
+                  onClick={() => handleNavAction(action.onClick)}
+                >
+                  <span className="action-icon">{action.icon}</span>
+                  <span className="action-label">{action.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Section de la liste des menus disponibles */}
           <div className="drawer-section">
