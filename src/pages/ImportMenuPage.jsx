@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Modal, Progress, Spin } from 'antd';
 import AdminLayout from '../components/AdminLayout';
 import ExcelImportMenu from '../components/ExcelImportMenu';
 import { MenuService } from '../services/MenuService';
@@ -8,6 +9,10 @@ import { LocalMenuService } from '../services/LocalMenuService';
 export default function ImportMenuPage() {
   const navigate = useNavigate();
   const [pendingMenus, setPendingMenus] = useState(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importMessage, setImportMessage] = useState('');
+  const [importProgress, setImportProgress] = useState(0);
+  const [totalPlats, setTotalPlats] = useState(0);
 
   // Réinitialiser l'import et le formulaire
   const handleReset = () => {
@@ -124,53 +129,54 @@ export default function ImportMenuPage() {
     }
   };
 
-  // Enregistre les menus dans Supabase
+  // Enregistre les menus dans Supabase avec popup de progression
   const handleConfirmImport = async () => {
-    console.log('🚀 DÉBUT handleConfirmImport - pendingMenus:', pendingMenus);
-    
     if (!pendingMenus || pendingMenus.length === 0) {
-      console.error('❌ Pas de menus en attente');
       alert("Aucun menu à importer. Veuillez d'abord importer un fichier Excel.");
       return;
     }
     
-    console.log('💾 Sauvegarde des menus dans Supabase...', pendingMenus);
+    // Calculer le nombre total de plats
+    let total = 0;
+    for (const menu of pendingMenus) {
+      if (menu && menu.originalMenus) {
+        total += menu.originalMenus.length;
+      }
+    }
+    
+    setIsImporting(true);
+    setImportMessage('🚀 Démarrage de l\'import...');
+    setImportProgress(0);
+    setTotalPlats(total);
     
     try {
-      let totalPlats = 0;
       let successPlats = 0;
+      let currentIndex = 0;
       
       for (const menu of pendingMenus) {
-        console.log(`📋 Traitement menu semaine ${menu.week_number}...`);
-        
         if (menu && menu.year && menu.week_number && menu.originalMenus) {
-          totalPlats += menu.originalMenus.length;
+          setImportMessage(`📋 Traitement semaine ${menu.week_number}...`);
           
-          // Importer chaque plat dans Supabase
           for (const item of menu.originalMenus) {
             try {
-              console.log(`📝 Traitement plat: "${item.plat}"`);
+              currentIndex++;
+              setImportMessage(`⏳ Enregistrement : ${item.plat}\n(${currentIndex}/${total})`);
               
               let dateStr;
               
               if (item.dateStr) {
-                // Nouveau format avec dateStr (déjà formaté en DD.MM.YYYY par ExcelImportMenu)
                 const [day, month, year] = item.dateStr.split('.');
                 dateStr = `${year}-${month}-${day}`;
-                console.log(`  → dateStr reçue: ${item.dateStr} → convertie en: ${dateStr}`);
               } else if (item.date) {
-                // Fallback si date est un objet Date (ne devrait pas arriver)
                 const year = item.date.getFullYear();
                 const month = String(item.date.getMonth() + 1).padStart(2, '0');
                 const day = String(item.date.getDate()).padStart(2, '0');
                 dateStr = `${year}-${month}-${day}`;
               } else if (item.jour) {
-                // Ancien format - calculer la date
                 const joursSemaine = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"];
                 const dayIndex = joursSemaine.indexOf(item.jour);
                 
                 if (dayIndex >= 0) {
-                  // Calculer la date du jour dans la semaine
                   const mondayDate = new Date(menu.year, 0, 1 + (menu.week_number - 1) * 7);
                   const day = mondayDate.getDay();
                   const mondayOffset = day <= 4 ? day - 1 : day - 8;
@@ -187,51 +193,37 @@ export default function ImportMenuPage() {
                 const mealType = item.moment.toLowerCase() === 'midi' ? 'MIDI' : 'SOIR';
                 const dishType = item.typePlat || 'AUTRE';
                 
-                console.log(`  → Date: ${dateStr}, Moment: ${mealType}, Type: ${dishType}`);
-                
-                // Créer ou récupérer le plat
-                console.log(`  → Création du plat...`);
                 const dish = await MenuService.getOrCreateDish(item.plat, dishType);
-                console.log(`  → Plat créé/récupéré: ID=${dish.id}`);
-                
-                // Assigner le plat au meal
-                console.log(`  → Assignation au meal...`);
                 await MenuService.assignDishToMealByType(dateStr, mealType, dishType, dish.id);
                 
                 successPlats++;
-                console.log(`✅ ${item.plat} sauvegardé (${successPlats}/${totalPlats})`);
-              } else {
-                console.warn(`⚠️ Pas de date pour ${item.plat}`);
               }
+              
+              setImportProgress((currentIndex / total) * 100);
             } catch (error) {
               console.error(`⚠️ Erreur pour ${item.plat}:`, error);
-              console.error(`   Message: ${error.message}`);
-              console.error(`   Stack: ${error.stack}`);
             }
           }
-          
-          console.log(`✅ Menu semaine ${menu.week_number} traité: ${successPlats}/${totalPlats} plats`);
         }
       }
       
-      console.log(`🎉 Import terminé: ${successPlats}/${totalPlats} plats importés`);
+      setImportMessage(`✅ Import réussi !\n${successPlats}/${total} plats enregistrés\n\n⏳ Redirection en cours...`);
+      setImportProgress(100);
       
-      // Redirection vers la semaine importée
-      if (pendingMenus[0] && pendingMenus[0].week_number) {
-        const weekNum = pendingMenus[0].week_number;
-        alert(`Menu de la semaine ${weekNum} importé avec succès ! (${successPlats}/${totalPlats} plats)\nRedirection...`);
-        navigate("/admin/week/" + weekNum);
-      } else {
-        alert(`Importation réussie ! (${successPlats}/${totalPlats} plats)`);
-        navigate("/admin");
-      }
-      
-      setPendingMenus(null);
+      // Redirection après 2 secondes
+      setTimeout(() => {
+        if (pendingMenus[0] && pendingMenus[0].week_number) {
+          navigate("/admin/week/" + pendingMenus[0].week_number);
+        } else {
+          navigate("/admin");
+        }
+        setIsImporting(false);
+        setPendingMenus(null);
+      }, 2000);
     } catch (error) {
-      console.error('❌ Erreur FATALE lors de l\'import Supabase:', error);
-      console.error(`   Message: ${error.message}`);
-      console.error(`   Stack: ${error.stack}`);
-      alert(`Erreur lors de l'import: ${error.message}`);
+      console.error('❌ Erreur lors de l\'import:', error);
+      setImportMessage(`❌ Erreur : ${error.message}`);
+      setIsImporting(false);
     }
   };
 
@@ -293,6 +285,42 @@ export default function ImportMenuPage() {
           </button>
         </div>
       </div>
+
+      {/* Modal de progression de l'import */}
+      <Modal
+        title="📥 Importation en cours..."
+        open={isImporting}
+        closable={false}
+        footer={null}
+        centered
+        width={400}
+        bodyStyle={{ textAlign: 'center', padding: '2rem' }}
+      >
+        <div style={{ marginBottom: '2rem' }}>
+          <Spin size="large" />
+        </div>
+        
+        <div style={{ 
+          marginBottom: '1.5rem', 
+          fontSize: '1rem',
+          whiteSpace: 'pre-line',
+          lineHeight: '1.6',
+          color: '#333',
+          minHeight: '60px'
+        }}>
+          {importMessage}
+        </div>
+        
+        <Progress 
+          percent={Math.round(importProgress)} 
+          status={importProgress === 100 ? 'success' : 'active'}
+          format={percent => `${percent}%`}
+        />
+        
+        <div style={{ marginTop: '1.5rem', fontSize: '0.9rem', color: '#666' }}>
+          {totalPlats > 0 && `Total : ${totalPlats} plats`}
+        </div>
+      </Modal>
     </AdminLayout>
   );
 }

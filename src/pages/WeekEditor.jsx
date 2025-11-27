@@ -43,9 +43,13 @@ const WeekEditor = () => {
 
       const weekMenusData = {};
       for (let i = 0; i < weekDates.length; i++) {
-        const date = weekDates[i];
+        const dateObj = weekDates[i];
+        // Formater la date en YYYY-MM-DD pour Supabase
+        const dateStr = dateObj instanceof Date 
+          ? `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`
+          : dateObj;
         try {
-          const mealsData = await MenuService.getMenuForDate(date);
+          const mealsData = await MenuService.getMenuForDate(dateStr);
           
           const dayMenu = {};
           if (mealsData && mealsData.length > 0) {
@@ -113,7 +117,11 @@ const WeekEditor = () => {
 
   const handleDishAssignment = async (mealType, dishType, dishId) => {
     try {
-      const currentDate = weekDates[selectedDay];
+      const dateObj = weekDates[selectedDay];
+      // Formater la date en YYYY-MM-DD pour Supabase
+      const currentDate = dateObj instanceof Date 
+        ? `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`
+        : dateObj;
       
       console.log('🔄 Modification du menu:', { currentDate, mealType, dishType, dishId });
       
@@ -174,7 +182,11 @@ const WeekEditor = () => {
       for (let i = 0; i < weekDates.length; i++) {
         if (i === fromDayIndex) continue;
         
-        const targetDate = weekDates[i];
+        const dateObj = weekDates[i];
+        // Formater la date en YYYY-MM-DD pour Supabase
+        const targetDate = dateObj instanceof Date 
+          ? `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`
+          : dateObj;
         
         try {
           // Identifier les types de meals à copier (MIDI et/ou SOIR)
