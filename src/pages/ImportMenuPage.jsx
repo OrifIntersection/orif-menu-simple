@@ -32,7 +32,8 @@ export default function ImportMenuPage() {
     
     if (hasNewFormat) {
       // Nouveau format : grouper par date et moment
-      const joursSemaine = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
+      // IMPORTANT: Seulement Lundi-Vendredi (pas Samedi/Dimanche)
+      const joursSemaine = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"];
       const moments = ["Midi", "Soir"];
       const data = {};
       
@@ -45,9 +46,17 @@ export default function ImportMenuPage() {
       };
       
       // Récupère toutes les dates uniques
-      const uniqueDates = [...new Set(menus.map(m => m.date ? formatDateLocal(m.date) : null).filter(Boolean))].sort();
+      const allDates = menus.map(m => m.date ? formatDateLocal(m.date) : null).filter(Boolean);
       
-      console.log('📅 Dates uniques trouvées:', uniqueDates);
+      // FILTRE: Garder seulement Lundi-Vendredi (pas Samedi/Dimanche)
+      const uniqueDates = [...new Set(allDates)].sort().filter((dateStr) => {
+        const [year, month, day] = dateStr.split('-').map(Number);
+        const date = new Date(year, month - 1, day, 12, 0, 0);
+        const dayOfWeek = date.getDay(); // 0=Dimanche, 1=Lundi, ..., 6=Samedi
+        return dayOfWeek >= 1 && dayOfWeek <= 5; // Lundi-Vendredi seulement
+      });
+      
+      console.log('📅 Dates uniques trouvées (Lun-Ven seulement):', uniqueDates);
       
       moments.forEach((meal) => {
         data[meal] = {};
@@ -56,7 +65,7 @@ export default function ImportMenuPage() {
           const [year, month, day] = dateStr.split('-').map(Number);
           const date = new Date(year, month - 1, day, 12, 0, 0);
           const dayIndex = date.getDay();
-          const dayName = joursSemaine[dayIndex === 0 ? 6 : dayIndex - 1];
+          const dayName = joursSemaine[dayIndex - 1]; // Lundi=0, ..., Vendredi=4
           
           console.log(`📅 ${dateStr} → jour ${dayIndex} → ${dayName}`);
           
@@ -70,9 +79,10 @@ export default function ImportMenuPage() {
             .map((m) => `${m.typePlat}: ${m.plat}`)
             .filter(Boolean);
           
-          data[meal][dayName] = plats.length > 0 ? plats.join(" / ") : "";
-          
-          console.log(`  ${dayName} ${meal}: ${plats.length} plats`);
+          if (dayName) {
+            data[meal][dayName] = plats.length > 0 ? plats.join(" / ") : "";
+            console.log(`  ${dayName} ${meal}: ${plats.length} plats`);
+          }
         });
       });
       
@@ -210,10 +220,10 @@ export default function ImportMenuPage() {
       setImportMessage(`✅ Import réussi !\n${successPlats}/${total} plats enregistrés\n\n⏳ Redirection en cours...`);
       setImportProgress(100);
       
-      // Redirection après 2 secondes
+      // Redirection après 2 secondes vers la page de la semaine
       setTimeout(() => {
         if (pendingMenus[0] && pendingMenus[0].week_number) {
-          navigate("/admin/week/" + pendingMenus[0].week_number);
+          navigate("/week/" + pendingMenus[0].week_number);
         } else {
           navigate("/admin");
         }
