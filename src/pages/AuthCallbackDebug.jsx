@@ -36,7 +36,7 @@ const AuthCallbackDebug = () => {
 
   return (
     <main className="container">
-      <PageLayout title="🔧 Page de Debug - Tous les outils">
+      <PageLayout title="🔍 Diagnostic Système">
         
         {/* Section Navigation */}
         <div style={{ background: '#e3f2fd', padding: '1.5rem', borderRadius: 8, marginBottom: '2rem' }}>

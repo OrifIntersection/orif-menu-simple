@@ -5,6 +5,10 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { Spin, Alert, Card } from 'antd'
 import { CheckCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons'
 
+/**
+ * Page Historique de Connexion
+ * Affiche l'état de la session et le traitement du Magic Link
+ */
 const AuthCallback = () => {
   const [status, setStatus] = useState('loading') // 'loading', 'success', 'error'
   const [message, setMessage] = useState('')
