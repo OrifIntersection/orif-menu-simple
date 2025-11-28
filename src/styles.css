@@ -859,6 +859,7 @@ td {
    HOME DATE PICKER
    ======================================== */
 .home-date-picker.ant-picker {
+  width: auto !important;
   padding: 0 !important;
   border-radius: 6px !important;
 }
@@ -869,10 +870,14 @@ td {
   font-weight: bold !important;
   border: 1px solid var(--border) !important;
   font-size: 1em !important;
+  color: var(--text) !important;
+  background: var(--bg) !important;
 }
 
 .home-date-picker .ant-picker-input::placeholder {
-  font-weight: normal;
+  color: var(--text) !important;
+  font-weight: bold !important;
+  opacity: 1 !important;
 }
 
 .home-date-picker.ant-picker-focused .ant-picker-input {
