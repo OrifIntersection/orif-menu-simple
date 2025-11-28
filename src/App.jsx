@@ -193,7 +193,9 @@ function HomePage() {
             }}
             placeholder="Cherche un jour"
             format="DD/MM/YYYY"
-            style={{ padding: '0.5rem 1.2rem', borderRadius: 6, fontWeight: 'bold', minWidth: 160 }}
+            inputReadOnly
+            className="home-date-picker"
+            style={{ minWidth: 160 }}
           />
         </div>
         <h2 className="menu-title" style={{textAlign: 'center', marginBottom: '1.5rem'}}>
