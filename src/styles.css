@@ -860,15 +860,37 @@ td {
    IMPRESSION
    ======================================== */
 /* ========================================
-   DATE INPUT VISIBILITY
+   CUSTOM DATE INPUT
    ======================================== */
-input[type="date"] {
-  color: var(--text) !important;
-  background: var(--bg) !important;
+.date-input-wrapper {
+  position: relative;
+  display: inline-block;
 }
 
-input[type="date"]::placeholder {
+.custom-date-input {
+  padding: 0.5rem 1.2rem !important;
+  border-radius: 6px !important;
+  font-weight: bold !important;
+  border: 1px solid var(--border) !important;
+  font-size: 1em !important;
+  color: transparent !important;
+  background: var(--bg) !important;
+  min-width: 160px !important;
+  cursor: pointer !important;
+}
+
+.custom-date-input:valid {
   color: var(--text) !important;
+}
+
+.date-input-label {
+  position: absolute;
+  left: 1.2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text);
+  font-weight: bold;
+  pointer-events: none;
 }
 
 /* ========================================

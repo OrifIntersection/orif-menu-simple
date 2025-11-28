@@ -178,15 +178,20 @@ function HomePage() {
             ))}
           </select>
           {/* Agenda pour choisir un jour */}
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={e => {
-              setSelectedDate(e.target.value);
-              if (e.target.value) navigate(`/date/${e.target.value}`);
-            }}
-            style={{ padding: '0.5rem 1.2rem', borderRadius: 6, fontWeight: 'bold', minWidth: 160, border: '1px solid #d0d5dd' }}
-          />
+          <div className="date-input-wrapper">
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={e => {
+                setSelectedDate(e.target.value);
+                if (e.target.value) navigate(`/date/${e.target.value}`);
+              }}
+              className="custom-date-input"
+            />
+            <span className="date-input-label" style={{ display: selectedDate ? 'none' : 'block' }}>
+              Chercher un jour
+            </span>
+          </div>
         </div>
         <h2 className="menu-title" style={{textAlign: 'center', marginBottom: '1.5rem'}}>
           {`Menu la semaine N° ${currentWeekNumber} du ${formatDate(startDate)} au ${formatDate(endDate)}`}
