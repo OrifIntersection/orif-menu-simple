@@ -315,11 +315,17 @@ td {
   color: #333 !important;
   opacity: 1 !important;
   font-size: 1em !important;
+  font-weight: 700 !important;
+}
+
+.date-picker input {
+  font-weight: 700 !important;
 }
 
 .date-picker input::placeholder {
   color: #333 !important;
   opacity: 1 !important;
+  font-weight: 700 !important;
 }
 
 .date-picker .ant-picker-suffix {
