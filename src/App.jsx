@@ -193,7 +193,7 @@ function HomePage() {
               }}
               placeholder="Chercher un jour"
               format="DD/MM/YYYY"
-              style={{ width: '100%', minWidth: '160px', fontWeight: 'bold' }}
+              style={{ padding: '0.5rem 1.2rem', borderRadius: 6, fontWeight: 'bold', minWidth: 120 }}
             />
           </div>
         </div>
