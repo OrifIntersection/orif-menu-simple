@@ -2,19 +2,23 @@
    STYLES RESPONSIVE - Menu du jour uniquement
    ======================================== */
 
-/* Responsive pour petits écrans - menu du jour UNIQUEMENT */
+/* Responsive pour petits écrans */
 @media (max-width: 768px) {
-  /* Appliquer uniquement au menu du jour (1 seul jour) */
-  .daily-menu-view table {
+  /* Appliquer à tous les tableaux */
+  .daily-menu-view table,
+  table {
     min-width: 100% !important;
   }
   
   .daily-menu-view thead th,
-  .daily-menu-view tfoot th {
+  .daily-menu-view tfoot th,
+  thead th,
+  tfoot th {
     padding: 8px 4px;
   }
   
-  .daily-menu-view td {
+  .daily-menu-view td,
+  tbody td {
     padding: 8px 4px;
     min-width: 100px;
   }
@@ -43,18 +47,22 @@
   }
 }
 
-/* Responsive pour très petits écrans - menu du jour uniquement */
+/* Responsive pour très petits écrans */
 @media (max-width: 480px) {
-  .daily-menu-view table {
+  .daily-menu-view table,
+  table {
     min-width: 100% !important;
   }
   
   .daily-menu-view thead th,
-  .daily-menu-view tfoot th {
+  .daily-menu-view tfoot th,
+  thead th,
+  tfoot th {
     padding: 6px 2px;
   }
   
-  .daily-menu-view td {
+  .daily-menu-view td,
+  tbody td {
     padding: 6px 2px;
     min-width: 85px;
   }
@@ -100,7 +108,8 @@
     font-size: 0.85em;
   }
   
-  .daily-menu-view td {
+  .daily-menu-view td,
+  tbody td {
     padding: 2px 1px !important;
     font-size: 0.85em;
     min-width: 75px;
@@ -189,7 +198,8 @@
     font-size: 0.8em;
   }
   
-  .daily-menu-view td {
+  .daily-menu-view td,
+  tbody td {
     padding: 1px 0 !important;
     font-size: 0.8em;
     line-height: 1.2;
@@ -301,7 +311,8 @@
     word-wrap: break-word;
   }
   
-  .daily-menu-view td {
+  .daily-menu-view td,
+  tbody td {
     padding: 1px 0 !important;
     font-size: 0.75em;
     line-height: 1.1;
