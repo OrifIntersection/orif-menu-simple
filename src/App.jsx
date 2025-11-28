@@ -170,7 +170,7 @@ function HomePage() {
               setSelectedWeek(e.target.value);
               if (e.target.value) navigate(`/week/${e.target.value}`);
             }}
-            style={{ padding: '0.5rem 1.2rem', borderRadius: 6, fontWeight: 'bold', fontSize: '0.9em', minWidth: 120 }}
+            style={{ padding: '0.4rem 0.8rem', borderRadius: 6, fontWeight: 'normal', fontSize: '0.85em', minWidth: 120 }}
           >
             <option value="">Menu d'autre semaine disponible</option>
             {availableWeeks.map(week => (
@@ -185,7 +185,7 @@ function HomePage() {
               setSelectedDate(e.target.value);
               if (e.target.value) navigate(`/date/${e.target.value}`);
             }}
-            style={{ padding: '0.5rem 1.2rem', borderRadius: 6, fontWeight: 'bold', minWidth: 160 }}
+            style={{ padding: '0.4rem 0.8rem', borderRadius: 6, fontWeight: 'normal', fontSize: '0.85em', minWidth: 160 }}
           />
         </div>
         <h2 className="menu-title" style={{textAlign: 'center', marginBottom: '1.5rem'}}>
