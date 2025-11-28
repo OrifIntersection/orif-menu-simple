@@ -306,8 +306,17 @@ td {
 }
 
 .button-select {
-  background-color: #f5f5f5 !important;
+  background: #e8e8e8 !important;
+  background-color: #e8e8e8 !important;
   color: #333 !important;
+}
+
+select {
+  background: #e8e8e8 !important;
+}
+
+.date-picker .ant-picker {
+  background: #e8e8e8 !important;
 }
 
 .date-picker .ant-picker-input {
@@ -316,6 +325,7 @@ td {
   font-size: 1em !important;
   opacity: 1 !important;
   padding: 0.5rem 1.2rem !important;
+  background: transparent !important;
 }
 
 .date-picker .ant-picker-input::placeholder {
