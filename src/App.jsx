@@ -130,7 +130,7 @@ function HomePage() {
         setMenuData(null);
       } else {
         // IMPORTANT: Normaliser les données Supabase AVANT de filtrer
-        const normalized = normalizeMenu({ items: data || [] }, currentWeekNumber);
+        const normalized = normalizeMenu(data || [], currentWeekNumber);
         // Filtrer pour afficher uniquement Lundi-Vendredi
         const filtered = filterWeekdays(normalized);
         setMenuData(filtered);
