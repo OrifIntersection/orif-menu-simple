@@ -295,7 +295,7 @@ td {
 .date-picker .ant-picker {
   width: 100% !important;
   min-width: 160px !important;
-  padding: 0.5rem 1.2rem !important;
+  padding: 0 !important;
   border: 2px solid #333 !important;
   border-radius: 6px !important;
   background: #ffffff !important;
@@ -308,10 +308,22 @@ td {
   font-weight: 700 !important;
   font-size: 1em !important;
   opacity: 1 !important;
+  padding: 0.5rem 1.2rem !important;
 }
 
 .date-picker .ant-picker-input::placeholder {
-  color: #666 !important;
+  color: #333 !important;
+  opacity: 1 !important;
+  font-size: 1em !important;
+}
+
+.date-picker input::placeholder {
+  color: #333 !important;
+  opacity: 1 !important;
+}
+
+.date-picker .ant-picker-suffix {
+  display: block !important;
   opacity: 1 !important;
 }
 
