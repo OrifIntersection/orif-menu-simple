@@ -3,7 +3,6 @@ import React from "react";
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { DatePicker as AntDatePicker } from "antd";
-import dayjs from "dayjs";
 import { CalendarOutlined } from '@ant-design/icons';
 import { getCurrentYear, getCurrentWeekNumber } from "./utils/dateUtils";
 import PageLayout from "./components/PageLayout";
