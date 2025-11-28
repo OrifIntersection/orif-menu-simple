@@ -323,8 +323,17 @@ td {
 }
 
 .date-picker .ant-picker-suffix {
-  display: block !important;
+  display: flex !important;
+  align-items: center !important;
   opacity: 1 !important;
+  color: #333 !important;
+  font-size: 1.2em !important;
+  padding-right: 0.5rem !important;
+}
+
+.date-picker .anticon {
+  opacity: 1 !important;
+  color: #333 !important;
 }
 
 .picker-label {
