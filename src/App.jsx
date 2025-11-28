@@ -81,20 +81,9 @@ function HomePage() {
   // Charger le menu initial
   React.useEffect(() => {
     setLoading(true);
-    // Vérifie d'abord le localStorage
-    const localMenu = LocalMenuService.getMenuByWeek(currentYear, currentWeekNumber);
-    if (localMenu && localMenu.days && localMenu.days.length > 0) {
-      // Filtrer pour afficher uniquement Lundi-Vendredi
-      const filtered = filterWeekdays({
-        meals: localMenu.meals,
-        days: localMenu.days,
-        data: localMenu.data
-      });
-      setMenuData(filtered);
-      setLoading(false);
-      return;
-    }
-    // Sinon, utilise Supabase
+    // IMPORTANT: Pour la semaine courante, TOUJOURS charger Supabase en priorité
+    // (ignorer localStorage car il peut être incomplet)
+    // localStorage ne sert que comme fallback en cas d'erreur Supabase
     (async function fetchMenu() {
       if (!currentYear || !currentWeekNumber) return;
       const monday = (y, w) => {
@@ -132,8 +121,20 @@ function HomePage() {
           )
         `)
         .in('meal_date', weekDates);
-      if (error) {
-        setMenuData(null);
+      
+      if (error || !data) {
+        // Fallback: utiliser localStorage si Supabase échoue
+        const localMenu = LocalMenuService.getMenuByWeek(currentYear, currentWeekNumber);
+        if (localMenu && localMenu.days && localMenu.days.length > 0) {
+          const filtered = filterWeekdays({
+            meals: localMenu.meals,
+            days: localMenu.days,
+            data: localMenu.data
+          });
+          setMenuData(filtered);
+        } else {
+          setMenuData(null);
+        }
       } else {
         // IMPORTANT: Normaliser les données Supabase AVANT de filtrer
         const normalized = normalizeMenu(data || [], currentWeekNumber);
