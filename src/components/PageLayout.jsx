@@ -16,10 +16,10 @@ export default function PageLayout({ title, actions, children }) {
         <div className="brand">
           <span className="logo" aria-hidden="true"></span>
           <h1>{title}</h1>
+          <MenuDrawer />
         </div>
         <div className="toolbar">
           <div className="toolbar-buttons">
-            <MenuDrawer />
             {actions}
           </div>
         </div>
