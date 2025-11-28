@@ -75,7 +75,7 @@ function HomePage() {
         
         const supabaseWeeks = Object.values(weeks);
         setAvailableWeeks(supabaseWeeks.sort((a, b) => b - a));
-      } catch (err) {
+      } catch {
         setAvailableWeeks([]);
       }
     }
@@ -147,7 +147,7 @@ function HomePage() {
       }
       setLoading(false);
     })();
-  }, []);
+  }, [currentYear, currentWeekNumber]);
 
   // Calcul des dates de début et de fin de semaine
   const simpleMonday = (y, w) => {
