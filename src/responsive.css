@@ -306,7 +306,7 @@
     font-size: 0.75em;
     line-height: 1.1;
     word-wrap: break-word;
-    min-width: 65px;
+    min-width: 55px;
   }
   
   .daily-menu-view tbody th.meal-label {
