@@ -91,6 +91,7 @@ function HomePage() {
     }
     // Sinon, utilise Supabase
     (async function fetchMenu() {
+      if (!currentYear || !currentWeekNumber) return;
       const monday = (y, w) => {
         const d = new Date(y, 0, 1 + (w - 1) * 7);
         const day = d.getDay();
@@ -137,7 +138,7 @@ function HomePage() {
       }
       setLoading(false);
     })();
-  }, [currentYear, currentWeekNumber]);
+  }, []);
 
   // Calcul des dates de début et de fin de semaine
   const simpleMonday = (y, w) => {
