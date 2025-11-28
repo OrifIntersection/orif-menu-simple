@@ -7,44 +7,37 @@ export default function WeekDeletePicker() {
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState(''); // 'success' ou 'error'
 
-  // Charger les semaines disponibles
+  // Charger les semaines disponibles depuis localStorage ET Supabase
   useEffect(() => {
     async function loadWeeks() {
       try {
-        const localMenus = JSON.parse(localStorage.getItem('menus_local') || '[]');
-        if (localMenus.length > 0) {
-          const weeks = localMenus
-            .map(m => m.week_number)
-            .filter((v, i, arr) => arr.indexOf(v) === i)
-            .sort((a, b) => b - a);
-          setAvailableWeeks(weeks);
-          return;
-        }
+        const allWeeks = new Set();
 
+        // Charger du localStorage
+        const localMenus = JSON.parse(localStorage.getItem('menus_local') || '[]');
+        localMenus.forEach(m => allWeeks.add(m.week_number));
+
+        // Charger de Supabase
         const { supabase } = await import('../lib/supabase');
         const { data } = await supabase
           .from('meals')
           .select('meal_date')
           .order('meal_date', { ascending: false });
 
-        if (!data || data.length === 0) {
-          setAvailableWeeks([]);
-          return;
+        if (data && data.length > 0) {
+          data.forEach(item => {
+            const d = new Date(item.meal_date);
+            const year = d.getFullYear();
+            const jan1 = new Date(year, 0, 1);
+            const days = Math.floor((d - jan1) / (24 * 60 * 60 * 1000));
+            const weekNum = Math.ceil((days + jan1.getDay() + 1) / 7);
+            allWeeks.add(weekNum);
+          });
         }
 
-        const weeks = {};
-        data.forEach(item => {
-          const d = new Date(item.meal_date);
-          const year = d.getFullYear();
-          const jan1 = new Date(year, 0, 1);
-          const days = Math.floor((d - jan1) / (24 * 60 * 60 * 1000));
-          const weekNum = Math.ceil((days + jan1.getDay() + 1) / 7);
-          const key = `${year}-W${weekNum}`;
-          if (!weeks[key]) weeks[key] = weekNum;
-        });
-
-        const supabaseWeeks = Object.values(weeks).sort((a, b) => b - a);
-        setAvailableWeeks(supabaseWeeks);
+        // Convertir Set en array et trier
+        const weeks = Array.from(allWeeks).sort((a, b) => b - a);
+        setAvailableWeeks(weeks);
       } catch {
         setMessage('Erreur lors du chargement des semaines');
         setMessageType('error');

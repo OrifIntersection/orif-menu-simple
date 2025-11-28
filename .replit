@@ -46,12 +46,12 @@ localPort = 35249
 externalPort = 3001
 
 [[ports]]
-localPort = 37047
-externalPort = 4200
-
-[[ports]]
 localPort = 37713
 externalPort = 3000
+
+[[ports]]
+localPort = 45247
+externalPort = 4200
 
 [userenv]
 
