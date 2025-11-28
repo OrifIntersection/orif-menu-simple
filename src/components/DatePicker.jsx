@@ -31,6 +31,7 @@ export default function DatePicker() {
         value={selectedDate}
         onChange={handleDateChange}
         className="date-input"
+        placeholder="Cherche un jour"
         title="Sélectionner une date pour voir le menu du jour"
       />
     </div>
