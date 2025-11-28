@@ -304,6 +304,14 @@ td {
   font-size: 1em;
   cursor: pointer;
   transition: all 0.2s;
+  color: var(--text);
+  background: var(--bg);
+}
+
+.date-input::placeholder,
+.week-input::placeholder {
+  color: var(--muted);
+  opacity: 1;
 }
 
 .date-input:hover,
