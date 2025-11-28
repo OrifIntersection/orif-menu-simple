@@ -23,7 +23,7 @@ export default function DatePicker() {
   return (
     <div className="date-picker">
       <label htmlFor="date-select" className="picker-label">
-        📅 Menu d'une date:
+        📅 Cherche un jour:
       </label>
       <input
         id="date-select"
@@ -31,6 +31,7 @@ export default function DatePicker() {
         value={selectedDate}
         onChange={handleDateChange}
         className="date-input"
+        title="Sélectionner une date pour voir le menu du jour"
       />
     </div>
   );

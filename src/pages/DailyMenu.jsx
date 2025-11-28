@@ -11,7 +11,8 @@ export default function DailyMenu(props) {
   const [loading, setLoading] = React.useState(true);
   const date = props.date || format(new Date(), "yyyy-MM-dd");
   const jours = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
-  const jourObj = new Date(date + 'T12:00:00');
+  const [year, month, day] = date.split('-').map(Number);
+  const jourObj = new Date(year, month - 1, day);
   const jourActuel = jours[jourObj.getDay()];
 
   React.useEffect(() => {
@@ -45,7 +46,8 @@ export default function DailyMenu(props) {
       // Fallback localStorage si rien dans Supabase
       if (mealsData.length === 0) {
         const allMenus = LocalMenuService.getAllMenus();
-        const dateObj = new Date(date + 'T12:00:00');
+        const [dateYear, dateMonth, dateDay] = date.split('-').map(Number);
+        const dateObj = new Date(dateYear, dateMonth - 1, dateDay);
         const weekNum = getISOWeek(dateObj);
         const year = getYear(dateObj);
         
@@ -62,7 +64,8 @@ export default function DailyMenu(props) {
         }
       } else {
         // IMPORTANT: Normaliser les données Supabase pour que les émojis s'affichent
-        const dateObj = new Date(date + 'T12:00:00');
+        const [dateYear, dateMonth, dateDay] = date.split('-').map(Number);
+        const dateObj = new Date(dateYear, dateMonth - 1, dateDay);
         const weekNum = getISOWeek(dateObj);
         const normalized = normalizeMenu(mealsData, weekNum);
         // Extraire uniquement le jour demandé

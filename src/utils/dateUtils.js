@@ -71,7 +71,10 @@ export function formatDateForDisplay(date) {
  * @returns {Date} L'objet Date
  */
 export function parseDate(dateString) {
-  return new Date(dateString + 'T12:00:00'); // Midi pour éviter les problèmes de timezone
+  // Créer une date avec les composants pour éviter les problèmes de timezone
+  const [year, month, day] = dateString.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  return date;
 }
 
 /**
