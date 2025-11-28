@@ -2,7 +2,8 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
-import { CalendarOutlined } from '@ant-design/icons';
+import { DatePicker as AntDatePicker } from "antd";
+import dayjs from "dayjs";
 import { getCurrentYear, getCurrentWeekNumber } from "./utils/dateUtils";
 import PageLayout from "./components/PageLayout";
 import { LocalMenuService } from "./services/LocalMenuService";
@@ -32,7 +33,7 @@ import "./styles.css";
  */
 function HomePage() {
   const [selectedWeek, setSelectedWeek] = React.useState("");
-  const [selectedDate, setSelectedDate] = React.useState("");
+  const [selectedDate, setSelectedDate] = React.useState(null);
   const [menuData, setMenuData] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
   const [availableWeeks, setAvailableWeeks] = React.useState([]);
@@ -179,21 +180,20 @@ function HomePage() {
             ))}
           </select>
           {/* Agenda pour choisir un jour */}
-          <div className="date-input-wrapper">
-            <input
-              id="home-date-input"
-              type="date"
+          <div className="date-picker">
+            <AntDatePicker
               value={selectedDate}
-              onChange={e => {
-                setSelectedDate(e.target.value);
-                if (e.target.value) navigate(`/date/${e.target.value}`);
+              onChange={date => {
+                if (date) {
+                  setSelectedDate(date);
+                  const formattedDate = date.format('YYYY-MM-DD');
+                  navigate(`/date/${formattedDate}`);
+                }
               }}
-              className="custom-date-input"
+              placeholder="Chercher un jour"
+              format="DD/MM/YYYY"
+              style={{ width: '100%', minWidth: '160px' }}
             />
-            <label htmlFor="home-date-input" className="date-input-label">
-              <CalendarOutlined style={{ marginRight: '0.5rem' }} />
-              {selectedDate ? new Date(selectedDate + 'T00:00:00').toLocaleDateString('fr-FR') : 'Chercher un jour'}
-            </label>
           </div>
         </div>
         <h2 className="menu-title" style={{textAlign: 'center', marginBottom: '1.5rem'}}>
