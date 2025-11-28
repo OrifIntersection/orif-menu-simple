@@ -170,7 +170,7 @@ function HomePage() {
               setSelectedWeek(e.target.value);
               if (e.target.value) navigate(`/week/${e.target.value}`);
             }}
-            style={{ padding: '0.5rem 1.2rem', borderRadius: 6, fontWeight: 'bold', minWidth: 120 }}
+            style={{ padding: '0.5rem 1.2rem', borderRadius: 6, fontWeight: 'bold', fontSize: '0.9em', minWidth: 120 }}
           >
             <option value="">Menu d'autre semaine disponible</option>
             {availableWeeks.map(week => (
