@@ -30,19 +30,50 @@ import "./styles.css";
  * Affiche le menu de la semaine par défaut
  */
 function HomePage() {
-      // Récupère toutes les semaines disponibles dans le localStorage
-      const allMenus = LocalMenuService.getAllMenus();
-      const allWeeks = allMenus.map(m => m.week_number).filter((v, i, arr) => arr.indexOf(v) === i);
-      const [selectedWeek, setSelectedWeek] = React.useState("");
-      const [selectedDate, setSelectedDate] = React.useState("");
-      const navigate = useNavigate();
-    // Déclaration des hooks d'abord
-    const [menuData, setMenuData] = React.useState(null);
-    const [loading, setLoading] = React.useState(true);
-
-    const currentYear = getCurrentYear();
+  const [selectedWeek, setSelectedWeek] = React.useState("");
+  const [selectedDate, setSelectedDate] = React.useState("");
+  const [menuData, setMenuData] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+  const [availableWeeks, setAvailableWeeks] = React.useState([]);
+  const navigate = useNavigate();
+  
+  const currentYear = getCurrentYear();
   const currentWeekNumber = getCurrentWeekNumber();
-  // ...hooks déjà déclarés plus haut...
+
+  // Charger les semaines disponibles (localStorage + Supabase)
+  React.useEffect(() => {
+    (async function loadWeeks() {
+      try {
+        const localMenus = LocalMenuService.getAllMenus();
+        const localWeeks = localMenus.map(m => m.week_number).filter((v, i, arr) => arr.indexOf(v) === i);
+        
+        const { supabase } = await import('./lib/supabase');
+        const { data, error } = await supabase.from("meals").select("meal_date").order("meal_date", { ascending: false });
+        
+        let allWeeks = localWeeks;
+        if (!error && data && data.length > 0) {
+          // Regrouper par semaine depuis Supabase
+          const weeks = {};
+          data.forEach(item => {
+            const d = new Date(item.meal_date);
+            const year = d.getFullYear();
+            const jan1 = new Date(year, 0, 1);
+            const days = Math.floor((d - jan1) / (24 * 60 * 60 * 1000));
+            const weekNum = Math.ceil((days + jan1.getDay() + 1) / 7);
+            weeks[weekNum] = true;
+          });
+          const supabaseWeeks = Object.keys(weeks).map(Number);
+          // Combiner et dédupliquer
+          allWeeks = [...new Set([...localWeeks, ...supabaseWeeks])].sort((a, b) => b - a);
+        }
+        setAvailableWeeks(allWeeks);
+      } catch {
+        setAvailableWeeks([]);
+      }
+    })();
+  }, []);
+
+  // Charger le menu initial
   React.useEffect(() => {
     setLoading(true);
     // Vérifie d'abord le localStorage
@@ -139,7 +170,7 @@ function HomePage() {
             style={{ padding: '0.5rem 1.2rem', borderRadius: 6, fontWeight: 'bold', minWidth: 120 }}
           >
             <option value="">Menu d'autre semaine disponible</option>
-            {allWeeks.map(week => (
+            {availableWeeks.map(week => (
               <option key={week} value={week}>{`Semaine ${week}`}</option>
             ))}
           </select>
