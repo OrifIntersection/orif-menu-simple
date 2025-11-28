@@ -2,6 +2,7 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
+import { CalendarOutlined } from '@ant-design/icons';
 import { getCurrentYear, getCurrentWeekNumber } from "./utils/dateUtils";
 import PageLayout from "./components/PageLayout";
 import { LocalMenuService } from "./services/LocalMenuService";
@@ -190,6 +191,7 @@ function HomePage() {
               className="custom-date-input"
             />
             <label htmlFor="home-date-input" className="date-input-label">
+              <CalendarOutlined style={{ marginRight: '0.5rem' }} />
               {selectedDate ? new Date(selectedDate + 'T00:00:00').toLocaleDateString('fr-FR') : 'Chercher un jour'}
             </label>
           </div>
