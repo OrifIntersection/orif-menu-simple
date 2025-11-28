@@ -85,9 +85,9 @@ body {
 
 .toolbar-buttons {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 8px;
-  align-items: flex-end;
+  align-items: center;
 }
 
 /* ========================================
@@ -142,8 +142,14 @@ button:active {
 
 .table-caption {
   margin: 0;
-  font-size: 1.1em;
+  font-size: 0.95em;
   font-weight: 600;
+}
+
+.menu-title {
+  font-size: 0.9em;
+  font-weight: 600;
+  margin: 0 0 1.5rem 0;
 }
 
 table {
@@ -319,6 +325,9 @@ td {
   align-items: center;
   gap: 8px;
   font-weight: 500;
+  padding: 6px 10px !important;
+  font-size: 0.9em !important;
+  margin-left: auto;
 }
 
 .menu-drawer-toggle svg {
@@ -694,7 +703,7 @@ td {
   }
 
   .table-caption {
-    font-size: 1em;
+    font-size: 0.9em;
   }
 
   table {
