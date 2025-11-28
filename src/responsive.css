@@ -2,6 +2,11 @@
    STYLES RESPONSIVE - Menu du jour uniquement
    ======================================== */
 
+/* Responsive - Menu title sur petits écrans */
+.menu-title {
+  font-size: 0.85em;
+}
+
 /* Responsive pour petits écrans */
 @media (max-width: 768px) {
   /* Appliquer à tous les tableaux */
@@ -49,6 +54,10 @@
 
 /* Responsive pour très petits écrans */
 @media (max-width: 480px) {
+  .menu-title {
+    font-size: 0.8em;
+  }
+
   .daily-menu-view table,
   table {
     min-width: 100% !important;

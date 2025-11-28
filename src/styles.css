@@ -146,6 +146,12 @@ button:active {
   font-weight: 600;
 }
 
+.menu-title {
+  font-size: 0.9em;
+  font-weight: 600;
+  margin: 0 0 1.5rem 0;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
