@@ -45,7 +45,7 @@ export default function WeekDeletePicker() {
 
         const supabaseWeeks = Object.values(weeks).sort((a, b) => b - a);
         setAvailableWeeks(supabaseWeeks);
-      } catch (err) {
+      } catch {
         setMessage('Erreur lors du chargement des semaines');
         setMessageType('error');
       }
