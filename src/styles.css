@@ -296,9 +296,9 @@ td {
   width: auto !important;
   min-width: 120px !important;
   padding: 0 !important;
-  border: 1px solid #ccc !important;
+  border: 2px solid #999 !important;
   border-radius: 6px !important;
-  background: #f5f5f5 !important;
+  background: #d0d0d0 !important;
   opacity: 1 !important;
   box-shadow: none !important;
   cursor: pointer !important;
@@ -315,9 +315,6 @@ select {
   background: #d0d0d0 !important;
 }
 
-.date-picker .ant-picker {
-  background: #d0d0d0 !important;
-}
 
 .date-picker .ant-picker-input {
   color: #333 !important;
