@@ -49,7 +49,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
   gap: 12px;
   flex-wrap: wrap;
 }
@@ -86,7 +86,7 @@ body {
 .toolbar-buttons {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
   align-items: flex-end;
 }
 
@@ -325,6 +325,8 @@ td {
   align-items: center;
   gap: 8px;
   font-weight: 500;
+  padding: 6px 10px !important;
+  font-size: 0.9em !important;
 }
 
 .menu-drawer-toggle svg {
