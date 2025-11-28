@@ -8,9 +8,16 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
+    <!-- Précharger les feuilles de style critiques -->
+    <link rel="preload" href="/src/styles.css" as="style">
+    <!-- Cacher le contenu pendant le chargement des styles -->
+    <style>
+      body.fouc-prevention { opacity: 0; transition: opacity 0.3s ease-in; }
+      body.fouc-ready { opacity: 1; }
+    </style>
     <title>orif-menu</title>
   </head>
-  <body>
+  <body class="fouc-prevention">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
