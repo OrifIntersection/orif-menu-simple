@@ -2,6 +2,8 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
+import { DatePicker as AntDatePicker } from "antd";
+import dayjs from "dayjs";
 import { getCurrentYear, getCurrentWeekNumber } from "./utils/dateUtils";
 import PageLayout from "./components/PageLayout";
 import { LocalMenuService } from "./services/LocalMenuService";
@@ -178,13 +180,19 @@ function HomePage() {
             ))}
           </select>
           {/* Agenda pour choisir un jour */}
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={e => {
-              setSelectedDate(e.target.value);
-              if (e.target.value) navigate(`/date/${e.target.value}`);
+          <AntDatePicker
+            value={selectedDate ? dayjs(selectedDate) : null}
+            onChange={date => {
+              if (date) {
+                const formatted = date.format('YYYY-MM-DD');
+                setSelectedDate(formatted);
+                navigate(`/date/${formatted}`);
+              } else {
+                setSelectedDate("");
+              }
             }}
+            placeholder="Cherche un jour"
+            format="DD/MM/YYYY"
             style={{ padding: '0.5rem 1.2rem', borderRadius: 6, fontWeight: 'bold', minWidth: 160 }}
           />
         </div>

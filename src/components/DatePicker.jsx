@@ -1,38 +1,34 @@
 // Composant de sélection de date pour accéder aux menus passés
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { DatePicker as AntDatePicker } from "antd";
+import dayjs from "dayjs";
 
 /**
  * DatePicker - Permet de sélectionner une date pour voir le menu de ce jour
  */
 export default function DatePicker() {
   const navigate = useNavigate();
-  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedDate, setSelectedDate] = useState(null);
 
   // Gérer le changement de date
-  const handleDateChange = (e) => {
-    const date = e.target.value; // Format: YYYY-MM-DD
-    setSelectedDate(date);
-    
+  const handleDateChange = (date) => {
     if (date) {
+      setSelectedDate(date);
+      const formattedDate = date.format('YYYY-MM-DD');
       // Naviguer vers la page de consultation du menu de cette date
-      navigate(`/date/${date}`);
+      navigate(`/date/${formattedDate}`);
     }
   };
 
   return (
     <div className="date-picker">
-      <label htmlFor="date-select" className="picker-label">
-        📅 Cherche un jour:
-      </label>
-      <input
-        id="date-select"
-        type="date"
+      <AntDatePicker
         value={selectedDate}
         onChange={handleDateChange}
-        className="date-input"
         placeholder="Cherche un jour"
-        title="Sélectionner une date pour voir le menu du jour"
+        format="DD/MM/YYYY"
+        style={{ width: '100%' }}
       />
     </div>
   );
