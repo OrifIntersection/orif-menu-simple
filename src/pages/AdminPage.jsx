@@ -2,8 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 import { getCurrentWeekNumber, formatDate } from '../utils/dateUtils';
 import AdminLayout from '../components/AdminLayout';
-import DatePicker from '../components/DatePicker';
-import WeekPicker from '../components/WeekPicker';
+import WeekDeletePicker from '../components/WeekDeletePicker';
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -109,34 +108,19 @@ export default function AdminPage() {
             </div>
           </div>
 
-          {/* Section navigation par semaine */}
+          {/* Section suppression de semaine */}
           <div style={{ 
-            border: '2px solid #28a745', 
+            border: '2px solid #dc3545', 
             borderRadius: '12px', 
             padding: '2rem',
-            backgroundColor: 'white',
+            backgroundColor: '#fff5f5',
             boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
           }}>
-            <h3 style={{ marginTop: 0, color: '#28a745' }}>📅 Navigation par semaine</h3>
+            <h3 style={{ marginTop: 0, color: '#dc3545' }}>🗑️ Suppression de semaine</h3>
             <p style={{ color: '#666', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-              Consultez et modifiez les menus par semaine
+              Sélectionnez une semaine à supprimer définitivement
             </p>
-            <WeekPicker />
-          </div>
-
-          {/* Section navigation par date */}
-          <div style={{ 
-            border: '2px solid #ffc107', 
-            borderRadius: '12px', 
-            padding: '2rem',
-            backgroundColor: 'white',
-            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
-          }}>
-            <h3 style={{ marginTop: 0, color: '#e67e22' }}>📆 Navigation par date</h3>
-            <p style={{ color: '#666', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-              Accédez directement à une date spécifique
-            </p>
-            <DatePicker />
+            <WeekDeletePicker />
           </div>
 
           {/* Section statistiques */}
