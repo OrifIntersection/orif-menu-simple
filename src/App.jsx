@@ -180,6 +180,7 @@ function HomePage() {
           {/* Agenda pour choisir un jour */}
           <div className="date-input-wrapper">
             <input
+              id="home-date-input"
               type="date"
               value={selectedDate}
               onChange={e => {
@@ -188,9 +189,9 @@ function HomePage() {
               }}
               className="custom-date-input"
             />
-            <span className="date-input-label" style={{ display: selectedDate ? 'none' : 'block' }}>
-              Chercher un jour
-            </span>
+            <label htmlFor="home-date-input" className="date-input-label">
+              {selectedDate ? new Date(selectedDate + 'T00:00:00').toLocaleDateString('fr-FR') : 'Chercher un jour'}
+            </label>
           </div>
         </div>
         <h2 className="menu-title" style={{textAlign: 'center', marginBottom: '1.5rem'}}>
