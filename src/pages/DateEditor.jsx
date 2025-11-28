@@ -534,5 +534,4 @@ const DateEditor = () => {
     </AdminLayout>
   );
 };
-
 export default DateEditor;
