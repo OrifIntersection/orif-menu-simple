@@ -34,43 +34,20 @@ function HomePage() {
   const [selectedDate, setSelectedDate] = React.useState("");
   const [menuData, setMenuData] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
-  const [availableWeeks, setAvailableWeeks] = React.useState([]);
   const navigate = useNavigate();
   
   const currentYear = getCurrentYear();
   const currentWeekNumber = getCurrentWeekNumber();
 
-  // Charger les semaines disponibles (localStorage + Supabase)
-  React.useEffect(() => {
-    (async function loadWeeks() {
-      try {
-        const localMenus = LocalMenuService.getAllMenus();
-        const localWeeks = localMenus.map(m => m.week_number).filter((v, i, arr) => arr.indexOf(v) === i);
-        
-        const { supabase } = await import('./lib/supabase');
-        const { data, error } = await supabase.from("meals").select("meal_date").order("meal_date", { ascending: false });
-        
-        let allWeeks = localWeeks;
-        if (!error && data && data.length > 0) {
-          // Regrouper par semaine depuis Supabase
-          const weeks = {};
-          data.forEach(item => {
-            const d = new Date(item.meal_date);
-            const year = d.getFullYear();
-            const jan1 = new Date(year, 0, 1);
-            const days = Math.floor((d - jan1) / (24 * 60 * 60 * 1000));
-            const weekNum = Math.ceil((days + jan1.getDay() + 1) / 7);
-            weeks[weekNum] = true;
-          });
-          const supabaseWeeks = Object.keys(weeks).map(Number);
-          // Combiner et dédupliquer
-          allWeeks = [...new Set([...localWeeks, ...supabaseWeeks])].sort((a, b) => b - a);
-        }
-        setAvailableWeeks(allWeeks);
-      } catch {
-        setAvailableWeeks([]);
-      }
-    })();
+  // Charger les semaines disponibles directement
+  const availableWeeks = React.useMemo(() => {
+    // D'ABORD : localStorage
+    const localMenus = JSON.parse(localStorage.getItem('menus_local') || '[]');
+    if (localMenus.length > 0) {
+      return localMenus.map(m => m.week_number).filter((v, i, arr) => arr.indexOf(v) === i).sort((a, b) => b - a);
+    }
+    // Fallback : semaines 1-52
+    return Array.from({length: 52}, (_, i) => i + 1).reverse();
   }, []);
 
   // Charger le menu initial
@@ -171,9 +148,16 @@ function HomePage() {
             style={{ padding: '0.5rem 1.2rem', borderRadius: 6, fontWeight: 'bold', minWidth: 120 }}
           >
             <option value="">Menu d'autre semaine disponible</option>
-            {availableWeeks.map(week => (
-              <option key={week} value={week}>{`Semaine ${week}`}</option>
-            ))}
+            {availableWeeks && availableWeeks.length > 0 ? (
+              availableWeeks.map(week => (
+                <option key={week} value={week}>{`Semaine ${week}`}</option>
+              ))
+            ) : (
+              // Fallback : affiche semaines 1-52
+              Array.from({length: 52}, (_, i) => i + 1).reverse().map(week => (
+                <option key={week} value={week}>{`Semaine ${week}`}</option>
+              ))
+            )}
           </select>
           {/* Agenda pour choisir un jour */}
           <input
