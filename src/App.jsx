@@ -2,6 +2,9 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
+import { DatePicker as AntDatePicker } from "antd";
+import dayjs from "dayjs";
+import { CalendarOutlined } from '@ant-design/icons';
 import { getCurrentYear, getCurrentWeekNumber } from "./utils/dateUtils";
 import PageLayout from "./components/PageLayout";
 import { LocalMenuService } from "./services/LocalMenuService";
@@ -31,7 +34,7 @@ import "./styles.css";
  */
 function HomePage() {
   const [selectedWeek, setSelectedWeek] = React.useState("");
-  const [selectedDate, setSelectedDate] = React.useState("");
+  const [selectedDate, setSelectedDate] = React.useState(null);
   const [menuData, setMenuData] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
   const [availableWeeks, setAvailableWeeks] = React.useState([]);
@@ -170,7 +173,8 @@ function HomePage() {
               setSelectedWeek(e.target.value);
               if (e.target.value) navigate(`/week/${e.target.value}`);
             }}
-            style={{ padding: '0.5rem 1.2rem', borderRadius: 6, fontWeight: 'bold', minWidth: 120 }}
+            className="button-select"
+            style={{ padding: '0.5rem 1.2rem', borderRadius: '6px', fontWeight: 'bold', minWidth: '120px', border: '2px solid #999', background: '#d0d0d0', color: '#333', cursor: 'pointer', fontSize: '1em' }}
           >
             <option value="">Menu d'autre semaine disponible</option>
             {availableWeeks.map(week => (
@@ -178,15 +182,21 @@ function HomePage() {
             ))}
           </select>
           {/* Agenda pour choisir un jour */}
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={e => {
-              setSelectedDate(e.target.value);
-              if (e.target.value) navigate(`/date/${e.target.value}`);
-            }}
-            style={{ padding: '0.5rem 1.2rem', borderRadius: 6, fontWeight: 'bold', minWidth: 160 }}
-          />
+          <div className="date-picker">
+            <AntDatePicker
+              value={selectedDate}
+              onChange={date => {
+                if (date) {
+                  setSelectedDate(date);
+                  const formattedDate = date.format('YYYY-MM-DD');
+                  navigate(`/date/${formattedDate}`);
+                }
+              }}
+              placeholder="Chercher un jour"
+              format="DD/MM/YYYY"
+              style={{ padding: '0.5rem 1.2rem', borderRadius: 6, fontWeight: 'bold', minWidth: 120 }}
+            />
+          </div>
         </div>
         <h2 className="menu-title" style={{textAlign: 'center', marginBottom: '1.5rem'}}>
           {`Menu la semaine N° ${currentWeekNumber} du ${formatDate(startDate)} au ${formatDate(endDate)}`}

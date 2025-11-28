@@ -92,7 +92,9 @@ export function normalizeMenu(menu, weekNumber) {
     menu.forEach(mealItem => {
       // Valider la date
       if (!mealItem.meal_date) return;
-      const date = new Date(mealItem.meal_date);
+      // Créer la date sans problème de timezone: YYYY-MM-DD
+      const [dateYear, dateMonth, dateDay] = mealItem.meal_date.split('-').map(Number);
+      const date = new Date(dateYear, dateMonth - 1, dateDay);
       if (isNaN(date.getTime())) return;
       
       const dayIndex = (date.getDay() + 6) % 7;

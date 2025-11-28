@@ -384,5 +384,4 @@ const WeekEditor = () => {
   );
 };
 
-
 export default WeekEditor;
