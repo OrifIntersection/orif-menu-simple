@@ -80,9 +80,6 @@ function HomePage() {
   // Charger le menu initial
   React.useEffect(() => {
     setLoading(true);
-    // IMPORTANT: Pour la semaine courante, TOUJOURS charger Supabase en priorité
-    // (ignorer localStorage car il peut être incomplet)
-    // localStorage ne sert que comme fallback en cas d'erreur Supabase
     (async function fetchMenu() {
       if (!currentYear || !currentWeekNumber) return;
       const monday = (y, w) => {
@@ -93,15 +90,14 @@ function HomePage() {
         return d;
       };
       const start = monday(currentYear, currentWeekNumber);
-      const weekDates = Array.from({ length: 5 }, (_, i) => {
-        const date = new Date(start);
-        date.setDate(start.getDate() + i);
-        return date.toISOString().slice(0, 10);
-      });
-      
+      // Récupérer toutes les dates de la semaine depuis Supabase
       const { supabase } = await import('./lib/supabase');
-      console.log('📅 Chargement menu Supabase pour dates:', weekDates);
-      
+      // Récupérer tous les repas de la semaine (lundi-dimanche)
+      const weekStart = new Date(start);
+      const weekEnd = new Date(start);
+      weekEnd.setDate(weekStart.getDate() + 6);
+      const weekStartStr = weekStart.toISOString().slice(0, 10);
+      const weekEndStr = weekEnd.toISOString().slice(0, 10);
       const { data, error } = await supabase
         .from('meals')
         .select(`
@@ -119,8 +115,8 @@ function HomePage() {
             )
           )
         `)
-        .in('meal_date', weekDates);
-      
+        .gte('meal_date', weekStartStr)
+        .lte('meal_date', weekEndStr);
       if (error || !data) {
         // Fallback: utiliser localStorage si Supabase échoue
         const localMenu = LocalMenuService.getMenuByWeek(currentYear, currentWeekNumber);
@@ -135,9 +131,9 @@ function HomePage() {
           setMenuData(null);
         }
       } else {
-        // IMPORTANT: Normaliser les données Supabase AVANT de filtrer
+        // Normaliser les données Supabase avec le pipeline complet
         const normalized = normalizeMenu(data || [], currentWeekNumber);
-        // Filtrer pour afficher uniquement Lundi-Vendredi
+        // Filtrer pour afficher uniquement Lundi-Vendredi avec emojis
         const filtered = filterWeekdays(normalized);
         setMenuData(filtered);
       }
