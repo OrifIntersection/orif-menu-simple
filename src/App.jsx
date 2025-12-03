@@ -10,7 +10,7 @@ import { LocalMenuService } from "./services/LocalMenuService";
 import MenuTable from "./components/MenuTable";
 import Footer from "./components/Footer";
 import { AuthProvider } from "./contexts/AuthContext";
-import { normalizeMenu } from "./utils/menuNormalizer";
+import { normalizeMenu, filterWeekdays } from "./utils/menuNormalizer";
 import WeekMenuPage from "./pages/WeekMenuPage";
 import DateMenuPage from "./pages/DateMenuPage";
 import AdminPage from "./pages/AdminPage";
@@ -80,6 +80,9 @@ function HomePage() {
   // Charger le menu initial
   React.useEffect(() => {
     setLoading(true);
+    // IMPORTANT: Pour la semaine courante, TOUJOURS charger Supabase en priorité
+    // (ignorer localStorage car il peut être incomplet)
+    // localStorage ne sert que comme fallback en cas d'erreur Supabase
     (async function fetchMenu() {
       if (!currentYear || !currentWeekNumber) return;
       const monday = (y, w) => {
@@ -90,14 +93,15 @@ function HomePage() {
         return d;
       };
       const start = monday(currentYear, currentWeekNumber);
-      // On ne génère plus weekDates fixes, on récupère toutes les dates de la semaine depuis Supabase
+      const weekDates = Array.from({ length: 5 }, (_, i) => {
+        const date = new Date(start);
+        date.setDate(start.getDate() + i);
+        return date.toISOString().slice(0, 10);
+      });
+      
       const { supabase } = await import('./lib/supabase');
-      // Récupérer tous les repas de la semaine (lundi-dimanche)
-      const weekStart = new Date(start);
-      const weekEnd = new Date(start);
-      weekEnd.setDate(weekStart.getDate() + 6);
-      const weekStartStr = weekStart.toISOString().slice(0, 10);
-      const weekEndStr = weekEnd.toISOString().slice(0, 10);
+      console.log('📅 Chargement menu Supabase pour dates:', weekDates);
+      
       const { data, error } = await supabase
         .from('meals')
         .select(`
@@ -115,33 +119,27 @@ function HomePage() {
             )
           )
         `)
-        .gte('meal_date', weekStartStr)
-        .lte('meal_date', weekEndStr);
+        .in('meal_date', weekDates);
+      
       if (error || !data) {
         // Fallback: utiliser localStorage si Supabase échoue
         const localMenu = LocalMenuService.getMenuByWeek(currentYear, currentWeekNumber);
         if (localMenu && localMenu.days && localMenu.days.length > 0) {
-          setMenuData({
-            ...localMenu,
-            days: localMenu.days
+          const filtered = filterWeekdays({
+            meals: localMenu.meals,
+            days: localMenu.days,
+            data: localMenu.data
           });
+          setMenuData(filtered);
         } else {
           setMenuData(null);
         }
       } else {
-        // Extraire dynamiquement les jours présents dans les données Supabase
-        const daysSet = new Set();
-        data.forEach(item => {
-          const d = new Date(item.meal_date);
-          const dayIndex = (d.getDay() + 6) % 7;
-          const daysFr = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
-          const dayName = daysFr[dayIndex];
-          if (dayName) daysSet.add(dayName);
-        });
-        const days = Array.from(daysSet);
-        // Normaliser les données avec la vraie liste de jours
+        // IMPORTANT: Normaliser les données Supabase AVANT de filtrer
         const normalized = normalizeMenu(data || [], currentWeekNumber);
-        setMenuData({ ...normalized, days });
+        // Filtrer pour afficher uniquement Lundi-Vendredi
+        const filtered = filterWeekdays(normalized);
+        setMenuData(filtered);
       }
       setLoading(false);
     })();
@@ -159,9 +157,7 @@ function HomePage() {
   const endDate = new Date(startDate);
   endDate.setDate(startDate.getDate() + 6);
   const formatDate = (date) => date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-  // ...
 
-  // ...navigate déjà déclaré plus haut...
   return (
     <main className="container">
       <PageLayout 
