@@ -9,21 +9,17 @@
 
 /* Responsive pour petits écrans */
 @media (max-width: 768px) {
-  /* Appliquer à tous les tableaux SAUF Ant Design */
-  .daily-menu-view table,
-  table:not(.ant-picker-table) {
+  /* Appliquer SEULEMENT à .daily-menu-view */
+  .daily-menu-view table {
     min-width: 100% !important;
   }
   
   .daily-menu-view thead th,
-  .daily-menu-view tfoot th,
-  thead th:not(.ant-picker-cell),
-  tfoot th:not(.ant-picker-cell) {
+  .daily-menu-view tfoot th {
     padding: 8px 4px;
   }
   
-  .daily-menu-view td,
-  tbody td:not(.ant-picker-cell) {
+  .daily-menu-view td {
     padding: 8px 4px;
     min-width: 100px;
   }
@@ -41,12 +37,12 @@
     font-size: 1em;
   }
   
-  /* Le bouton reste à droite sur mobile - exclure Ant Design */
+  /* Le bouton reste à droite sur mobile */
   .table-header {
     gap: 8px;
   }
   
-  .table-toggle-btn:not(.ant-btn) {
+  .table-toggle-btn {
     font-size: 0.85em;
     padding: 6px 10px;
   }
@@ -58,20 +54,16 @@
     font-size: 0.8em;
   }
 
-  .daily-menu-view table,
-  table:not(.ant-picker-table) {
+  .daily-menu-view table {
     min-width: 100% !important;
   }
   
   .daily-menu-view thead th,
-  .daily-menu-view tfoot th,
-  thead th:not(.ant-picker-cell),
-  tfoot th:not(.ant-picker-cell) {
+  .daily-menu-view tfoot th {
     padding: 6px 2px;
   }
   
-  .daily-menu-view td,
-  tbody td:not(.ant-picker-cell) {
+  .daily-menu-view td {
     padding: 6px 2px;
     min-width: 85px;
   }
@@ -117,8 +109,7 @@
     font-size: 0.85em;
   }
   
-  .daily-menu-view td,
-  tbody td {
+  .daily-menu-view td {
     padding: 2px 1px !important;
     font-size: 0.85em;
     min-width: 75px;
@@ -165,15 +156,10 @@
     height: 18px;
   }
   
-  /* Boutons plus petits - exclure Ant Design */
-  button:not(.ant-btn):not(.ant-picker-header-view *) {
-    padding: 6px 8px;
-    font-size: 0.85em;
-  }
-  
-  .table-toggle-btn:not(.ant-btn) {
-    padding: 4px 8px;
+  /* Boutons plus petits */
+  .table-toggle-btn {
     font-size: 0.8em;
+    padding: 4px 8px;
   }
   
   /* Table caption plus petit */
@@ -207,8 +193,7 @@
     font-size: 0.8em;
   }
   
-  .daily-menu-view td,
-  tbody td {
+  .daily-menu-view td {
     padding: 1px 0 !important;
     font-size: 0.8em;
     line-height: 1.2;
@@ -256,15 +241,10 @@
     height: 16px;
   }
   
-  /* Boutons minimaux - exclure Ant Design */
-  button:not(.ant-btn):not(.ant-picker-header-view *) {
-    padding: 4px 6px;
-    font-size: 0.8em;
-  }
-  
-  .table-toggle-btn:not(.ant-btn) {
-    padding: 3px 6px;
+  /* Boutons minimaux */
+  .table-toggle-btn {
     font-size: 0.75em;
+    padding: 3px 6px;
   }
   
   .table-caption {
@@ -282,7 +262,7 @@
     border-radius: 4px;
   }
   
-  button, .drawer-action-item, .drawer-menu-item {
+  .drawer-action-item, .drawer-menu-item {
     border-radius: 4px;
   }
 }
@@ -320,8 +300,7 @@
     word-wrap: break-word;
   }
   
-  .daily-menu-view td,
-  tbody td {
+  .daily-menu-view td {
     padding: 1px 0 !important;
     font-size: 0.75em;
     line-height: 1.1;
@@ -370,15 +349,10 @@
     height: 14px;
   }
   
-  /* Boutons ultra-compacts - exclure Ant Design */
-  button:not(.ant-btn):not(.ant-picker-header-view *) {
-    padding: 3px 4px;
-    font-size: 0.75em;
-  }
-  
-  .table-toggle-btn:not(.ant-btn) {
-    padding: 2px 4px;
+  /* Boutons ultra-compacts */
+  .table-toggle-btn {
     font-size: 0.7em;
+    padding: 2px 4px;
   }
   
   .table-caption {
