@@ -358,35 +358,49 @@ select {
 
 /* Calendrier ouvert - limiter sa taille sur desktop */
 .ant-picker-panel-container {
-  max-width: 260px !important;
-  transform: scale(0.75) !important;
+  max-width: 240px !important;
+  width: 240px !important;
+  transform: scale(0.65) !important;
   transform-origin: top center !important;
 }
 
 .ant-picker-panel {
-  max-width: 260px !important;
-  font-size: 0.85em !important;
-  width: 260px !important;
+  max-width: 240px !important;
+  width: 240px !important;
+  font-size: 0.8em !important;
 }
 
 .ant-picker-cell {
-  font-size: 0.85em !important;
-  padding: 2px !important;
-  width: 30px !important;
-  height: 28px !important;
+  font-size: 0.8em !important;
+  padding: 1px !important;
+  width: 28px !important;
+  height: 26px !important;
+  line-height: 26px !important;
 }
 
 .ant-picker-header {
-  font-size: 0.9em !important;
-  padding: 2px 4px !important;
+  font-size: 0.85em !important;
+  padding: 1px 2px !important;
+}
+
+.ant-picker-header-view button {
+  font-size: 0.8em !important;
 }
 
 .ant-picker-content {
-  width: 260px !important;
+  width: 240px !important;
 }
 
 .ant-picker-cell-in-view {
-  width: 30px !important;
+  width: 28px !important;
+}
+
+.ant-picker-body {
+  width: 240px !important;
+}
+
+.ant-picker-datetime-panel .ant-picker-time-panel {
+  display: none !important;
 }
 
 .picker-label {
