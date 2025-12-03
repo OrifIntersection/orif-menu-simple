@@ -152,15 +152,19 @@ button:active {
   margin: 0 0 1.5rem 0;
 }
 
-table:not(.ant-picker-table) {
+.table-wrap table,
+.daily-menu-view table {
   width: 100%;
   border-collapse: collapse;
   min-width: 720px;
 }
 
-thead th:not(.ant-picker-cell),
-tfoot th:not(.ant-picker-cell),
-tbody th:not(.ant-picker-cell) {
+.table-wrap thead th,
+.table-wrap tfoot th,
+.table-wrap tbody th,
+.daily-menu-view thead th,
+.daily-menu-view tfoot th,
+.daily-menu-view tbody th {
   background: #a3a5a7;
   padding: 10px 12px;
   text-align: center;
@@ -203,7 +207,8 @@ tbody th.meal-label-right {
   border-right: none;
 }
 
-td:not(.ant-picker-cell) {
+.table-wrap td,
+.daily-menu-view td {
   border: 1px solid #000;
   border-top: none;
   border-right: none;
@@ -356,8 +361,9 @@ select {
   color: #333 !important;
 }
 
-/* Calendrier - laisser Ant Design s'afficher naturellement */
+/* Calendrier - Réinitialiser TOUS les styles CSS */
 .ant-picker-panel-container {
+  all: revert !important;
   z-index: 1050 !important;
 }
 
