@@ -152,15 +152,15 @@ button:active {
   margin: 0 0 1.5rem 0;
 }
 
-table {
+table:not(.ant-picker-table) {
   width: 100%;
   border-collapse: collapse;
   min-width: 720px;
 }
 
-thead th,
-tfoot th,
-tbody th {
+thead th:not(.ant-picker-cell),
+tfoot th:not(.ant-picker-cell),
+tbody th:not(.ant-picker-cell) {
   background: #a3a5a7;
   padding: 10px 12px;
   text-align: center;
@@ -203,7 +203,7 @@ tbody th.meal-label-right {
   border-right: none;
 }
 
-td {
+td:not(.ant-picker-cell) {
   border: 1px solid #000;
   border-top: none;
   border-right: none;
