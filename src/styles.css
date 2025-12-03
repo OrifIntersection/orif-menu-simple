@@ -356,39 +356,9 @@ select {
   color: #333 !important;
 }
 
-/* Calendrier ouvert - afficher 7 colonnes correctement et compact */
+/* Calendrier - laisser Ant Design s'afficher naturellement */
 .ant-picker-panel-container {
   z-index: 1050 !important;
-  width: 280px !important;
-}
-
-.ant-picker-panel {
-  font-size: 1em !important;
-  width: 280px !important;
-  max-width: 280px !important;
-}
-
-/* Forcer la grille à 7 colonnes */
-.ant-picker-date-panel {
-  width: 280px !important;
-}
-
-.ant-picker-cell {
-  width: 14.28% !important;
-}
-
-.ant-picker-date-panel .ant-picker-body table {
-  width: 280px !important;
-  table-layout: fixed !important;
-}
-
-.ant-picker-date-panel .ant-picker-body table td {
-  width: 14.28% !important;
-}
-
-/* Assurer que les cellules s'affichent en ligne */
-.ant-picker-cell-in-view {
-  width: 14.28% !important;
 }
 
 .picker-label {
