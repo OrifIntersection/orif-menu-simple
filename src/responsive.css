@@ -7,14 +7,6 @@
   font-size: 0.85em;
 }
 
-/* Responsive pour GRANDS écrans - exclure Ant Design */
-@media (min-width: 769px) {
-  /* Ne pas appliquer les styles responsive à Ant Design */
-  table:not(.ant-picker-table) {
-    /* styles pour tables normales seulement */
-  }
-}
-
 /* Responsive pour petits écrans */
 @media (max-width: 768px) {
   /* Appliquer à tous les tableaux - EXCLURE calendrier Ant Design */
