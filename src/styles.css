@@ -356,13 +356,39 @@ select {
   color: #333 !important;
 }
 
-/* Calendrier ouvert - taille normale et lisible */
+/* Calendrier ouvert - afficher 7 colonnes correctement */
 .ant-picker-panel-container {
   z-index: 1050 !important;
 }
 
 .ant-picker-panel {
   font-size: 1em !important;
+}
+
+/* Forcer la grille à 7 colonnes */
+.ant-picker-date-panel {
+  width: auto !important;
+}
+
+.ant-picker-cell {
+  width: 14.28% !important;
+  display: inline-block !important;
+}
+
+.ant-picker-date-panel .ant-picker-body table {
+  width: 100% !important;
+  table-layout: fixed !important;
+}
+
+.ant-picker-date-panel .ant-picker-body table td {
+  width: 14.28% !important;
+  display: table-cell !important;
+}
+
+/* Assurer que les cellules s'affichent en ligne */
+.ant-picker-cell-in-view {
+  display: table-cell !important;
+  width: 14.28% !important;
 }
 
 .picker-label {
