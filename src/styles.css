@@ -152,15 +152,19 @@ button:active {
   margin: 0 0 1.5rem 0;
 }
 
-table {
+.table-wrap table,
+.daily-menu-view table {
   width: 100%;
   border-collapse: collapse;
   min-width: 720px;
 }
 
-thead th,
-tfoot th,
-tbody th {
+.table-wrap thead th,
+.table-wrap tfoot th,
+.table-wrap tbody th,
+.daily-menu-view thead th,
+.daily-menu-view tfoot th,
+.daily-menu-view tbody th {
   background: #a3a5a7;
   padding: 10px 12px;
   text-align: center;
@@ -203,7 +207,8 @@ tbody th.meal-label-right {
   border-right: none;
 }
 
-td {
+.table-wrap td,
+.daily-menu-view td {
   border: 1px solid #000;
   border-top: none;
   border-right: none;
@@ -354,6 +359,39 @@ select {
 .date-picker .anticon {
   opacity: 1 !important;
   color: #333 !important;
+}
+
+/* Calendrier - Réinitialiser styles visuels SEULEMENT + background sexy */
+.ant-picker-panel-container {
+  z-index: 1050 !important;
+  background: linear-gradient(135deg, #f0f9ff 0%, #cffafe 50%, #e0f2fe 100%) !important;
+  border-radius: 8px !important;
+  padding: 12px !important;
+  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.15) !important;
+}
+
+/* Réinitialiser SEULEMENT les styles table du calendrier */
+.ant-picker-panel-container table {
+  width: auto !important;
+  min-width: auto !important;
+  border-collapse: separate !important;
+}
+
+.ant-picker-panel-container thead th,
+.ant-picker-panel-container tfoot th,
+.ant-picker-panel-container tbody th {
+  background: transparent !important;
+  padding: auto !important;
+  border: none !important;
+  text-align: auto !important;
+  font-weight: auto !important;
+}
+
+.ant-picker-panel-container td {
+  border: none !important;
+  padding: auto !important;
+  background: transparent !important;
+  text-align: auto !important;
 }
 
 .picker-label {

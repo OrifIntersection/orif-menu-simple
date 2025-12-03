@@ -7,23 +7,31 @@
   font-size: 0.85em;
 }
 
+/* Responsive pour GRANDS écrans - exclure Ant Design */
+@media (min-width: 769px) {
+  /* Ne pas appliquer les styles responsive à Ant Design */
+  table:not(.ant-picker-table) {
+    /* styles pour tables normales seulement */
+  }
+}
+
 /* Responsive pour petits écrans */
 @media (max-width: 768px) {
-  /* Appliquer à tous les tableaux */
+  /* Appliquer à tous les tableaux - EXCLURE calendrier Ant Design */
   .daily-menu-view table,
-  table {
+  table:not(.ant-picker-table) {
     min-width: 100% !important;
   }
   
   .daily-menu-view thead th,
   .daily-menu-view tfoot th,
-  thead th,
-  tfoot th {
+  thead th:not(.ant-picker-cell),
+  tfoot th:not(.ant-picker-cell) {
     padding: 8px 4px;
   }
   
   .daily-menu-view td,
-  tbody td {
+  tbody td:not(.ant-picker-cell) {
     padding: 8px 4px;
     min-width: 100px;
   }
@@ -59,19 +67,19 @@
   }
 
   .daily-menu-view table,
-  table {
+  table:not(.ant-picker-table) {
     min-width: 100% !important;
   }
   
   .daily-menu-view thead th,
   .daily-menu-view tfoot th,
-  thead th,
-  tfoot th {
+  thead th:not(.ant-picker-cell),
+  tfoot th:not(.ant-picker-cell) {
     padding: 6px 2px;
   }
   
   .daily-menu-view td,
-  tbody td {
+  tbody td:not(.ant-picker-cell) {
     padding: 6px 2px;
     min-width: 85px;
   }
@@ -166,7 +174,7 @@
   }
   
   /* Boutons plus petits */
-  button {
+  button:not(.ant-btn) {
     padding: 6px 8px;
     font-size: 0.85em;
   }
@@ -257,7 +265,7 @@
   }
   
   /* Boutons minimaux */
-  button {
+  button:not(.ant-btn) {
     padding: 4px 6px;
     font-size: 0.8em;
   }
@@ -282,7 +290,7 @@
     border-radius: 4px;
   }
   
-  button, .drawer-action-item, .drawer-menu-item {
+  .drawer-action-item, .drawer-menu-item {
     border-radius: 4px;
   }
 }
@@ -371,7 +379,7 @@
   }
   
   /* Boutons ultra-compacts */
-  button {
+  button:not(.ant-btn) {
     padding: 3px 4px;
     font-size: 0.75em;
   }
