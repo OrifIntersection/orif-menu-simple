@@ -9,21 +9,21 @@
 
 /* Responsive pour petits écrans */
 @media (max-width: 768px) {
-  /* Appliquer à tous les tableaux */
+  /* Appliquer à tous les tableaux SAUF Ant Design */
   .daily-menu-view table,
-  table {
+  table:not(.ant-picker-table) {
     min-width: 100% !important;
   }
   
   .daily-menu-view thead th,
   .daily-menu-view tfoot th,
-  thead th,
-  tfoot th {
+  thead th:not(.ant-picker-cell),
+  tfoot th:not(.ant-picker-cell) {
     padding: 8px 4px;
   }
   
   .daily-menu-view td,
-  tbody td {
+  tbody td:not(.ant-picker-cell) {
     padding: 8px 4px;
     min-width: 100px;
   }
@@ -41,12 +41,12 @@
     font-size: 1em;
   }
   
-  /* Le bouton reste à droite sur mobile */
+  /* Le bouton reste à droite sur mobile - exclure Ant Design */
   .table-header {
     gap: 8px;
   }
   
-  .table-toggle-btn {
+  .table-toggle-btn:not(.ant-btn) {
     font-size: 0.85em;
     padding: 6px 10px;
   }
@@ -59,19 +59,19 @@
   }
 
   .daily-menu-view table,
-  table {
+  table:not(.ant-picker-table) {
     min-width: 100% !important;
   }
   
   .daily-menu-view thead th,
   .daily-menu-view tfoot th,
-  thead th,
-  tfoot th {
+  thead th:not(.ant-picker-cell),
+  tfoot th:not(.ant-picker-cell) {
     padding: 6px 2px;
   }
   
   .daily-menu-view td,
-  tbody td {
+  tbody td:not(.ant-picker-cell) {
     padding: 6px 2px;
     min-width: 85px;
   }
@@ -165,13 +165,13 @@
     height: 18px;
   }
   
-  /* Boutons plus petits */
-  button {
+  /* Boutons plus petits - exclure Ant Design */
+  button:not(.ant-btn):not(.ant-picker-header-view *) {
     padding: 6px 8px;
     font-size: 0.85em;
   }
   
-  .table-toggle-btn {
+  .table-toggle-btn:not(.ant-btn) {
     padding: 4px 8px;
     font-size: 0.8em;
   }
@@ -256,13 +256,13 @@
     height: 16px;
   }
   
-  /* Boutons minimaux */
-  button {
+  /* Boutons minimaux - exclure Ant Design */
+  button:not(.ant-btn):not(.ant-picker-header-view *) {
     padding: 4px 6px;
     font-size: 0.8em;
   }
   
-  .table-toggle-btn {
+  .table-toggle-btn:not(.ant-btn) {
     padding: 3px 6px;
     font-size: 0.75em;
   }
@@ -370,13 +370,13 @@
     height: 14px;
   }
   
-  /* Boutons ultra-compacts */
-  button {
+  /* Boutons ultra-compacts - exclure Ant Design */
+  button:not(.ant-btn):not(.ant-picker-header-view *) {
     padding: 3px 4px;
     font-size: 0.75em;
   }
   
-  .table-toggle-btn {
+  .table-toggle-btn:not(.ant-btn) {
     padding: 2px 4px;
     font-size: 0.7em;
   }
