@@ -361,10 +361,14 @@ select {
   color: #333 !important;
 }
 
-/* Calendrier - Réinitialiser TOUS les styles CSS */
+/* Calendrier - Réinitialiser TOUS les styles CSS + background sexy */
 .ant-picker-panel-container {
   all: revert !important;
   z-index: 1050 !important;
+  background: linear-gradient(135deg, #f0f9ff 0%, #cffafe 50%, #e0f2fe 100%) !important;
+  border-radius: 8px !important;
+  padding: 12px !important;
+  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.15) !important;
 }
 
 .picker-label {

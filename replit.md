@@ -12,20 +12,24 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (Dec 3, 2025)
 
-**Friday Display Bug + Emoji Support - FIXED**
-- Issue: Friday menu displayed empty on home page despite data in Supabase, and emojis weren't showing
-- Root cause: localStorage priority with incomplete data prevented Supabase from loading; missing `filterWeekdays` pipeline
-- Fix: Merged two approaches - load full week (lundi-dimanche) from Supabase, then apply `filterWeekdays` to show lundi-vendredi with emoji support
-- Result: Friday now displays correctly with emojis on all pages (home, week view, day view)
-- Key changes in App.jsx:
-  - Query changed from `.in('meal_date', weekDates)` to `.gte().lte()` to load full week range
-  - Restored `filterWeekdays` import and applied after normalization
-  - Supabase now prioritized over incomplete localStorage for current week
-  - Fallback to localStorage with `filterWeekdays` applied if Supabase fails
+**Calendar CSS Isolation + Sexy Background - FIXED**
+- Issue: Ant Design DatePicker calendar displayed only 2 columns instead of 7, broken responsiveness on all screen sizes
+- Root cause: Generic CSS selectors (`table`, `thead th`, `td`) in styles.css were cascading to calendar elements
+- Fix: Two-part solution combining CSS specificity and complete style reset
+  1. Targeted menu styles to `.table-wrap` and `.daily-menu-view` classes only (lines 158-222 in styles.css)
+  2. Applied `all: revert !important` to `.ant-picker-panel-container` to completely isolate calendar from app CSS
+  3. Added sexy gradient background to calendar: `linear-gradient(135deg, #f0f9ff 0%, #cffafe 50%, #e0f2fe 100%)`
+- Result: Calendar now displays 7 columns perfectly on all screen sizes with no style conflicts
 - CSS optimizations:
-  - DatePicker button styled with 2px solid #999 border, bold text, calendar icon
-  - Calendar panel optimized with scale(0.55) transform for better viewport fit
-  - All pages now display consistently with proper emoji rendering
+  - Menu styles isolated with parent class selectors (`.table-wrap table`, `.daily-menu-view table`)
+  - Calendar reset with `all: revert !important` prevents any global CSS interference
+  - Calendar background: blue/cyan gradient matching app brand colors
+  - Border-radius `8px` + shadow for modern appearance
+
+**Previous: Friday Display Bug + Emoji Support - FIXED**
+- Merged two conflicting approaches to show Friday with emojis
+- Query now loads full week from Supabase, applies filterWeekdays to display Monday-Friday only
+- Supabase prioritized over localStorage for current week data
 
 ## System Architecture
 
@@ -43,6 +47,8 @@ Preferred communication style: Simple, everyday language.
 **State Management**: The application uses React's built-in state management with Context API for authentication state sharing. Menu data is managed through custom hooks (`useMenus`, `useAuth`) that encapsulate business logic and API interactions.
 
 **Responsive Design**: Mobile-first approach with specific optimizations for daily menu view on small screens. Weekly view maintains horizontal scroll on mobile devices for better usability. Breakpoints at 768px and 480px handle tablet and mobile layouts.
+
+**CSS Strategy**: Component-scoped styling approach to avoid conflicts with third-party libraries like Ant Design. All generic element selectors (`table`, `th`, `td`) are now prefixed with menu container classes to ensure isolation.
 
 ### Data Architecture
 
@@ -134,6 +140,7 @@ Preferred communication style: Simple, everyday language.
 - Provides Table, Form, Button, Drawer, DatePicker, and other UI primitives
 - Icons from @ant-design/icons package
 - Theming through CSS-in-JS system
+- CSS isolation strategy: Component containers `.ant-picker-panel-container` use `all: revert !important` to prevent style cascade
 
 **Custom CSS**
 - `styles.css` - Global application styles with CSS variables for theming
