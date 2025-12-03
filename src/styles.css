@@ -356,6 +356,28 @@ select {
   color: #333 !important;
 }
 
+/* Calendrier ouvert - limiter sa taille sur desktop */
+.ant-picker-panel-container {
+  max-width: 320px !important;
+  transform: scale(0.85) !important;
+  transform-origin: top center !important;
+}
+
+.ant-picker-panel {
+  max-width: 300px !important;
+  font-size: 0.9em !important;
+}
+
+.ant-picker-cell {
+  font-size: 0.9em !important;
+  padding: 3px !important;
+}
+
+.ant-picker-header {
+  font-size: 0.95em !important;
+  padding: 4px 8px !important;
+}
+
 .picker-label {
   font-weight: 600;
   font-size: 0.95em;
