@@ -10,6 +10,18 @@ The application operates in a graceful degradation mode - it functions with loca
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes (Dec 3, 2025)
+
+**Friday Display Bug - FIXED**
+- Issue: Friday menu displayed empty on home page despite data in Supabase
+- Root cause: localStorage priority with incomplete data prevented Supabase from loading
+- Fix: Merged two approaches - load full week (lundi-dimanche) from Supabase, then apply `filterWeekdays` to show lundi-vendredi with emoji support
+- Result: Friday now displays correctly with emojis on all pages (home, week view, etc.)
+- Key changes in App.jsx:
+  - Query changed from `.in('meal_date', weekDates)` to `.gte().lte()` to load full week range
+  - Restored `filterWeekdays` import and applied after normalization
+  - Supabase now prioritized over incomplete localStorage for current week
+
 ## System Architecture
 
 ### Frontend Architecture

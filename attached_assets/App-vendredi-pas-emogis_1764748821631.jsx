@@ -10,7 +10,7 @@ import { LocalMenuService } from "./services/LocalMenuService";
 import MenuTable from "./components/MenuTable";
 import Footer from "./components/Footer";
 import { AuthProvider } from "./contexts/AuthContext";
-import { normalizeMenu, filterWeekdays } from "./utils/menuNormalizer";
+import { normalizeMenu } from "./utils/menuNormalizer";
 import WeekMenuPage from "./pages/WeekMenuPage";
 import DateMenuPage from "./pages/DateMenuPage";
 import AdminPage from "./pages/AdminPage";
@@ -90,7 +90,7 @@ function HomePage() {
         return d;
       };
       const start = monday(currentYear, currentWeekNumber);
-      // Récupérer toutes les dates de la semaine depuis Supabase
+      // On ne génère plus weekDates fixes, on récupère toutes les dates de la semaine depuis Supabase
       const { supabase } = await import('./lib/supabase');
       // Récupérer tous les repas de la semaine (lundi-dimanche)
       const weekStart = new Date(start);
@@ -121,21 +121,27 @@ function HomePage() {
         // Fallback: utiliser localStorage si Supabase échoue
         const localMenu = LocalMenuService.getMenuByWeek(currentYear, currentWeekNumber);
         if (localMenu && localMenu.days && localMenu.days.length > 0) {
-          const filtered = filterWeekdays({
-            meals: localMenu.meals,
-            days: localMenu.days,
-            data: localMenu.data
+          setMenuData({
+            ...localMenu,
+            days: localMenu.days
           });
-          setMenuData(filtered);
         } else {
           setMenuData(null);
         }
       } else {
-        // Normaliser les données Supabase avec le pipeline complet
+        // Extraire dynamiquement les jours présents dans les données Supabase
+        const daysSet = new Set();
+        data.forEach(item => {
+          const d = new Date(item.meal_date);
+          const dayIndex = (d.getDay() + 6) % 7;
+          const daysFr = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+          const dayName = daysFr[dayIndex];
+          if (dayName) daysSet.add(dayName);
+        });
+        const days = Array.from(daysSet);
+        // Normaliser les données avec la vraie liste de jours
         const normalized = normalizeMenu(data || [], currentWeekNumber);
-        // Filtrer pour afficher uniquement Lundi-Vendredi avec emojis
-        const filtered = filterWeekdays(normalized);
-        setMenuData(filtered);
+        setMenuData({ ...normalized, days });
       }
       setLoading(false);
     })();
@@ -153,7 +159,9 @@ function HomePage() {
   const endDate = new Date(startDate);
   endDate.setDate(startDate.getDate() + 6);
   const formatDate = (date) => date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  // ...
 
+  // ...navigate déjà déclaré plus haut...
   return (
     <main className="container">
       <PageLayout 
