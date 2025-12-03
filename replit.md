@@ -12,15 +12,20 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (Dec 3, 2025)
 
-**Friday Display Bug - FIXED**
-- Issue: Friday menu displayed empty on home page despite data in Supabase
-- Root cause: localStorage priority with incomplete data prevented Supabase from loading
+**Friday Display Bug + Emoji Support - FIXED**
+- Issue: Friday menu displayed empty on home page despite data in Supabase, and emojis weren't showing
+- Root cause: localStorage priority with incomplete data prevented Supabase from loading; missing `filterWeekdays` pipeline
 - Fix: Merged two approaches - load full week (lundi-dimanche) from Supabase, then apply `filterWeekdays` to show lundi-vendredi with emoji support
-- Result: Friday now displays correctly with emojis on all pages (home, week view, etc.)
+- Result: Friday now displays correctly with emojis on all pages (home, week view, day view)
 - Key changes in App.jsx:
   - Query changed from `.in('meal_date', weekDates)` to `.gte().lte()` to load full week range
   - Restored `filterWeekdays` import and applied after normalization
   - Supabase now prioritized over incomplete localStorage for current week
+  - Fallback to localStorage with `filterWeekdays` applied if Supabase fails
+- CSS optimizations:
+  - DatePicker button styled with 2px solid #999 border, bold text, calendar icon
+  - Calendar panel optimized with scale(0.55) transform for better viewport fit
+  - All pages now display consistently with proper emoji rendering
 
 ## System Architecture
 

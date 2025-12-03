@@ -356,51 +356,60 @@ select {
   color: #333 !important;
 }
 
-/* Calendrier ouvert - limiter sa taille sur desktop */
+/* Calendrier ouvert - limiter sa taille drastiquement */
 .ant-picker-panel-container {
-  max-width: 240px !important;
-  width: 240px !important;
-  transform: scale(0.65) !important;
+  position: fixed !important;
+  max-width: 200px !important;
+  width: 200px !important;
+  overflow: hidden !important;
+  left: 50% !important;
+  transform: translateX(-50%) scale(0.55) !important;
   transform-origin: top center !important;
 }
 
 .ant-picker-panel {
-  max-width: 240px !important;
-  width: 240px !important;
-  font-size: 0.8em !important;
+  max-width: 200px !important;
+  width: 200px !important;
+  font-size: 0.75em !important;
+  overflow: hidden !important;
 }
 
 .ant-picker-cell {
-  font-size: 0.8em !important;
-  padding: 1px !important;
-  width: 28px !important;
-  height: 26px !important;
-  line-height: 26px !important;
+  font-size: 0.75em !important;
+  padding: 0 !important;
+  width: 25px !important;
+  height: 24px !important;
+  line-height: 24px !important;
+  min-width: 25px !important;
 }
 
 .ant-picker-header {
-  font-size: 0.85em !important;
-  padding: 1px 2px !important;
+  font-size: 0.8em !important;
+  padding: 1px !important;
 }
 
 .ant-picker-header-view button {
-  font-size: 0.8em !important;
+  font-size: 0.75em !important;
+  padding: 0 2px !important;
 }
 
 .ant-picker-content {
-  width: 240px !important;
+  width: 100% !important;
+  overflow: hidden !important;
 }
 
 .ant-picker-cell-in-view {
-  width: 28px !important;
+  width: 25px !important;
+  min-width: 25px !important;
 }
 
 .ant-picker-body {
-  width: 240px !important;
+  width: 100% !important;
+  overflow: hidden !important;
 }
 
-.ant-picker-datetime-panel .ant-picker-time-panel {
-  display: none !important;
+.ant-picker-cell-in-view.ant-picker-cell {
+  min-width: 25px !important;
 }
 
 .picker-label {
