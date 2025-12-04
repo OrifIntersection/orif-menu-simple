@@ -361,37 +361,13 @@ select {
   color: #333 !important;
 }
 
-/* Calendrier - Réinitialiser styles visuels SEULEMENT + background sexy */
+/* Calendrier - Background et apparence SEULEMENT - NE PAS TOUCHER à la structure */
 .ant-picker-panel-container {
   z-index: 1050 !important;
   background: linear-gradient(135deg, #f0f9ff 0%, #cffafe 50%, #e0f2fe 100%) !important;
   border-radius: 8px !important;
   padding: 12px !important;
   box-shadow: 0 4px 12px rgba(6, 182, 212, 0.15) !important;
-}
-
-/* Réinitialiser SEULEMENT les styles table du calendrier */
-.ant-picker-panel-container table {
-  width: auto !important;
-  min-width: auto !important;
-  border-collapse: separate !important;
-}
-
-.ant-picker-panel-container thead th,
-.ant-picker-panel-container tfoot th,
-.ant-picker-panel-container tbody th {
-  background: transparent !important;
-  padding: auto !important;
-  border: none !important;
-  text-align: auto !important;
-  font-weight: auto !important;
-}
-
-.ant-picker-panel-container td {
-  border: none !important;
-  padding: auto !important;
-  background: transparent !important;
-  text-align: auto !important;
 }
 
 .picker-label {
