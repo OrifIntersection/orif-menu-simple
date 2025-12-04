@@ -2,7 +2,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DatePicker as AntDatePicker } from "antd";
+import fr_FR from "antd/locale/fr_FR";
 import dayjs from "dayjs";
+import "dayjs/locale/fr";
 
 /**
  * DatePicker - Permet de sélectionner une date pour voir le menu de ce jour
@@ -29,6 +31,7 @@ export default function DatePicker() {
         placeholder="Cherche un jour"
         format="DD/MM/YYYY"
         style={{ width: '100%' }}
+        locale={fr_FR}
       />
     </div>
   );
