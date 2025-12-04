@@ -190,6 +190,7 @@ function HomePage() {
               placeholder="Chercher un jour"
               format="DD/MM/YYYY"
               style={{ padding: '0.5rem 1.2rem', borderRadius: 6, fontWeight: 'bold', minWidth: 120 }}
+              locale={fr_FR}
             />
           </div>
         </div>
