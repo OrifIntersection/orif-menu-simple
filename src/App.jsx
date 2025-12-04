@@ -2,7 +2,8 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
-import { DatePicker as AntDatePicker } from "antd";
+import { DatePicker as AntDatePicker, ConfigProvider } from "antd";
+import fr_FR from "antd/locale/fr_FR";
 import { CalendarOutlined } from '@ant-design/icons';
 import { getCurrentYear, getCurrentWeekNumber } from "./utils/dateUtils";
 import PageLayout from "./components/PageLayout";
@@ -219,11 +220,12 @@ function HomePage() {
  */
 export default function App() {
   return (
-    <AuthProvider>
-      {/* BrowserRouter active le système de navigation basé sur l'URL */}
-      <BrowserRouter>
-        {/* Routes définit toutes les routes possibles de l'application */}
-        <Routes>
+    <ConfigProvider locale={fr_FR}>
+      <AuthProvider>
+        {/* BrowserRouter active le système de navigation basé sur l'URL */}
+        <BrowserRouter>
+          {/* Routes définit toutes les routes possibles de l'application */}
+          <Routes>
           {/* Route pour la page d'accueil (/) */}
           <Route path="/" element={<HomePage />} />
           {/* Route pour la page de connexion */}
@@ -258,7 +260,8 @@ export default function App() {
           {/* Route catch-all pour toutes les URLs non définies */}
           <Route path="*" element={<HomePage />} />
         </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+        </BrowserRouter>
+      </AuthProvider>
+    </ConfigProvider>
   );
 }
