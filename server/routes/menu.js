@@ -16,16 +16,37 @@ let fictiveData = {
     { id: 6, name: 'Pain', type: 'AUTRE', created_at: new Date() }
   ],
   meals: [
-    { id: 1, meal_date: '2025-01-06', meal_type: 'MIDI' },
-    { id: 2, meal_date: '2025-01-06', meal_type: 'SOIR' },
-    { id: 3, meal_date: '2025-01-07', meal_type: 'MIDI' }
-  ],
-  meals_dishes: [
-    { meal_id: 1, dish_id: 1 },
-    { meal_id: 1, dish_id: 2 },
-    { meal_id: 1, dish_id: 3 },
-    { meal_id: 2, dish_id: 4 },
-    { meal_id: 2, dish_id: 5 }
+    { 
+      id: 1, 
+      meal_date: '2025-01-06', 
+      meal_type: 'MIDI',
+      created_at: new Date(),
+      dishes: [
+        { id: 1, name: 'Spaghetti Bolognaise', type: 'PLAT' },
+        { id: 2, name: 'Salade verte', type: 'ENTREE' },
+        { id: 3, name: 'Riz', type: 'GARNITURE' }
+      ]
+    },
+    { 
+      id: 2, 
+      meal_date: '2025-01-06', 
+      meal_type: 'SOIR',
+      created_at: new Date(),
+      dishes: [
+        { id: 4, name: 'Haricots verts', type: 'LEGUME' },
+        { id: 5, name: 'Mousse au chocolat', type: 'DESSERT' }
+      ]
+    },
+    { 
+      id: 3, 
+      meal_date: '2025-01-07', 
+      meal_type: 'MIDI',
+      created_at: new Date(),
+      dishes: [
+        { id: 1, name: 'Spaghetti Bolognaise', type: 'PLAT' },
+        { id: 6, name: 'Pain', type: 'AUTRE' }
+      ]
+    }
   ]
 };
 

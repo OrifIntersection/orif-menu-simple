@@ -10,7 +10,34 @@ The application operates in a graceful degradation mode - it functions with loca
 
 Preferred communication style: Simple, everyday language.
 
-## Recent Changes (Dec 3, 2025)
+## Recent Changes (Dec 22, 2025)
+
+**Express API Backend - NEW**
+- Converted Supabase API to ExpressJS backend
+- Created `server/` directory with Express server:
+  - `server/index.js` - Main Express server on port 3001
+  - `server/db.js` - PostgreSQL connection using native pg driver
+  - `server/routes/menu.js` - API routes for dishes and meals
+- Routes implemented:
+  - `GET /api/dishes` - List all dishes
+  - `GET /api/dishes/:id` - Get dish by ID
+  - `POST /api/dishes` - Add new dish (requires: name, type)
+  - `PUT /api/dishes/:id` - Update dish
+  - `DELETE /api/dishes/:id` - Delete dish
+  - `GET /api/meals` - List all meals with dishes
+  - `GET /api/meals/:date` - Get meals by date
+  - `POST /api/meals` - Add new meal
+- PostgreSQL database with 3 tables: dishes, meals, meals_dishes
+- Fictive data fallback when database is unavailable
+- ES Module syntax (import/export)
+
+**Calendar French Locale - FIXED**
+- Configured Ant Design with French locale (fr_FR)
+- Calendar now displays Monday-Sunday instead of Sunday-Saturday
+- Added ConfigProvider with locale in App.jsx
+- Added locale prop to all DatePicker components
+
+## Previous Changes (Dec 3, 2025)
 
 **Calendar CSS Isolation + Sexy Background - FIXED**
 - Issue: Ant Design DatePicker calendar displayed only 2 columns instead of 7, broken responsiveness on all screen sizes
