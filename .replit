@@ -17,6 +17,10 @@ author = "agent"
 task = "workflow.run"
 args = "Start application"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "API Express"
+
 [[workflows.workflow]]
 name = "Start application"
 author = "agent"
@@ -29,6 +33,22 @@ waitForPort = 5000
 [workflows.workflow.metadata]
 outputType = "webview"
 
+[[workflows.workflow]]
+name = "API Express"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node server/index.js"
+waitForPort = 3001
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[ports]]
+localPort = 3001
+externalPort = 3001
+
 [[ports]]
 localPort = 5000
 externalPort = 80
@@ -40,26 +60,6 @@ externalPort = 3003
 [[ports]]
 localPort = 24678
 externalPort = 3002
-
-[[ports]]
-localPort = 35249
-externalPort = 3001
-
-[[ports]]
-localPort = 36709
-externalPort = 5000
-
-[[ports]]
-localPort = 37243
-externalPort = 4200
-
-[[ports]]
-localPort = 37713
-externalPort = 3000
-
-[[ports]]
-localPort = 41109
-externalPort = 5173
 
 [userenv]
 
