@@ -108,6 +108,38 @@ export default function AdminPage() {
             </div>
           </div>
 
+          {/* Section gestion des utilisateurs */}
+          <div style={{ 
+            border: '2px solid #6f42c1', 
+            borderRadius: '12px', 
+            padding: '2rem',
+            backgroundColor: 'white',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+          }}>
+            <h3 style={{ marginTop: 0, color: '#6f42c1' }}>👥 Gestion des utilisateurs</h3>
+            <p style={{ color: '#666', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+              Créer, modifier ou supprimer des comptes
+            </p>
+            <button 
+              onClick={() => navigate('/admin/users')}
+              style={{ 
+                padding: '1rem',
+                fontSize: '1rem',
+                backgroundColor: '#6f42c1',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                width: '100%'
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#5936a0'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = '#6f42c1'}
+            >
+              👥 Gérer les utilisateurs
+            </button>
+          </div>
+
           {/* Section suppression de semaine */}
           <div style={{ 
             border: '2px solid #dc3545', 

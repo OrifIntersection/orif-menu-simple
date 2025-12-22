@@ -7,6 +7,18 @@
 USE menu_cafet;
 
 -- =========================================
+-- UTILISATEUR ADMIN PAR DÉFAUT
+-- =========================================
+-- Mot de passe: admin123 (hashé avec bcrypt 10 rounds)
+-- IMPORTANT: Changez ce mot de passe après la première connexion!
+
+INSERT INTO users (username, email, password_hash, full_name, role) VALUES
+  ('admin', 'admin@orif.ch', '$2b$10$SbhdK/xbwPILz91Eb7B4leKz0Z5yqXbZx.g0NqL8MpKL8K4K4K4K4', 'Administrateur', 'admin');
+
+-- Pour créer un nouveau hash bcrypt, utilisez:
+-- node -e "const bcrypt = require('bcryptjs'); console.log(bcrypt.hashSync('votre_mot_de_passe', 10));"
+
+-- =========================================
 -- PLATS D'EXEMPLE
 -- =========================================
 

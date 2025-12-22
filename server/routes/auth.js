@@ -5,7 +5,7 @@ import db from '../db.js';
 
 const router = express.Router();
 
-const JWT_SECRET = process.env.JWT_SECRET || 'votre-secret-jwt-a-changer';
+const JWT_SECRET = process.env.JWT_SECRET || 'menu-cafet-orif-dev-secret-2025';
 const JWT_EXPIRES_IN = '24h';
 
 export const authMiddleware = async (req, res, next) => {
@@ -33,8 +33,8 @@ export const adminMiddleware = (req, res, next) => {
   next();
 };
 
-router.post('/register', async (req, res) => {
-  const { username, email, password, full_name } = req.body;
+router.post('/register', authMiddleware, adminMiddleware, async (req, res) => {
+  const { username, email, password, full_name, role } = req.body;
   
   if (!username || !email || !password) {
     return res.status(400).json({ error: 'Username, email et mot de passe requis' });
@@ -43,6 +43,8 @@ router.post('/register', async (req, res) => {
   if (password.length < 6) {
     return res.status(400).json({ error: 'Le mot de passe doit contenir au moins 6 caractères' });
   }
+  
+  const userRole = role === 'admin' ? 'admin' : 'viewer';
   
   try {
     const existingUser = await db.query(
@@ -58,25 +60,85 @@ router.post('/register', async (req, res) => {
     
     const result = await db.query(
       'INSERT INTO users (username, email, password_hash, full_name, role) VALUES (?, ?, ?, ?, ?)',
-      [username, email, password_hash, full_name || null, 'viewer']
+      [username, email, password_hash, full_name || null, userRole]
     );
     
     const userId = result.rows.insertId;
     
-    const token = jwt.sign(
-      { id: userId, username, email, role: 'viewer' },
-      JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN }
-    );
-    
     res.status(201).json({
-      message: 'Compte créé avec succès',
-      user: { id: userId, username, email, full_name, role: 'viewer' },
-      token
+      message: 'Utilisateur créé avec succès',
+      user: { id: userId, username, email, full_name, role: userRole }
     });
   } catch (error) {
-    console.error('Erreur inscription:', error);
+    console.error('Erreur création utilisateur:', error);
     res.status(500).json({ error: 'Erreur lors de la création du compte' });
+  }
+});
+
+router.get('/users', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const result = await db.query(
+      'SELECT id, username, email, full_name, role, is_active, created_at FROM users ORDER BY created_at DESC'
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Erreur liste utilisateurs:', error);
+    res.status(500).json({ error: 'Erreur lors de la récupération des utilisateurs' });
+  }
+});
+
+router.put('/users/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  const { id } = req.params;
+  const { role, is_active } = req.body;
+  
+  if (parseInt(id) === req.user.id && role !== 'admin') {
+    return res.status(400).json({ error: 'Vous ne pouvez pas retirer vos propres droits admin' });
+  }
+  
+  try {
+    const updates = [];
+    const values = [];
+    
+    if (role !== undefined) {
+      updates.push('role = ?');
+      values.push(role);
+    }
+    if (is_active !== undefined) {
+      updates.push('is_active = ?');
+      values.push(is_active);
+    }
+    
+    if (updates.length === 0) {
+      return res.status(400).json({ error: 'Aucune modification spécifiée' });
+    }
+    
+    values.push(id);
+    
+    await db.query(
+      `UPDATE users SET ${updates.join(', ')} WHERE id = ?`,
+      values
+    );
+    
+    res.json({ message: 'Utilisateur modifié avec succès' });
+  } catch (error) {
+    console.error('Erreur modification utilisateur:', error);
+    res.status(500).json({ error: 'Erreur lors de la modification' });
+  }
+});
+
+router.delete('/users/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  const { id } = req.params;
+  
+  if (parseInt(id) === req.user.id) {
+    return res.status(400).json({ error: 'Vous ne pouvez pas supprimer votre propre compte' });
+  }
+  
+  try {
+    await db.query('DELETE FROM users WHERE id = ?', [id]);
+    res.json({ message: 'Utilisateur supprimé avec succès' });
+  } catch (error) {
+    console.error('Erreur suppression utilisateur:', error);
+    res.status(500).json({ error: 'Erreur lors de la suppression' });
   }
 });
 

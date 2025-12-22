@@ -99,6 +99,30 @@ class ApiService {
     });
   }
 
+  static async getUsers() {
+    return this.request('/auth/users');
+  }
+
+  static async createUser(username, email, password, full_name, role) {
+    return this.request('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ username, email, password, full_name, role })
+    });
+  }
+
+  static async updateUser(id, data) {
+    return this.request(`/auth/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  }
+
+  static async deleteUser(id) {
+    return this.request(`/auth/users/${id}`, {
+      method: 'DELETE'
+    });
+  }
+
   static logout() {
     this.removeToken();
     this.removeUser();

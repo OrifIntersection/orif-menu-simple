@@ -61,13 +61,10 @@ export const JwtAuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (username, email, password, full_name) => {
+  const createUser = async (username, email, password, full_name, role) => {
     try {
-      const data = await ApiService.register(username, email, password, full_name);
-      setUser(data.user);
-      setUserRole(data.user.role || 'viewer');
-      setIsAuthenticated(true);
-      return { success: true, message: 'Compte créé avec succès' };
+      await ApiService.createUser(username, email, password, full_name, role);
+      return { success: true, message: 'Utilisateur créé avec succès' };
     } catch (error) {
       return { success: false, message: error.message };
     }
@@ -95,13 +92,11 @@ export const JwtAuthProvider = ({ children }) => {
     userRole,
     loading,
     login,
-    register,
+    createUser,
     logout,
     isAdmin,
     getUserInfo,
-    signInWithMagicLink: null,
-    signOut: logout,
-    isSupabaseConfigured: false
+    signOut: logout
   };
 
   return (

@@ -25,6 +25,7 @@ import ImportLocalMenuPage from './pages/ImportLocalMenuPage';
 import ImportMenuPage from './pages/ImportMenuPage';
 import StyleDemo from './pages/StyleDemo';
 import EmojiDemo from './pages/EmojiDemo';
+import UsersPage from './pages/UsersPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import "./styles.css";
 
@@ -257,6 +258,8 @@ export default function App() {
           <Route path="/admin/week/:weekNumber" element={<ProtectedRoute element={<WeekEditor />} />} />
           {/* Route pour éditer le menu d'une date */}
           <Route path="/admin/date/:date" element={<ProtectedRoute element={<DateEditor />} />} />
+          {/* Route pour la gestion des utilisateurs */}
+          <Route path="/admin/users" element={<ProtectedRoute element={<UsersPage />} requireAdmin={true} />} />
           
           {/* Route catch-all pour toutes les URLs non définies */}
           <Route path="*" element={<HomePage />} />
