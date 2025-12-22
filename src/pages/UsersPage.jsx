@@ -32,14 +32,19 @@ export default function UsersPage() {
   const handleCreate = () => {
     setEditingUser(null)
     form.resetFields()
+    form.setFieldsValue({ role: 'viewer', is_active: true })
     setModalVisible(true)
   }
 
   const handleEdit = (user) => {
     setEditingUser(user)
     form.setFieldsValue({
+      username: user.username,
+      email: user.email,
+      full_name: user.full_name || '',
       role: user.role,
-      is_active: user.is_active
+      is_active: user.is_active,
+      password: ''
     })
     setModalVisible(true)
   }
@@ -57,10 +62,17 @@ export default function UsersPage() {
   const handleSubmit = async (values) => {
     try {
       if (editingUser) {
-        await ApiService.updateUser(editingUser.id, {
+        const updateData = {
+          username: values.username,
+          email: values.email,
+          full_name: values.full_name,
           role: values.role,
           is_active: values.is_active
-        })
+        }
+        if (values.password) {
+          updateData.password = values.password
+        }
+        await ApiService.updateUser(editingUser.id, updateData)
         message.success('Utilisateur modifié')
       } else {
         await ApiService.createUser(
@@ -183,56 +195,52 @@ export default function UsersPage() {
         open={modalVisible}
         onCancel={() => setModalVisible(false)}
         footer={null}
+        width={500}
       >
         <Form
           form={form}
           layout="vertical"
           onFinish={handleSubmit}
-          initialValues={{ role: 'viewer', is_active: true }}
         >
-          {!editingUser && (
-            <>
-              <Form.Item
-                name="username"
-                label="Nom d'utilisateur"
-                rules={[
-                  { required: true, message: 'Requis' },
-                  { min: 3, message: 'Minimum 3 caractères' }
-                ]}
-              >
-                <Input placeholder="Identifiant unique" />
-              </Form.Item>
+          <Form.Item
+            name="username"
+            label="Nom d'utilisateur"
+            rules={[
+              { required: true, message: 'Requis' },
+              { min: 3, message: 'Minimum 3 caractères' }
+            ]}
+          >
+            <Input placeholder="Identifiant unique" />
+          </Form.Item>
 
-              <Form.Item
-                name="email"
-                label="Email"
-                rules={[
-                  { required: true, message: 'Requis' },
-                  { type: 'email', message: 'Email invalide' }
-                ]}
-              >
-                <Input placeholder="email@exemple.com" />
-              </Form.Item>
+          <Form.Item
+            name="email"
+            label="Email"
+            rules={[
+              { required: true, message: 'Requis' },
+              { type: 'email', message: 'Email invalide' }
+            ]}
+          >
+            <Input placeholder="email@exemple.com" />
+          </Form.Item>
 
-              <Form.Item
-                name="full_name"
-                label="Nom complet"
-              >
-                <Input placeholder="Jean Dupont" />
-              </Form.Item>
+          <Form.Item
+            name="full_name"
+            label="Nom complet"
+          >
+            <Input placeholder="Jean Dupont" />
+          </Form.Item>
 
-              <Form.Item
-                name="password"
-                label="Mot de passe"
-                rules={[
-                  { required: true, message: 'Requis' },
-                  { min: 6, message: 'Minimum 6 caractères' }
-                ]}
-              >
-                <Input.Password placeholder="Mot de passe" />
-              </Form.Item>
-            </>
-          )}
+          <Form.Item
+            name="password"
+            label={editingUser ? "Nouveau mot de passe (laisser vide pour conserver)" : "Mot de passe"}
+            rules={editingUser ? [] : [
+              { required: true, message: 'Requis' },
+              { min: 6, message: 'Minimum 6 caractères' }
+            ]}
+          >
+            <Input.Password placeholder={editingUser ? "Laisser vide pour ne pas changer" : "Mot de passe"} />
+          </Form.Item>
 
           <Form.Item
             name="role"
@@ -245,21 +253,19 @@ export default function UsersPage() {
             </Select>
           </Form.Item>
 
-          {editingUser && (
-            <Form.Item
-              name="is_active"
-              label="Compte actif"
-              valuePropName="checked"
-            >
-              <Switch />
-            </Form.Item>
-          )}
+          <Form.Item
+            name="is_active"
+            label="Compte actif"
+            valuePropName="checked"
+          >
+            <Switch />
+          </Form.Item>
 
           <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
             <Space>
               <Button onClick={() => setModalVisible(false)}>Annuler</Button>
               <Button type="primary" htmlType="submit">
-                {editingUser ? 'Modifier' : 'Créer'}
+                {editingUser ? 'Enregistrer' : 'Créer'}
               </Button>
             </Space>
           </Form.Item>

@@ -84,14 +84,17 @@ export default {
         const userId = params[params.length - 1];
         const user = fictiveUsers.find(u => u.id === parseInt(userId));
         if (user) {
-          if (sqlLower.includes('role')) {
-            const roleIndex = params.findIndex((p, i) => i < params.length - 1);
-            if (roleIndex >= 0) user.role = params[roleIndex];
-          }
-          if (sqlLower.includes('is_active')) {
-            const activeIndex = sqlLower.includes('role') ? 1 : 0;
-            user.is_active = params[activeIndex];
-          }
+          const fields = sql.match(/(\w+)\s*=\s*\?/g) || [];
+          fields.forEach((field, index) => {
+            const fieldName = field.split('=')[0].trim();
+            const value = params[index];
+            if (fieldName === 'username') user.username = value;
+            if (fieldName === 'email') user.email = value;
+            if (fieldName === 'full_name') user.full_name = value;
+            if (fieldName === 'password_hash') user.password_hash = value;
+            if (fieldName === 'role') user.role = value;
+            if (fieldName === 'is_active') user.is_active = value;
+          });
           console.log('Utilisateur modifié:', user.username);
         }
         return { rows: [] };

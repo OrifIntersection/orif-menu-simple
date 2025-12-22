@@ -89,9 +89,9 @@ router.get('/users', authMiddleware, adminMiddleware, async (req, res) => {
 
 router.put('/users/:id', authMiddleware, adminMiddleware, async (req, res) => {
   const { id } = req.params;
-  const { role, is_active } = req.body;
+  const { username, email, password, full_name, role, is_active } = req.body;
   
-  if (parseInt(id) === req.user.id && role !== 'admin') {
+  if (parseInt(id) === req.user.id && role !== undefined && role !== 'admin') {
     return res.status(400).json({ error: 'Vous ne pouvez pas retirer vos propres droits admin' });
   }
   
@@ -99,6 +99,23 @@ router.put('/users/:id', authMiddleware, adminMiddleware, async (req, res) => {
     const updates = [];
     const values = [];
     
+    if (username !== undefined) {
+      updates.push('username = ?');
+      values.push(username);
+    }
+    if (email !== undefined) {
+      updates.push('email = ?');
+      values.push(email);
+    }
+    if (full_name !== undefined) {
+      updates.push('full_name = ?');
+      values.push(full_name);
+    }
+    if (password) {
+      const password_hash = await bcrypt.hash(password, 10);
+      updates.push('password_hash = ?');
+      values.push(password_hash);
+    }
     if (role !== undefined) {
       updates.push('role = ?');
       values.push(role);
