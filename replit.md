@@ -16,16 +16,18 @@ Preferred communication style: Simple, everyday language.
 - Migrated from Supabase/PostgreSQL to MySQL for Datalik deployment
 - JWT authentication with username/password login fully implemented
 - Frontend connected to Express API with JWT auth context
+- Admin-only user registration (no public signup)
 - Files created/modified:
   - `sql/schema.sql` - MySQL database schema (dishes, meals, meals_dishes, users)
-  - `sql/seed.sql` - Test data for MySQL with bcrypt hashed passwords
-  - `server/routes/auth.js` - JWT authentication routes (login/register/me)
-  - `src/services/ApiService.js` - Frontend API client with token management
-  - `src/contexts/JwtAuthContext.jsx` - JWT auth context provider
-  - `src/hooks/useAuth.js` - Updated to use JWT auth context
-  - `src/components/ProtectedRoute.jsx` - Updated for JWT authentication
+  - `sql/seed.sql` - Test data + default admin user with bcrypt hash
+  - `server/routes/auth.js` - JWT auth routes (login protected, register admin-only)
+  - `src/services/ApiService.js` - Frontend API client with user management
+  - `src/contexts/JwtAuthContext.jsx` - JWT auth context (createUser for admins)
+  - `src/pages/UsersPage.jsx` - Admin page for user management
+  - `src/pages/LoginPage.jsx` - Login only (no public registration)
   - `docs/DEPLOIEMENT_DEBIAN.md` - Complete deployment guide for Debian 13
 - Default admin credentials: username "admin", password "admin123"
+- JWT_SECRET should be set via environment variable in production
 
 **Express API Backend**
 - Full REST API with Express.js on port 3001
