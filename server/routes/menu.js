@@ -8,12 +8,12 @@ const MEAL_TYPES = ['MIDI', 'SOIR'];
 
 let fictiveData = {
   dishes: [
-    { id: 1, name: 'Spaghetti Bolognaise', type: 'PLAT', created_at: new Date() },
-    { id: 2, name: 'Salade verte', type: 'ENTREE', created_at: new Date() },
-    { id: 3, name: 'Riz', type: 'GARNITURE', created_at: new Date() },
-    { id: 4, name: 'Haricots verts', type: 'LEGUME', created_at: new Date() },
-    { id: 5, name: 'Mousse au chocolat', type: 'DESSERT', created_at: new Date() },
-    { id: 6, name: 'Pain', type: 'AUTRE', created_at: new Date() }
+    { id: 1, name: 'Spaghetti Bolognaise', dish_type: 'PLAT', created_at: new Date() },
+    { id: 2, name: 'Salade verte', dish_type: 'ENTREE', created_at: new Date() },
+    { id: 3, name: 'Riz', dish_type: 'GARNITURE', created_at: new Date() },
+    { id: 4, name: 'Haricots verts', dish_type: 'LEGUME', created_at: new Date() },
+    { id: 5, name: 'Mousse au chocolat', dish_type: 'DESSERT', created_at: new Date() },
+    { id: 6, name: 'Pain', dish_type: 'AUTRE', created_at: new Date() }
   ],
   meals: [
     { 
@@ -22,9 +22,9 @@ let fictiveData = {
       meal_type: 'MIDI',
       created_at: new Date(),
       dishes: [
-        { id: 1, name: 'Spaghetti Bolognaise', type: 'PLAT' },
-        { id: 2, name: 'Salade verte', type: 'ENTREE' },
-        { id: 3, name: 'Riz', type: 'GARNITURE' }
+        { id: 1, name: 'Spaghetti Bolognaise', dish_type: 'PLAT' },
+        { id: 2, name: 'Salade verte', dish_type: 'ENTREE' },
+        { id: 3, name: 'Riz', dish_type: 'GARNITURE' }
       ]
     },
     { 
@@ -33,8 +33,8 @@ let fictiveData = {
       meal_type: 'SOIR',
       created_at: new Date(),
       dishes: [
-        { id: 4, name: 'Haricots verts', type: 'LEGUME' },
-        { id: 5, name: 'Mousse au chocolat', type: 'DESSERT' }
+        { id: 4, name: 'Haricots verts', dish_type: 'LEGUME' },
+        { id: 5, name: 'Mousse au chocolat', dish_type: 'DESSERT' }
       ]
     },
     { 
@@ -43,8 +43,8 @@ let fictiveData = {
       meal_type: 'MIDI',
       created_at: new Date(),
       dishes: [
-        { id: 1, name: 'Spaghetti Bolognaise', type: 'PLAT' },
-        { id: 6, name: 'Pain', type: 'AUTRE' }
+        { id: 1, name: 'Spaghetti Bolognaise', dish_type: 'PLAT' },
+        { id: 6, name: 'Pain', dish_type: 'AUTRE' }
       ]
     }
   ]
@@ -52,7 +52,7 @@ let fictiveData = {
 
 router.get('/dishes', async (req, res) => {
   try {
-    const result = await db.query('SELECT * FROM dishes ORDER BY id');
+    const result = await db.query('SELECT * FROM dishes WHERE is_active = TRUE ORDER BY id');
     if (result.rows.length === 0) {
       return res.json(fictiveData.dishes);
     }
@@ -66,7 +66,7 @@ router.get('/dishes', async (req, res) => {
 router.get('/dishes/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await db.query('SELECT * FROM dishes WHERE id = $1', [id]);
+    const result = await db.query('SELECT * FROM dishes WHERE id = ?', [id]);
     if (result.rows.length === 0) {
       const dish = fictiveData.dishes.find(d => d.id === parseInt(id));
       return dish ? res.json(dish) : res.status(404).json({ error: 'Plat non trouvé' });
@@ -79,13 +79,13 @@ router.get('/dishes/:id', async (req, res) => {
 });
 
 router.post('/dishes', async (req, res) => {
-  const { name, type } = req.body;
+  const { name, dish_type } = req.body;
   
-  if (!name || !type) {
+  if (!name || !dish_type) {
     return res.status(400).json({ error: 'Nom et type requis' });
   }
   
-  if (!DISH_TYPES.includes(type)) {
+  if (!DISH_TYPES.includes(dish_type)) {
     return res.status(400).json({ 
       error: `Type invalide. Types valides: ${DISH_TYPES.join(', ')}` 
     });
@@ -93,13 +93,14 @@ router.post('/dishes', async (req, res) => {
   
   try {
     const result = await db.query(
-      'INSERT INTO dishes (name, type) VALUES ($1, $2) RETURNING *',
-      [name, type]
+      'INSERT INTO dishes (name, dish_type) VALUES (?, ?)',
+      [name, dish_type]
     );
-    res.status(201).json(result.rows[0]);
+    const newDish = { id: result.rows.insertId, name, dish_type, created_at: new Date() };
+    res.status(201).json(newDish);
   } catch (error) {
     const newId = Math.max(...fictiveData.dishes.map(d => d.id)) + 1;
-    const newDish = { id: newId, name, type, created_at: new Date() };
+    const newDish = { id: newId, name, dish_type, created_at: new Date() };
     fictiveData.dishes.push(newDish);
     res.status(201).json(newDish);
   }
@@ -107,19 +108,20 @@ router.post('/dishes', async (req, res) => {
 
 router.put('/dishes/:id', async (req, res) => {
   const { id } = req.params;
-  const { name, type } = req.body;
+  const { name, dish_type } = req.body;
   
-  if (type && !DISH_TYPES.includes(type)) {
+  if (dish_type && !DISH_TYPES.includes(dish_type)) {
     return res.status(400).json({ 
       error: `Type invalide. Types valides: ${DISH_TYPES.join(', ')}` 
     });
   }
   
   try {
-    const result = await db.query(
-      'UPDATE dishes SET name = COALESCE($1, name), type = COALESCE($2, type) WHERE id = $3 RETURNING *',
-      [name, type, id]
+    await db.query(
+      'UPDATE dishes SET name = COALESCE(?, name), dish_type = COALESCE(?, dish_type), updated_at = NOW() WHERE id = ?',
+      [name || null, dish_type || null, id]
     );
+    const result = await db.query('SELECT * FROM dishes WHERE id = ?', [id]);
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Plat non trouvé' });
     }
@@ -130,7 +132,7 @@ router.put('/dishes/:id', async (req, res) => {
       return res.status(404).json({ error: 'Plat non trouvé' });
     }
     if (name) fictiveData.dishes[index].name = name;
-    if (type) fictiveData.dishes[index].type = type;
+    if (dish_type) fictiveData.dishes[index].dish_type = dish_type;
     res.json(fictiveData.dishes[index]);
   }
 });
@@ -139,10 +141,11 @@ router.delete('/dishes/:id', async (req, res) => {
   const { id } = req.params;
   
   try {
-    const result = await db.query('DELETE FROM dishes WHERE id = $1 RETURNING *', [id]);
+    const result = await db.query('SELECT * FROM dishes WHERE id = ?', [id]);
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Plat non trouvé' });
     }
+    await db.query('DELETE FROM dishes WHERE id = ?', [id]);
     res.json({ message: 'Plat supprimé', dish: result.rows[0] });
   } catch (error) {
     const index = fictiveData.dishes.findIndex(d => d.id === parseInt(id));
@@ -156,19 +159,31 @@ router.delete('/dishes/:id', async (req, res) => {
 
 router.get('/meals', async (req, res) => {
   try {
-    const result = await db.query(`
-      SELECT m.*, 
-        json_agg(json_build_object('id', d.id, 'name', d.name, 'type', d.type)) as dishes
-      FROM meals m
-      LEFT JOIN meals_dishes md ON m.id = md.meal_id
-      LEFT JOIN dishes d ON md.dish_id = d.id
-      GROUP BY m.id
-      ORDER BY m.meal_date, m.meal_type
+    const mealsResult = await db.query(`
+      SELECT * FROM meals ORDER BY meal_date, meal_type
     `);
-    if (result.rows.length === 0) {
+    
+    if (mealsResult.rows.length === 0) {
       return res.json(fictiveData.meals);
     }
-    res.json(result.rows);
+    
+    const meals = [];
+    for (const meal of mealsResult.rows) {
+      const dishesResult = await db.query(`
+        SELECT d.id, d.name, d.dish_type 
+        FROM dishes d
+        JOIN meals_dishes md ON d.id = md.dish_id
+        WHERE md.meal_id = ?
+        ORDER BY md.position
+      `, [meal.id]);
+      
+      meals.push({
+        ...meal,
+        dishes: dishesResult.rows
+      });
+    }
+    
+    res.json(meals);
   } catch (error) {
     console.log('Base de données non disponible, données fictives utilisées');
     res.json(fictiveData.meals);
@@ -179,22 +194,32 @@ router.get('/meals/:date', async (req, res) => {
   const { date } = req.params;
   
   try {
-    const result = await db.query(`
-      SELECT m.*, 
-        json_agg(json_build_object('id', d.id, 'name', d.name, 'type', d.type)) as dishes
-      FROM meals m
-      LEFT JOIN meals_dishes md ON m.id = md.meal_id
-      LEFT JOIN dishes d ON md.dish_id = d.id
-      WHERE m.meal_date = $1
-      GROUP BY m.id
-      ORDER BY m.meal_type
+    const mealsResult = await db.query(`
+      SELECT * FROM meals WHERE meal_date = ? ORDER BY meal_type
     `, [date]);
     
-    if (result.rows.length === 0) {
+    if (mealsResult.rows.length === 0) {
       const meals = fictiveData.meals.filter(m => m.meal_date === date);
       return res.json(meals);
     }
-    res.json(result.rows);
+    
+    const meals = [];
+    for (const meal of mealsResult.rows) {
+      const dishesResult = await db.query(`
+        SELECT d.id, d.name, d.dish_type 
+        FROM dishes d
+        JOIN meals_dishes md ON d.id = md.dish_id
+        WHERE md.meal_id = ?
+        ORDER BY md.position
+      `, [meal.id]);
+      
+      meals.push({
+        ...meal,
+        dishes: dishesResult.rows
+      });
+    }
+    
+    res.json(meals);
   } catch (error) {
     const meals = fictiveData.meals.filter(m => m.meal_date === date);
     res.json(meals);
@@ -216,27 +241,51 @@ router.post('/meals', async (req, res) => {
   
   try {
     const mealResult = await db.query(
-      'INSERT INTO meals (meal_date, meal_type) VALUES ($1, $2) RETURNING *',
+      'INSERT INTO meals (meal_date, meal_type) VALUES (?, ?)',
       [meal_date, meal_type]
     );
     
-    const meal = mealResult.rows[0];
+    const mealId = mealResult.rows.insertId;
     
     if (dish_ids && dish_ids.length > 0) {
-      for (const dish_id of dish_ids) {
+      for (let i = 0; i < dish_ids.length; i++) {
+        const dishResult = await db.query('SELECT dish_type FROM dishes WHERE id = ?', [dish_ids[i]]);
+        const dishType = dishResult.rows[0]?.dish_type || 'AUTRE';
+        
         await db.query(
-          'INSERT INTO meals_dishes (meal_id, dish_id) VALUES ($1, $2)',
-          [meal.id, dish_id]
+          'INSERT INTO meals_dishes (meal_id, dish_id, dish_type, position) VALUES (?, ?, ?, ?)',
+          [mealId, dish_ids[i], dishType, i + 1]
         );
       }
     }
     
-    res.status(201).json(meal);
+    res.status(201).json({ id: mealId, meal_date, meal_type });
   } catch (error) {
+    console.error('Erreur création repas:', error);
     const newId = Math.max(...fictiveData.meals.map(m => m.id)) + 1;
-    const newMeal = { id: newId, meal_date, meal_type };
+    const newMeal = { id: newId, meal_date, meal_type, dishes: [] };
     fictiveData.meals.push(newMeal);
     res.status(201).json(newMeal);
+  }
+});
+
+router.delete('/meals/:id', async (req, res) => {
+  const { id } = req.params;
+  
+  try {
+    const result = await db.query('SELECT * FROM meals WHERE id = ?', [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Repas non trouvé' });
+    }
+    await db.query('DELETE FROM meals WHERE id = ?', [id]);
+    res.json({ message: 'Repas supprimé', meal: result.rows[0] });
+  } catch (error) {
+    const index = fictiveData.meals.findIndex(m => m.id === parseInt(id));
+    if (index === -1) {
+      return res.status(404).json({ error: 'Repas non trouvé' });
+    }
+    const deleted = fictiveData.meals.splice(index, 1);
+    res.json({ message: 'Repas supprimé', meal: deleted[0] });
   }
 });
 

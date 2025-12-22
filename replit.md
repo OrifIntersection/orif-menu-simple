@@ -2,9 +2,9 @@
 
 ## Overview
 
-Menu Cafét is a React-based web application for managing and displaying cafeteria menus at ORIF. The application provides both public-facing menu displays (daily and weekly views) and administrative functionality for menu editing. It's built with React, Vite, and Ant Design, with Supabase as the backend database solution.
+Menu Cafét is a React-based web application for managing and displaying cafeteria menus at ORIF. The application provides both public-facing menu displays (daily and weekly views) and administrative functionality for menu editing. Built with React, Vite, and Ant Design, with ExpressJS backend and MySQL database.
 
-The application operates in a graceful degradation mode - it functions with local storage when Supabase is unavailable and seamlessly integrates with the database when configured. This dual-mode architecture ensures the application remains functional during development and in production environments.
+**Target Deployment:** Debian 13 server (Datalik) - self-hosted solution without cloud dependencies.
 
 ## User Preferences
 
@@ -12,30 +12,30 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (Dec 22, 2025)
 
-**Express API Backend - NEW**
-- Converted Supabase API to ExpressJS backend
-- Created `server/` directory with Express server:
-  - `server/index.js` - Main Express server on port 3001
-  - `server/db.js` - PostgreSQL connection using native pg driver
-  - `server/routes/menu.js` - API routes for dishes and meals
+**MySQL + JWT Migration - NEW**
+- Migrated from Supabase/PostgreSQL to MySQL for Datalik deployment
+- Added JWT authentication with username/password login
+- New files created:
+  - `sql/schema.sql` - MySQL database schema
+  - `sql/seed.sql` - Test data for MySQL
+  - `server/routes/auth.js` - JWT authentication routes
+  - `src/services/ApiService.js` - Frontend API client
+  - `src/contexts/JwtAuthContext.jsx` - JWT auth context
+  - `docs/DEPLOIEMENT_DEBIAN.md` - Deployment guide for Debian 13
+
+**Express API Backend**
+- Full REST API with Express.js on port 3001
+- MySQL database connection with mysql2 driver
 - Routes implemented:
-  - `GET /api/dishes` - List all dishes
-  - `GET /api/dishes/:id` - Get dish by ID
-  - `POST /api/dishes` - Add new dish (requires: name, type)
-  - `PUT /api/dishes/:id` - Update dish
-  - `DELETE /api/dishes/:id` - Delete dish
-  - `GET /api/meals` - List all meals with dishes
-  - `GET /api/meals/:date` - Get meals by date
-  - `POST /api/meals` - Add new meal
-- PostgreSQL database with 3 tables: dishes, meals, meals_dishes
+  - Auth: `POST /api/auth/login`, `POST /api/auth/register`, `GET /api/auth/me`
+  - Dishes: `GET/POST/PUT/DELETE /api/dishes`
+  - Meals: `GET/POST/DELETE /api/meals`
 - Fictive data fallback when database is unavailable
 - ES Module syntax (import/export)
 
 **Calendar French Locale - FIXED**
 - Configured Ant Design with French locale (fr_FR)
 - Calendar now displays Monday-Sunday instead of Sunday-Saturday
-- Added ConfigProvider with locale in App.jsx
-- Added locale prop to all DatePicker components
 
 ## Previous Changes (Dec 3, 2025)
 

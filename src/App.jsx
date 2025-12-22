@@ -10,7 +10,7 @@ import PageLayout from "./components/PageLayout";
 import { LocalMenuService } from "./services/LocalMenuService";
 import MenuTable from "./components/MenuTable";
 import Footer from "./components/Footer";
-import { AuthProvider } from "./contexts/AuthContext";
+import { JwtAuthProvider } from "./contexts/JwtAuthContext";
 import { normalizeMenu, filterWeekdays } from "./utils/menuNormalizer";
 import WeekMenuPage from "./pages/WeekMenuPage";
 import DateMenuPage from "./pages/DateMenuPage";
@@ -222,7 +222,7 @@ function HomePage() {
 export default function App() {
   return (
     <ConfigProvider locale={fr_FR}>
-      <AuthProvider>
+      <JwtAuthProvider>
         {/* BrowserRouter active le système de navigation basé sur l'URL */}
         <BrowserRouter>
           {/* Routes définit toutes les routes possibles de l'application */}
@@ -262,7 +262,7 @@ export default function App() {
           <Route path="*" element={<HomePage />} />
         </Routes>
         </BrowserRouter>
-      </AuthProvider>
+      </JwtAuthProvider>
     </ConfigProvider>
   );
 }
