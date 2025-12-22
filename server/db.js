@@ -40,19 +40,73 @@ const fictiveUsers = [
   }
 ];
 
+let nextUserId = 2;
+
 export default {
   query: async (sql, params = []) => {
     if (!isConnected) {
-      if (sql.includes('SELECT') && sql.includes('users') && sql.includes('WHERE')) {
+      const sqlLower = sql.toLowerCase();
+      
+      if (sqlLower.includes('select') && sqlLower.includes('users') && sqlLower.includes('where')) {
         const searchTerm = params[0];
         const user = fictiveUsers.find(u => 
           u.username === searchTerm || u.email === searchTerm || u.id === searchTerm
         );
         return { rows: user ? [user] : [] };
       }
-      if (sql.includes('SELECT') && sql.includes('users') && !sql.includes('WHERE')) {
-        return { rows: fictiveUsers };
+      
+      if (sqlLower.includes('select') && sqlLower.includes('users') && !sqlLower.includes('where')) {
+        return { rows: [...fictiveUsers] };
       }
+      
+      if (sqlLower.includes('insert') && sqlLower.includes('users')) {
+        const [username, email, password_hash, full_name, role] = params;
+        const existing = fictiveUsers.find(u => u.username === username || u.email === email);
+        if (existing) {
+          throw new Error('Username ou email déjà utilisé');
+        }
+        const newUser = {
+          id: nextUserId++,
+          username,
+          email,
+          password_hash,
+          full_name: full_name || null,
+          role: role || 'viewer',
+          is_active: true,
+          created_at: new Date().toISOString()
+        };
+        fictiveUsers.push(newUser);
+        console.log('Utilisateur créé:', username, role);
+        return { rows: { insertId: newUser.id } };
+      }
+      
+      if (sqlLower.includes('update') && sqlLower.includes('users')) {
+        const userId = params[params.length - 1];
+        const user = fictiveUsers.find(u => u.id === parseInt(userId));
+        if (user) {
+          if (sqlLower.includes('role')) {
+            const roleIndex = params.findIndex((p, i) => i < params.length - 1);
+            if (roleIndex >= 0) user.role = params[roleIndex];
+          }
+          if (sqlLower.includes('is_active')) {
+            const activeIndex = sqlLower.includes('role') ? 1 : 0;
+            user.is_active = params[activeIndex];
+          }
+          console.log('Utilisateur modifié:', user.username);
+        }
+        return { rows: [] };
+      }
+      
+      if (sqlLower.includes('delete') && sqlLower.includes('users')) {
+        const userId = parseInt(params[0]);
+        const index = fictiveUsers.findIndex(u => u.id === userId);
+        if (index > -1) {
+          const deleted = fictiveUsers.splice(index, 1);
+          console.log('Utilisateur supprimé:', deleted[0]?.username);
+        }
+        return { rows: [] };
+      }
+      
       return { rows: [] };
     }
     
