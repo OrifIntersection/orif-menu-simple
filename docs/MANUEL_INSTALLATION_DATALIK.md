@@ -2,6 +2,7 @@
 
 ## Objectif
 
+- Déployer sur le sous-domaine : **cafeteria.applications.ws**
 - Installer Node.js 20 sur Debian 13
 - Installer et configurer MySQL 8
 - Configurer nginx comme reverse proxy
@@ -306,7 +307,7 @@ Ajouter le contenu :
 ```nginx
 server {
     listen 80;
-    server_name menu.votre-domaine.ch;
+    server_name cafeteria.applications.ws;
 
     # Fichiers statiques du frontend
     root /var/www/menu-cafet/dist;
@@ -374,7 +375,7 @@ sudo systemctl restart nginx
 Ouvrir le lien suivant :
 
 ```
-http://menu.votre-domaine.ch
+http://cafeteria.applications.ws
 ```
 
 Tester la connexion admin :
@@ -395,7 +396,7 @@ sudo apt install -y certbot python3-certbot-nginx
 Obtenir le certificat :
 
 ```bash
-sudo certbot --nginx -d menu.votre-domaine.ch
+sudo certbot --nginx -d cafeteria.applications.ws
 ```
 
 > Suivre les instructions et choisir de rediriger HTTP vers HTTPS.
