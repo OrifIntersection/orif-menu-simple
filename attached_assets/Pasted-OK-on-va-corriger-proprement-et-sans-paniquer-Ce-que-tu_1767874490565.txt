@@ -1,0 +1,173 @@
+OK, on va corriger **proprement et sans paniquer**.
+Ce que tu as fait est **réversible** et **sans impact** tant que le serveur n’est pas exposé publiquement avec ce mot de passe.
+
+Je te dis **exactement quoi faire**, **dans quel ordre**, et **pourquoi**.
+
+---
+
+## 1️⃣ Ce qui est réellement grave (et ce qui ne l’est pas)
+
+### ❌ Erreur
+
+Tu as :
+
+```sql
+CREATE USER 'menu_user'@'localhost' IDENTIFIED BY 'MotDePasseSecurise123!';
+```
+
+➡️ Mot de passe **en clair**, **faible**, **copié-collé**.
+
+### ✅ Ce qui te sauve
+
+* utilisateur limité à `'localhost'`
+* pas encore utilisé par l’app
+* pas exposé sur Internet
+* tu es **root** → tu peux corriger immédiatement
+
+👉 **Risque = faible**, **correction = simple**.
+
+---
+
+## 2️⃣ Action immédiate : changer le mot de passe (rotation)
+
+Connecte-toi à MySQL :
+
+```bash
+sudo mysql
+```
+
+Puis **change le mot de passe** (commande UNIQUE, sans recréer l’utilisateur) :
+
+```sql
+ALTER USER 'menu_user'@'localhost'
+IDENTIFIED BY 'REMPLACE_PAR_UN_VRAI_MOT_DE_PASSE_LONG_ET_UNIQUE';
+FLUSH PRIVILEGES;
+EXIT;
+```
+
+### 🔐 Mot de passe recommandé
+
+* 20 à 30 caractères
+* lettres + chiffres + symboles
+* **différent de tout autre mot de passe**
+* stocké **hors code** (on y vient)
+
+Exemple (ne réutilise pas tel quel) :
+
+```
+N9!sR@p2m#Aq8D%LZK7t
+```
+
+---
+
+## 3️⃣ Vérifier que l’ancien mot de passe est invalide
+
+Teste volontairement l’ancien (il doit échouer) :
+
+```bash
+mysql -u menu_user -p
+```
+
+➡️ entre `MotDePasseSecurise123!`
+➡️ **doit refuser**
+
+Puis teste avec le nouveau :
+
+```bash
+mysql -u menu_user -p menu_cafet
+```
+
+---
+
+## 4️⃣ Important : ton schéma SQL est BON (rien à corriger)
+
+Tes tables sont **propres et bien pensées** :
+
+### 👍 Points positifs
+
+* `utf8mb4` ✅
+* tables de jointure (`meals_dishes`) correctes
+* `ON DELETE CASCADE` bien utilisé
+* séparation `users` / `meals` / `dishes`
+* `password_hash` (pas password en clair) ✅
+
+👉 **Aucune modification nécessaire côté tables**.
+
+---
+
+## 5️⃣ Bonne pratique OBLIGATOIRE pour la suite (Node.js)
+
+### ❌ À ne plus jamais faire
+
+```js
+const password = "MotDePasseSecurise123!";
+```
+
+### ✅ À faire
+
+Utiliser une **variable d’environnement** :
+
+```bash
+nano /etc/menu-cafet.env
+```
+
+```env
+DB_HOST=localhost
+DB_NAME=menu_cafet
+DB_USER=menu_user
+DB_PASSWORD=TON_NOUVEAU_MOT_DE_PASSE
+```
+
+Puis dans Node.js :
+
+```js
+process.env.DB_PASSWORD
+```
+
+Et avec PM2 :
+
+```bash
+pm2 start ecosystem.config.js --env production
+```
+
+---
+
+## 6️⃣ Ce que ferait un auditeur sécurité (et pourquoi tu es OK)
+
+Un audit regarderait :
+
+* ❓ mot de passe en clair dans Git → ❌
+* ❓ user MySQL avec `%` → ❌
+* ❓ root MySQL exposé → ❌
+
+Dans ton cas :
+
+* user local uniquement ✅
+* rotation faite immédiatement ✅
+* mot de passe hors code ensuite ✅
+
+👉 **Tu passes.**
+
+---
+
+## 7️⃣ Résumé clair
+
+### À faire maintenant
+
+1. ✅ `ALTER USER` (changement mot de passe)
+2. ✅ tester l’accès
+3. ✅ stocker le secret hors code
+
+### À retenir
+
+* **MySQL root ≠ user applicatif**
+* un mot de passe exposé → **on le change, point**
+* pas besoin de recréer la DB ni les tables
+
+---
+
+Si tu veux, au prochain message :
+
+* je te fais un **fichier `.env` + `ecosystem.config.js` propre**
+* ou on attaque **connexion MySQL depuis Node**
+* ou **Nginx + SSL** maintenant que la DB est saine
