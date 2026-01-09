@@ -177,6 +177,75 @@ class ApiService {
     });
   }
 
+  static async getMenuByWeek(year, week) {
+    return this.request(`/meals/week/${year}/${week}`);
+  }
+
+  static async getMenuForDate(date) {
+    const meals = await this.request(`/meals/${date}`);
+    return meals.map(meal => ({
+      ...meal,
+      meals_dishes: meal.dishes ? meal.dishes.map(d => ({
+        dish_id: d.id,
+        dishes: d
+      })) : []
+    }));
+  }
+
+  static async getAllDishes() {
+    return this.request('/dishes');
+  }
+
+  static async getOrCreateDish(name, dishType = 'AUTRE') {
+    const dishes = await this.request('/dishes');
+    const existing = dishes.find(d => d.name === name && d.dish_type === dishType);
+    if (existing) return existing;
+    
+    return this.request('/dishes', {
+      method: 'POST',
+      body: JSON.stringify({ name, dish_type: dishType })
+    });
+  }
+
+  static async assignDishToMealByType(mealDate, mealType, dishType, dishId) {
+    return this.request('/meals/assign', {
+      method: 'POST',
+      body: JSON.stringify({ meal_date: mealDate, meal_type: mealType, dish_type: dishType, dish_id: dishId })
+    });
+  }
+
+  static async removeDishFromMealByType(mealDate, mealType, dishType) {
+    return this.request('/meals/remove-dish', {
+      method: 'POST',
+      body: JSON.stringify({ meal_date: mealDate, meal_type: mealType, dish_type: dishType })
+    });
+  }
+
+  static async clearMealByType(mealDate, mealType) {
+    return this.request('/meals/clear', {
+      method: 'POST',
+      body: JSON.stringify({ meal_date: mealDate, meal_type: mealType })
+    });
+  }
+
+  static async getAllMenus() {
+    const meals = await this.request('/meals');
+    const weeks = {};
+    meals.forEach(meal => {
+      const d = new Date(meal.meal_date);
+      const year = d.getFullYear();
+      const jan1 = new Date(year, 0, 1);
+      const days = Math.floor((d - jan1) / (24 * 60 * 60 * 1000));
+      const weekNum = Math.ceil((days + jan1.getDay() + 1) / 7);
+      const key = `${year}-W${weekNum}`;
+      if (!weeks[key]) weeks[key] = { year, weekNum, dates: [] };
+      if (!weeks[key].dates.includes(meal.meal_date)) {
+        weeks[key].dates.push(meal.meal_date);
+      }
+    });
+    return Object.values(weeks);
+  }
+
   static isAuthenticated() {
     return !!this.getToken();
   }

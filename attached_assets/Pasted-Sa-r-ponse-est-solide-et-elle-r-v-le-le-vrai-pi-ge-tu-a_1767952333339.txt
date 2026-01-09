@@ -1,0 +1,98 @@
+Sa réponse est solide, et elle révèle le vrai “piège” : **tu avais raison de douter, mais pas pour la bonne route**.
+
+### Ce que tu dois retenir (vrai diagnostic)
+
+* ✅ **Il n’y a probablement aucun appel à `/api/menu`** → mon hypothèse était plausible vu le comportement, mais ton `curl /api/menu` renvoyait le frontend parce que **la route n’existe pas**, pas parce que le frontend l’appelait.
+* ✅ L’API Express expose bien **`/api/meals`** et **`/api/dishes`** (tu l’as prouvé).
+* ✅ Le vrai problème est architectural : **deux backends en parallèle** :
+
+  * `ApiService.js` → **Express/MySQL** (Datalik) ✅
+  * `MenuService.js` → **Supabase** ❌ (ne marchera pas sur ton serveur si Supabase n’est plus le backend “source of truth”)
+
+👉 Tant que des pages utilisent Supabase, ton frontend “semble marcher” en dev (Replit) mais **ne correspond pas au déploiement Datalik**.
+
+---
+
+## Blind spot à corriger (et opportunité)
+
+Tu es en train de basculer d’un modèle “BaaS” (Supabase) vers un modèle “self-hosted” (MySQL + Express).
+Ça implique une règle simple :
+
+> **Un seul backend source de vérité** en prod.
+
+Sinon tu auras :
+
+* incohérences de données
+* bugs intermittents
+* auth différente
+* logique de menu dupliquée
+
+---
+
+## Dois-tu accepter sa migration ?
+
+Oui, **mais avec deux conditions** (sinon tu vas subir des régressions sans comprendre).
+
+### ✅ Condition 1 — Migration “progressive”, pas big-bang
+
+* garder Supabase éventuellement derrière un flag
+* migrer écran par écran
+* vérifier chaque endpoint (`/api/meals`, `/api/dishes`, auth)
+
+### ✅ Condition 2 — Contrat API clair (endpoints + payloads)
+
+Avant qu’il touche au frontend, impose un “contrat” minimal :
+
+* quelles routes API existent
+* format JSON attendu
+* erreurs (401, 403, 404)
+* auth (JWT) : où est stocké le token, quel header
+
+---
+
+## Message prêt à envoyer (court, précis, sans ambiguïté)
+
+Copie-colle :
+
+> Oui, fais la migration, mais **progressivement** et en gardant un comportement identique côté UI.
+> Objectif prod : **100% des pages menus doivent utiliser l’API Express/MySQL via `ApiService.js`**, et **plus aucun appel direct Supabase** depuis les pages (Supabase ne doit plus être la source de vérité).
+>
+> Merci de :
+>
+> 1. Lister les fichiers qui utilisent encore `MenuService.js` (Supabase) et proposer l’ordre de migration (pages principales d’abord : `WeekMenuPage`, `DailyMenu`, etc.).
+> 2. Ajouter/compléter dans `ApiService.js` les méthodes nécessaires (meals/dishes CRUD) en appelant les endpoints Express (`/api/meals`, `/api/dishes`, etc.).
+> 3. Modifier les pages pour utiliser `ApiService` et supprimer les appels Supabase.
+> 4. Me donner une checklist de test après chaque étape (lecture menus, édition, sauvegarde, auth admin).
+>
+> Dès que tu as un PR prêt, je le déploie sur Datalik et je teste.
+
+---
+
+## Point technique (important pour éviter un futur mur)
+
+Tes routes actuelles dans `menu.js` montrent des choses comme :
+
+* `GET /api/meals`
+* `GET /api/dishes`
+* mais aussi des `POST/PUT/DELETE` sur dishes
+
+➡️ Il faut vérifier si le frontend a aussi besoin de :
+
+* création/édition de meals (pas juste dishes)
+* association meals ↔ dishes
+* endpoints “semaine” / “jour” (filtrage)
+
+Sinon la migration sera bloquée.
+
+---
+
+## Ce que je te conseille maintenant (action concrète)
+
+1. Tu acceptes la migration avec le message ci-dessus.
+2. En parallèle, tu demandes qu’il te confirme :
+
+   * quelles pages consomment Supabase
+   * quelles features exactes doivent marcher en prod (viewer + admin)
+3. Tu fais **HTTPS (Certbot)** maintenant ou après, comme tu veux : ça n’impacte pas cette migration.
+
+Si tu me colles le contenu de `src/services/ApiService.js` et `src/services/MenuService.js`, je peux te dire **exactement** quelles méthodes manquent côté Express/MySQL pour que la migration soit clean.

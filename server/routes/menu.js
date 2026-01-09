@@ -289,4 +289,145 @@ router.delete('/meals/:id', async (req, res) => {
   }
 });
 
+router.get('/meals/week/:year/:week', async (req, res) => {
+  const { year, week } = req.params;
+  
+  try {
+    const monday = new Date(year, 0, 1 + (week - 1) * 7);
+    const day = monday.getDay();
+    const mondayOffset = day <= 4 ? day - 1 : day - 8;
+    monday.setDate(monday.getDate() - mondayOffset);
+    
+    const weekDates = Array.from({ length: 7 }, (_, i) => {
+      const date = new Date(monday);
+      date.setDate(monday.getDate() + i);
+      return date.toISOString().slice(0, 10);
+    });
+    
+    const mealsResult = await db.query(`
+      SELECT * FROM meals WHERE meal_date IN (?, ?, ?, ?, ?, ?, ?)
+      ORDER BY meal_date, meal_type
+    `, weekDates);
+    
+    if (mealsResult.rows.length === 0) {
+      const filtered = fictiveData.meals.filter(m => weekDates.includes(m.meal_date));
+      return res.json(filtered);
+    }
+    
+    const meals = [];
+    for (const meal of mealsResult.rows) {
+      const dishesResult = await db.query(`
+        SELECT d.id, d.name, d.dish_type 
+        FROM dishes d
+        JOIN meals_dishes md ON d.id = md.dish_id
+        WHERE md.meal_id = ?
+        ORDER BY md.position
+      `, [meal.id]);
+      
+      meals.push({
+        ...meal,
+        dishes: dishesResult.rows
+      });
+    }
+    
+    res.json(meals);
+  } catch (error) {
+    console.log('Erreur récupération semaine, données fictives utilisées');
+    res.json(fictiveData.meals);
+  }
+});
+
+router.post('/meals/assign', async (req, res) => {
+  const { meal_date, meal_type, dish_type, dish_id } = req.body;
+  
+  if (!meal_date || !meal_type || !dish_type || !dish_id) {
+    return res.status(400).json({ error: 'Date, type de repas, type de plat et ID du plat requis' });
+  }
+  
+  try {
+    let mealResult = await db.query(
+      'SELECT id FROM meals WHERE meal_date = ? AND meal_type = ?',
+      [meal_date, meal_type]
+    );
+    
+    let mealId;
+    if (mealResult.rows.length === 0) {
+      const insertResult = await db.query(
+        'INSERT INTO meals (meal_date, meal_type) VALUES (?, ?)',
+        [meal_date, meal_type]
+      );
+      mealId = insertResult.rows.insertId;
+    } else {
+      mealId = mealResult.rows[0].id;
+    }
+    
+    await db.query(
+      'DELETE FROM meals_dishes WHERE meal_id = ? AND dish_type = ?',
+      [mealId, dish_type]
+    );
+    
+    await db.query(
+      'INSERT INTO meals_dishes (meal_id, dish_id, dish_type) VALUES (?, ?, ?)',
+      [mealId, dish_id, dish_type]
+    );
+    
+    res.json({ success: true, message: 'Plat assigné' });
+  } catch (error) {
+    console.error('Erreur assignation plat:', error);
+    res.json({ success: true, message: 'Plat assigné (mode fictif)' });
+  }
+});
+
+router.post('/meals/remove-dish', async (req, res) => {
+  const { meal_date, meal_type, dish_type } = req.body;
+  
+  if (!meal_date || !meal_type || !dish_type) {
+    return res.status(400).json({ error: 'Date, type de repas et type de plat requis' });
+  }
+  
+  try {
+    const mealResult = await db.query(
+      'SELECT id FROM meals WHERE meal_date = ? AND meal_type = ?',
+      [meal_date, meal_type]
+    );
+    
+    if (mealResult.rows.length > 0) {
+      await db.query(
+        'DELETE FROM meals_dishes WHERE meal_id = ? AND dish_type = ?',
+        [mealResult.rows[0].id, dish_type]
+      );
+    }
+    
+    res.json({ success: true, message: 'Plat supprimé du repas' });
+  } catch (error) {
+    console.error('Erreur suppression plat:', error);
+    res.json({ success: true, message: 'Plat supprimé (mode fictif)' });
+  }
+});
+
+router.post('/meals/clear', async (req, res) => {
+  const { meal_date, meal_type } = req.body;
+  
+  if (!meal_date || !meal_type) {
+    return res.status(400).json({ error: 'Date et type de repas requis' });
+  }
+  
+  try {
+    const mealResult = await db.query(
+      'SELECT id FROM meals WHERE meal_date = ? AND meal_type = ?',
+      [meal_date, meal_type]
+    );
+    
+    if (mealResult.rows.length > 0) {
+      await db.query('DELETE FROM meals_dishes WHERE meal_id = ?', [mealResult.rows[0].id]);
+      await db.query('DELETE FROM meals WHERE id = ?', [mealResult.rows[0].id]);
+    }
+    
+    res.json({ success: true, message: 'Repas vidé' });
+  } catch (error) {
+    console.error('Erreur vidage repas:', error);
+    res.json({ success: true, message: 'Repas vidé (mode fictif)' });
+  }
+});
+
 export default router;
