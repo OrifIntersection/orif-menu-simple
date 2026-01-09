@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MenuService } from '../services/MenuService';
+import ApiService from '../services/ApiService';
 import AdminLayout from '../components/AdminLayout';
 import { getWeekDates, formatDate } from '../utils/dateUtils';
 
@@ -36,28 +36,25 @@ const WeekEditor = () => {
     setLoading(true);
     setError('');
     try {
-      console.log('🔄 Chargement des données pour WeekEditor...');
-      
-      const dishesData = await MenuService.getAllDishes();
+      const dishesData = await ApiService.getAllDishes();
       setDishes(dishesData);
 
       const weekMenusData = {};
       for (let i = 0; i < weekDates.length; i++) {
         const dateObj = weekDates[i];
-        // Formater la date en YYYY-MM-DD pour Supabase
         const dateStr = dateObj instanceof Date 
           ? `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`
           : dateObj;
         try {
-          const mealsData = await MenuService.getMenuForDate(dateStr);
+          const mealsData = await ApiService.getMenuForDate(dateStr);
           
           const dayMenu = {};
           if (mealsData && mealsData.length > 0) {
             mealsData.forEach(meal => {
               const mealType = meal.meal_type;
-              const dishes = meal.meals_dishes || [];
+              const mealDishes = meal.meals_dishes || [];
               
-              dishes.forEach(mealDish => {
+              mealDishes.forEach(mealDish => {
                 const dish = mealDish.dishes;
                 if (!dish) return;
                 
@@ -100,9 +97,9 @@ const WeekEditor = () => {
     return (
       <AdminLayout title="Erreur">
         <div style={{ textAlign: 'center', padding: '2rem' }}>
-          <h2>❌ Numéro de semaine invalide</h2>
-          <p>Le numéro de semaine doit être entre 1 et 53.</p>
-          <button onClick={() => navigate('/admin')}>🏠 Retour à l'administration</button>
+          <h2>Numero de semaine invalide</h2>
+          <p>Le numero de semaine doit etre entre 1 et 53.</p>
+          <button onClick={() => navigate('/admin')}>Retour a l'administration</button>
         </div>
       </AdminLayout>
     );
@@ -118,12 +115,9 @@ const WeekEditor = () => {
   const handleDishAssignment = async (mealType, dishType, dishId) => {
     try {
       const dateObj = weekDates[selectedDay];
-      // Formater la date en YYYY-MM-DD pour Supabase
       const currentDate = dateObj instanceof Date 
         ? `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`
         : dateObj;
-      
-      console.log('🔄 Modification du menu:', { currentDate, mealType, dishType, dishId });
       
       const key = `${mealType}_${dishType}`;
       const dishName = dishId ? dishes.find(d => d.id === dishId)?.name : null;
@@ -142,23 +136,22 @@ const WeekEditor = () => {
       }));
       
       if (dishId) {
-        await MenuService.assignDishToMealByType(currentDate, mealType, dishType, dishId);
+        await ApiService.assignDishToMealByType(currentDate, mealType, dishType, dishId);
       } else {
-        await MenuService.removeDishFromMealByType(currentDate, mealType, dishType);
+        await ApiService.removeDishFromMealByType(currentDate, mealType, dishType);
       }
       
-      console.log('✅ Menu mis à jour avec succès');
       setError('');
       
     } catch (err) {
-      console.warn('⚠️ Mode hors ligne - modification locale conservée:', err.message);
+      console.warn('Mode hors ligne - modification locale conservee:', err.message);
       setError('Mode hors ligne - modifications temporaires uniquement');
     }
   };
 
   const copyDayToOtherDays = async (fromDayIndex) => {
     if (!weekMenus[fromDayIndex] || Object.keys(weekMenus[fromDayIndex]).length === 0) {
-      alert('Aucun menu à copier pour ce jour');
+      alert('Aucun menu a copier pour ce jour');
       return;
     }
 
@@ -168,8 +161,6 @@ const WeekEditor = () => {
     try {
       setLoading(true);
       const sourceMenu = weekMenus[fromDayIndex];
-      
-      console.log('🔄 Copie du menu:', sourceMenu);
       
       const newWeekMenus = { ...weekMenus };
       for (let i = 0; i < weekDates.length; i++) {
@@ -183,13 +174,11 @@ const WeekEditor = () => {
         if (i === fromDayIndex) continue;
         
         const dateObj = weekDates[i];
-        // Formater la date en YYYY-MM-DD pour Supabase
         const targetDate = dateObj instanceof Date 
           ? `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`
           : dateObj;
         
         try {
-          // Identifier les types de meals à copier (MIDI et/ou SOIR)
           const mealTypesInSource = new Set();
           for (const [key, menuItem] of Object.entries(sourceMenu)) {
             if (menuItem && menuItem.dish_id) {
@@ -198,16 +187,14 @@ const WeekEditor = () => {
             }
           }
 
-          // Supprimer UNIQUEMENT les meals qui seront copiés (préserve les autres)
           for (const mealType of mealTypesInSource) {
-            await MenuService.clearMealByType(targetDate, mealType);
+            await ApiService.clearMealByType(targetDate, mealType);
           }
           
-          // Copier les plats
           for (const [key, menuItem] of Object.entries(sourceMenu)) {
             if (menuItem && menuItem.dish_id) {
               const [mealType, dishType] = key.split('_');
-              await MenuService.assignDishToMealByType(targetDate, mealType, dishType, menuItem.dish_id);
+              await ApiService.assignDishToMealByType(targetDate, mealType, dishType, menuItem.dish_id);
             }
           }
         } catch (err) {
@@ -215,14 +202,12 @@ const WeekEditor = () => {
         }
       }
       
-      // Rafraîchir les données depuis Supabase pour garantir la cohérence
       await loadData();
       
-      alert('Menu copié avec succès sur tous les jours !');
-      console.log('✅ Copie terminée');
+      alert('Menu copie avec succes sur tous les jours !');
       setError('');
     } catch (err) {
-      console.warn('⚠️ Erreur lors de la copie, mode hors ligne activé:', err.message);
+      console.warn('Erreur lors de la copie, mode hors ligne active:', err.message);
       setError('Mode hors ligne - copie temporaire uniquement');
     } finally {
       setLoading(false);
@@ -231,16 +216,16 @@ const WeekEditor = () => {
 
   if (loading) {
     return (
-      <AdminLayout title="Cafétéria ORIF">
+      <AdminLayout title="Cafeteria ORIF">
         <div style={{ textAlign: 'center', padding: '2rem' }}>
-          🔄 Chargement des données...
+          Chargement des donnees...
         </div>
       </AdminLayout>
     );
   }
 
   return (
-    <AdminLayout title="Cafétéria ORIF">
+    <AdminLayout title="Cafeteria ORIF">
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         
         {error && (
@@ -257,7 +242,7 @@ const WeekEditor = () => {
         )}
 
         <div style={{ marginBottom: '2rem' }}>
-          <h3>Sélectionner un jour à éditer :</h3>
+          <h3>Selectionner un jour a editer :</h3>
           <div style={{ 
             display: 'grid', 
             gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', 
@@ -299,11 +284,11 @@ const WeekEditor = () => {
               width: '100%'
             }}
           >
-            📋 Copier ce jour sur tous les autres jours
+            Copier ce jour sur tous les autres jours
           </button>
         </div>
 
-        <h2>🗓️ Éditer le menu du {dayNames[selectedDay]} ({formatDate(weekDates[selectedDay])})</h2>
+        <h2>Editer le menu du {dayNames[selectedDay]} ({formatDate(weekDates[selectedDay])})</h2>
 
         <div style={{ marginTop: '2rem' }}>
           {mealTypes.map(mealType => (
@@ -316,7 +301,7 @@ const WeekEditor = () => {
                       Type de plat
                     </th>
                     <th style={{ textAlign: 'left', padding: '0.75rem', backgroundColor: '#f8f9fa', border: '1px solid #dee2e6' }}>
-                      Plat sélectionné
+                      Plat selectionne
                     </th>
                   </tr>
                 </thead>
@@ -376,7 +361,7 @@ const WeekEditor = () => {
               fontSize: '1rem'
             }}
           >
-            ← Retour à l'administration
+            Retour a l'administration
           </button>
         </div>
       </div>

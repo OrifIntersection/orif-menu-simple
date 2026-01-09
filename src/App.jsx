@@ -1,13 +1,11 @@
-// Fichier principal de l'application React avec système de navigation
 import React from "react";
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { DatePicker as AntDatePicker, ConfigProvider } from "antd";
 import fr_FR from "antd/locale/fr_FR";
-import { CalendarOutlined } from '@ant-design/icons';
 import { getCurrentYear, getCurrentWeekNumber } from "./utils/dateUtils";
 import PageLayout from "./components/PageLayout";
-import { LocalMenuService } from "./services/LocalMenuService";
+import ApiService from "./services/ApiService";
 import MenuTable from "./components/MenuTable";
 import Footer from "./components/Footer";
 import { JwtAuthProvider } from "./contexts/JwtAuthContext";
@@ -29,10 +27,6 @@ import UsersPage from './pages/UsersPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import "./styles.css";
 
-/**
- * HomePage - Page d'accueil
- * Affiche le menu de la semaine par défaut
- */
 function HomePage() {
   const [selectedWeek, setSelectedWeek] = React.useState("");
   const [selectedDate, setSelectedDate] = React.useState(null);
@@ -44,33 +38,11 @@ function HomePage() {
   const currentYear = getCurrentYear();
   const currentWeekNumber = getCurrentWeekNumber();
 
-  // Charger les semaines disponibles depuis Supabase ET localStorage
   React.useEffect(() => {
     async function loadAvailableWeeks() {
       try {
-        const allWeeks = new Set();
-
-        // Charger du localStorage
-        const localMenus = JSON.parse(localStorage.getItem('menus_local') || '[]');
-        localMenus.forEach(m => allWeeks.add(m.week_number));
-
-        // Charger de Supabase
-        const { supabase } = await import('./lib/supabase');
-        const { data, error } = await supabase.from("meals").select("meal_date").order("meal_date", { ascending: false });
-        
-        if (!error && data && data.length > 0) {
-          data.forEach(item => {
-            const d = new Date(item.meal_date);
-            const year = d.getFullYear();
-            const jan1 = new Date(year, 0, 1);
-            const days = Math.floor((d - jan1) / (24 * 60 * 60 * 1000));
-            const weekNum = Math.ceil((days + jan1.getDay() + 1) / 7);
-            allWeeks.add(weekNum);
-          });
-        }
-
-        // Convertir Set en array et trier
-        const weeks = Array.from(allWeeks).sort((a, b) => b - a);
+        const allMenus = await ApiService.getAllMenus();
+        const weeks = allMenus.map(m => m.weekNum).sort((a, b) => b - a);
         setAvailableWeeks(weeks);
       } catch {
         setAvailableWeeks([]);
@@ -79,71 +51,37 @@ function HomePage() {
     loadAvailableWeeks();
   }, []);
 
-  // Charger le menu initial
   React.useEffect(() => {
     setLoading(true);
     (async function fetchMenu() {
       if (!currentYear || !currentWeekNumber) return;
-      const monday = (y, w) => {
-        const d = new Date(y, 0, 1 + (w - 1) * 7);
-        const day = d.getDay();
-        const mondayOffset = day <= 4 ? day - 1 : day - 8;
-        d.setDate(d.getDate() - mondayOffset);
-        return d;
-      };
-      const start = monday(currentYear, currentWeekNumber);
-      // Récupérer toutes les dates de la semaine depuis Supabase
-      const { supabase } = await import('./lib/supabase');
-      // Récupérer tous les repas de la semaine (lundi-dimanche)
-      const weekStart = new Date(start);
-      const weekEnd = new Date(start);
-      weekEnd.setDate(weekStart.getDate() + 6);
-      const weekStartStr = weekStart.toISOString().slice(0, 10);
-      const weekEndStr = weekEnd.toISOString().slice(0, 10);
-      const { data, error } = await supabase
-        .from('meals')
-        .select(`
-          id,
-          meal_date,
-          meal_type,
-          meals_dishes (
-            dish_id,
-            position,
-            dishes (
-              id,
-              name,
-              description,
-              dish_type
-            )
-          )
-        `)
-        .gte('meal_date', weekStartStr)
-        .lte('meal_date', weekEndStr);
-      if (error || !data) {
-        // Fallback: utiliser localStorage si Supabase échoue
-        const localMenu = LocalMenuService.getMenuByWeek(currentYear, currentWeekNumber);
-        if (localMenu && localMenu.days && localMenu.days.length > 0) {
-          const filtered = filterWeekdays({
-            meals: localMenu.meals,
-            days: localMenu.days,
-            data: localMenu.data
-          });
+      
+      try {
+        const meals = await ApiService.getMenuByWeek(currentYear, currentWeekNumber);
+        
+        if (meals && meals.length > 0) {
+          const mealsWithDishes = meals.map(meal => ({
+            ...meal,
+            meals_dishes: meal.dishes ? meal.dishes.map(d => ({
+              dish_id: d.id,
+              dishes: d
+            })) : []
+          }));
+          const normalized = normalizeMenu(mealsWithDishes, currentWeekNumber);
+          const filtered = filterWeekdays(normalized);
           setMenuData(filtered);
         } else {
           setMenuData(null);
         }
-      } else {
-        // Normaliser les données Supabase avec le pipeline complet
-        const normalized = normalizeMenu(data || [], currentWeekNumber);
-        // Filtrer pour afficher uniquement Lundi-Vendredi avec emojis
-        const filtered = filterWeekdays(normalized);
-        setMenuData(filtered);
+      } catch (error) {
+        console.error('Erreur chargement menu:', error);
+        setMenuData(null);
       }
+      
       setLoading(false);
     })();
   }, [currentYear, currentWeekNumber]);
 
-  // Calcul des dates de début et de fin de semaine
   const simpleMonday = (y, w) => {
     const d = new Date(y, 0, 1 + (w - 1) * 7);
     const day = d.getDay();
@@ -159,9 +97,8 @@ function HomePage() {
   return (
     <main className="container">
       <PageLayout 
-        title="Cafétéria ORIF"
+        title="Cafeteria ORIF"
       >
-        {/* Bouton déroulant pour choisir une autre semaine */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '1rem' }}>
           <select
             value={selectedWeek}
@@ -177,7 +114,6 @@ function HomePage() {
               <option key={week} value={week}>{`Semaine ${week}`}</option>
             ))}
           </select>
-          {/* Agenda pour choisir un jour */}
           <div className="date-picker">
             <AntDatePicker
               value={selectedDate}
@@ -196,7 +132,7 @@ function HomePage() {
           </div>
         </div>
         <h2 className="menu-title" style={{textAlign: 'center', marginBottom: '1.5rem'}}>
-          {`Menu la semaine N° ${currentWeekNumber} du ${formatDate(startDate)} au ${formatDate(endDate)}`}
+          {`Menu la semaine N ${currentWeekNumber} du ${formatDate(startDate)} au ${formatDate(endDate)}`}
         </h2>
         {loading ? (
           <div>Chargement du menu...</div>
@@ -216,54 +152,31 @@ function HomePage() {
   );
 }
 
-/**
- * App - Composant racine de l'application
- * Configure le routeur et définit toutes les routes de l'application
- */
 export default function App() {
   return (
     <ConfigProvider locale={fr_FR}>
       <JwtAuthProvider>
-        {/* BrowserRouter active le système de navigation basé sur l'URL */}
         <BrowserRouter>
-          {/* Routes définit toutes les routes possibles de l'application */}
           <Routes>
-          {/* Route pour la page d'accueil (/) */}
-          <Route path="/" element={<HomePage />} />
-          {/* Route pour la page de connexion */}
-          <Route path="/login" element={<LoginPage />} />
-          {/* Route pour le callback d'authentification Magic Link */}
-          <Route path="/auth/callback" element={<AuthCallback />} />
-          {/* Route debug pour diagnostiquer les erreurs d'authentification */}
-          <Route path="/debug" element={<AuthCallbackDebug />} />
-          {/* Route pour afficher le menu d'une semaine spécifique */}
-          <Route path="/week/:weekNumber" element={<WeekMenuPage />} />
-          {/* Route pour la version alternative du menu de la semaine */}
-          <Route path="/week2/:weekNumber" element={<WeekMenuPage2 />} />
-          {/* Route pour l'importation locale robuste */}
-          <Route path="/import-local" element={<ImportLocalMenuPage />} />
-          {/* Route pour la démonstration des styles d'affichage */}
-          <Route path="/styles" element={<StyleDemo />} />
-          {/* Route pour la démonstration des émojis */}
-          <Route path="/emoji-demo" element={<EmojiDemo />} />
-          {/* Route pour afficher le menu d'une date spécifique */}
-          <Route path="/date/:date" element={<DateMenuPage />} />
-          
-          {/* ROUTES ADMIN PROTÉGÉES - Authentification requise */}
-          {/* Route pour la page d'administration */}
-          <Route path="/admin" element={<ProtectedRoute element={<AdminPage />} />} />
-          {/* Route pour l'import de menus Excel */}
-          <Route path="/admin/import" element={<ProtectedRoute element={<ImportMenuPage />} />} />
-          {/* Route pour éditer le menu d'une semaine */}
-          <Route path="/admin/week/:weekNumber" element={<ProtectedRoute element={<WeekEditor />} />} />
-          {/* Route pour éditer le menu d'une date */}
-          <Route path="/admin/date/:date" element={<ProtectedRoute element={<DateEditor />} />} />
-          {/* Route pour la gestion des utilisateurs */}
-          <Route path="/admin/users" element={<ProtectedRoute element={<UsersPage />} requireAdmin={true} />} />
-          
-          {/* Route catch-all pour toutes les URLs non définies */}
-          <Route path="*" element={<HomePage />} />
-        </Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/debug" element={<AuthCallbackDebug />} />
+            <Route path="/week/:weekNumber" element={<WeekMenuPage />} />
+            <Route path="/week2/:weekNumber" element={<WeekMenuPage2 />} />
+            <Route path="/import-local" element={<ImportLocalMenuPage />} />
+            <Route path="/styles" element={<StyleDemo />} />
+            <Route path="/emoji-demo" element={<EmojiDemo />} />
+            <Route path="/date/:date" element={<DateMenuPage />} />
+            
+            <Route path="/admin" element={<ProtectedRoute element={<AdminPage />} />} />
+            <Route path="/admin/import" element={<ProtectedRoute element={<ImportMenuPage />} />} />
+            <Route path="/admin/week/:weekNumber" element={<ProtectedRoute element={<WeekEditor />} />} />
+            <Route path="/admin/date/:date" element={<ProtectedRoute element={<DateEditor />} />} />
+            <Route path="/admin/users" element={<ProtectedRoute element={<UsersPage />} requireAdmin={true} />} />
+            
+            <Route path="*" element={<HomePage />} />
+          </Routes>
         </BrowserRouter>
       </JwtAuthProvider>
     </ConfigProvider>

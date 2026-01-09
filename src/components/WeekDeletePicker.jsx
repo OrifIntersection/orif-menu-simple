@@ -1,42 +1,18 @@
 import { useState, useEffect } from 'react';
+import ApiService from '../services/ApiService';
 
 export default function WeekDeletePicker() {
   const [availableWeeks, setAvailableWeeks] = useState([]);
   const [selectedWeek, setSelectedWeek] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [messageType, setMessageType] = useState(''); // 'success' ou 'error'
+  const [messageType, setMessageType] = useState('');
 
-  // Charger les semaines disponibles depuis localStorage ET Supabase
   useEffect(() => {
     async function loadWeeks() {
       try {
-        const allWeeks = new Set();
-
-        // Charger du localStorage
-        const localMenus = JSON.parse(localStorage.getItem('menus_local') || '[]');
-        localMenus.forEach(m => allWeeks.add(m.week_number));
-
-        // Charger de Supabase
-        const { supabase } = await import('../lib/supabase');
-        const { data } = await supabase
-          .from('meals')
-          .select('meal_date')
-          .order('meal_date', { ascending: false });
-
-        if (data && data.length > 0) {
-          data.forEach(item => {
-            const d = new Date(item.meal_date);
-            const year = d.getFullYear();
-            const jan1 = new Date(year, 0, 1);
-            const days = Math.floor((d - jan1) / (24 * 60 * 60 * 1000));
-            const weekNum = Math.ceil((days + jan1.getDay() + 1) / 7);
-            allWeeks.add(weekNum);
-          });
-        }
-
-        // Convertir Set en array et trier
-        const weeks = Array.from(allWeeks).sort((a, b) => b - a);
+        const allMenus = await ApiService.getAllMenus();
+        const weeks = allMenus.map(m => m.weekNum).sort((a, b) => b - a);
         setAvailableWeeks(weeks);
       } catch {
         setMessage('Erreur lors du chargement des semaines');
@@ -48,13 +24,13 @@ export default function WeekDeletePicker() {
 
   const handleDelete = async () => {
     if (!selectedWeek) {
-      setMessage('Veuillez sélectionner une semaine');
+      setMessage('Veuillez selectionner une semaine');
       setMessageType('error');
       return;
     }
 
     const confirmDelete = window.confirm(
-      `⚠️ Êtes-vous sûr de vouloir supprimer TOUTES les données de la semaine ${selectedWeek} ?\n\nCette action est IRRÉVERSIBLE !`
+      `Etes-vous sur de vouloir supprimer TOUTES les donnees de la semaine ${selectedWeek} ?\n\nCette action est IRREVERSIBLE !`
     );
 
     if (!confirmDelete) return;
@@ -63,43 +39,22 @@ export default function WeekDeletePicker() {
     setMessage('');
 
     try {
-      // Vérifier si on utilise localStorage ou Supabase
-      const localMenus = JSON.parse(localStorage.getItem('menus_local') || '[]');
-      const weekData = localMenus.find(m => m.week_number === parseInt(selectedWeek));
-
-      if (weekData) {
-        // Supprimer du localStorage
-        const updated = localMenus.filter(m => m.week_number !== parseInt(selectedWeek));
-        localStorage.setItem('menus_local', JSON.stringify(updated));
-        setMessage(`✅ Semaine ${selectedWeek} supprimée du localStorage`);
-        setMessageType('success');
-        setSelectedWeek('');
-        setAvailableWeeks(availableWeeks.filter(w => w !== parseInt(selectedWeek)));
-      } else {
-        // Supprimer de Supabase
-        const { supabase } = await import('../lib/supabase');
-
-        // D'abord, récupérer toutes les dates de la semaine
-        const weekDates = getWeekDates(parseInt(selectedWeek));
-
-        // Supprimer les meals (et les meals_dishes en cascade)
-        const { error } = await supabase
-          .from('meals')
-          .delete()
-          .in('meal_date', weekDates);
-
-        if (error) {
-          setMessage(`❌ Erreur lors de la suppression: ${error.message}`);
-          setMessageType('error');
-        } else {
-          setMessage(`✅ Semaine ${selectedWeek} supprimée de la base de données`);
-          setMessageType('success');
-          setSelectedWeek('');
-          setAvailableWeeks(availableWeeks.filter(w => w !== parseInt(selectedWeek)));
+      const weekDates = getWeekDates(parseInt(selectedWeek));
+      
+      for (const dateStr of weekDates) {
+        try {
+          await ApiService.clearMealByType(dateStr, 'MIDI');
+          await ApiService.clearMealByType(dateStr, 'SOIR');
+        } catch {
         }
       }
+      
+      setMessage(`Semaine ${selectedWeek} supprimee`);
+      setMessageType('success');
+      setSelectedWeek('');
+      setAvailableWeeks(availableWeeks.filter(w => w !== parseInt(selectedWeek)));
     } catch (err) {
-      setMessage(`❌ Erreur: ${err.message}`);
+      setMessage(`Erreur: ${err.message}`);
       setMessageType('error');
     } finally {
       setLoading(false);
@@ -138,7 +93,7 @@ export default function WeekDeletePicker() {
         }}
       >
         <option value="">
-          {availableWeeks.length === 0 ? 'Aucune semaine disponible' : 'Sélectionnez une semaine...'}
+          {availableWeeks.length === 0 ? 'Aucune semaine disponible' : 'Selectionnez une semaine...'}
         </option>
         {availableWeeks.map(week => (
           <option key={week} value={week}>{`Semaine ${week}`}</option>
@@ -159,18 +114,8 @@ export default function WeekDeletePicker() {
           opacity: !selectedWeek || loading ? 0.5 : 1,
           transition: 'all 0.2s ease'
         }}
-        onMouseEnter={(e) => {
-          if (selectedWeek && !loading) {
-            e.target.style.backgroundColor = '#bd2130';
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (selectedWeek && !loading) {
-            e.target.style.backgroundColor = '#dc3545';
-          }
-        }}
       >
-        {loading ? '⏳ Suppression en cours...' : '🗑️ Supprimer définitivement'}
+        {loading ? 'Suppression en cours...' : 'Supprimer definitivement'}
       </button>
 
       {message && (

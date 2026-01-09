@@ -1,8 +1,8 @@
-# Menu Cafét - Application de Gestion des Menus
+# Menu Cafet - Application de Gestion des Menus
 
 ## Overview
 
-Menu Cafét is a React-based web application for managing and displaying cafeteria menus at ORIF. The application provides both public-facing menu displays (daily and weekly views) and administrative functionality for menu editing. Built with React, Vite, and Ant Design, with ExpressJS backend and MySQL database.
+Menu Cafet is a React-based web application for managing and displaying cafeteria menus at ORIF. The application provides both public-facing menu displays (daily and weekly views) and administrative functionality for menu editing. Built with React, Vite, and Ant Design, with ExpressJS backend and MySQL database.
 
 **Target Deployment:** Debian 13 server (Datalik) - self-hosted solution without cloud dependencies.
 
@@ -10,59 +10,45 @@ Menu Cafét is a React-based web application for managing and displaying cafeter
 
 Preferred communication style: Simple, everyday language.
 
-## Recent Changes (Dec 22, 2025)
+## Recent Changes (Jan 9, 2026)
 
-**MySQL + JWT Migration - COMPLETE**
+**Complete Supabase Removal - Migration to MySQL + JWT**
+- Removed ALL Supabase dependencies from frontend
+- Deleted obsolete files:
+  - `src/services/MenuService.js` (was using Supabase)
+  - `src/services/LocalMenuService.js` (localStorage fallback)
+  - `src/lib/supabase.js` (Supabase client)
+- Migrated all pages to use `ApiService.js`:
+  - `WeekMenuPage.jsx`, `DailyMenu.jsx`, `WeekEditor.jsx`, `DateEditor.jsx`
+  - `ImportMenuPage.jsx`, `ImportLocalMenuPage.jsx`, `WeekMenuPage2.jsx`
+  - `AuthCallback.jsx`, `AuthCallbackDebug.jsx`
+  - `App.jsx`, `useMenus.js`
+- Migrated components:
+  - `MenuDrawer.jsx`, `WeekDeletePicker.jsx`
+- Application is now 100% MySQL-based, ready for Datalik deployment
+
+**New API Endpoints Added**
+- `GET /api/meals/week/:year/:week` - Get meals by week
+- `POST /api/meals/assign` - Assign dish to meal by type
+- `POST /api/meals/remove-dish` - Remove dish from meal by type
+- `POST /api/meals/clear` - Clear all dishes from a meal
+
+## Previous Changes (Dec 22, 2025)
+
+**MySQL + JWT Migration**
 - Migrated from Supabase/PostgreSQL to MySQL for Datalik deployment
 - JWT authentication with username/password login fully implemented
 - Frontend connected to Express API with JWT auth context
 - Admin-only user registration (no public signup)
-- Files created/modified:
+- Files:
   - `sql/schema.sql` - MySQL database schema (dishes, meals, meals_dishes, users)
   - `sql/seed.sql` - Test data + default admin user with bcrypt hash
   - `server/routes/auth.js` - JWT auth routes (login protected, register admin-only)
   - `src/services/ApiService.js` - Frontend API client with user management
-  - `src/contexts/JwtAuthContext.jsx` - JWT auth context (createUser for admins)
-  - `src/pages/UsersPage.jsx` - Admin page for user management
-  - `src/pages/LoginPage.jsx` - Login only (no public registration)
-  - `docs/DEPLOIEMENT_DEBIAN.md` - Complete deployment guide for Debian 13
+  - `src/contexts/JwtAuthContext.jsx` - JWT auth context
+  - `docs/MANUEL_INSTALLATION_DATALIK.md` - Complete deployment guide
 - Default admin credentials: username "admin", password "admin123"
 - JWT_SECRET should be set via environment variable in production
-
-**Express API Backend**
-- Full REST API with Express.js on port 3001
-- MySQL database connection with mysql2 driver
-- Routes implemented:
-  - Auth: `POST /api/auth/login`, `POST /api/auth/register`, `GET /api/auth/me`
-  - Dishes: `GET/POST/PUT/DELETE /api/dishes`
-  - Meals: `GET/POST/DELETE /api/meals`
-- Fictive data fallback when database is unavailable
-- ES Module syntax (import/export)
-
-**Calendar French Locale - FIXED**
-- Configured Ant Design with French locale (fr_FR)
-- Calendar now displays Monday-Sunday instead of Sunday-Saturday
-
-## Previous Changes (Dec 3, 2025)
-
-**Calendar CSS Isolation + Sexy Background - FIXED**
-- Issue: Ant Design DatePicker calendar displayed only 2 columns instead of 7, broken responsiveness on all screen sizes
-- Root cause: Generic CSS selectors (`table`, `thead th`, `td`) in styles.css were cascading to calendar elements
-- Fix: Two-part solution combining CSS specificity and complete style reset
-  1. Targeted menu styles to `.table-wrap` and `.daily-menu-view` classes only (lines 158-222 in styles.css)
-  2. Applied `all: revert !important` to `.ant-picker-panel-container` to completely isolate calendar from app CSS
-  3. Added sexy gradient background to calendar: `linear-gradient(135deg, #f0f9ff 0%, #cffafe 50%, #e0f2fe 100%)`
-- Result: Calendar now displays 7 columns perfectly on all screen sizes with no style conflicts
-- CSS optimizations:
-  - Menu styles isolated with parent class selectors (`.table-wrap table`, `.daily-menu-view table`)
-  - Calendar reset with `all: revert !important` prevents any global CSS interference
-  - Calendar background: blue/cyan gradient matching app brand colors
-  - Border-radius `8px` + shadow for modern appearance
-
-**Previous: Friday Display Bug + Emoji Support - FIXED**
-- Merged two conflicting approaches to show Friday with emojis
-- Query now loads full week from Supabase, applies filterWeekdays to display Monday-Friday only
-- Supabase prioritized over localStorage for current week data
 
 ## System Architecture
 
@@ -75,9 +61,15 @@ Preferred communication style: Simple, everyday language.
 **Routing Strategy**: React Router DOM 7.9.5 handles client-side routing with support for:
 - Public routes (menu display)
 - Protected admin routes (menu editing)
-- Authentication callback handling
+- JWT-based authentication
 
 **State Management**: The application uses React's built-in state management with Context API for authentication state sharing. Menu data is managed through custom hooks (`useMenus`, `useAuth`) that encapsulate business logic and API interactions.
+
+**API Service**: Single centralized `ApiService.js` handles all API calls:
+- Authentication (login, register, profile)
+- Dishes CRUD operations
+- Meals management (by date, by week)
+- Menu assignment operations
 
 **Responsive Design**: Mobile-first approach with specific optimizations for daily menu view on small screens. Weekly view maintains horizontal scroll on mobile devices for better usability. Breakpoints at 768px and 480px handle tablet and mobile layouts.
 
@@ -85,67 +77,64 @@ Preferred communication style: Simple, everyday language.
 
 ### Data Architecture
 
-**Database Schema**: Simplified three-table design focused on the core domain:
+**Database Schema (MySQL)**: Three-table design focused on the core domain:
 - `dishes` - Menu items with types (ENTREE, PLAT, GARNITURE, LEGUME, DESSERT, AUTRE)
 - `meals` - Meal instances identified by date and type (MIDI/SOIR)
 - `meals_dishes` - Junction table linking meals to their dishes
+- `users` - User accounts with bcrypt password hashes and roles
 
-**Legacy Cleanup**: The database schema underwent significant simplification, removing redundant tables (menu_items, menu_days, menus, meal_types, categories, allergens) in favor of a more straightforward relational model. This reduces complexity and improves query performance.
+**Data Flow**: Frontend -> ApiService.js -> Express API (port 3001) -> MySQL
 
-**Data Persistence Strategy**: Dual-mode storage system:
-- **Primary**: Supabase PostgreSQL database for production
-- **Fallback**: Browser localStorage for development/offline scenarios
-- Automatic detection and switching between modes based on Supabase availability
+**Fictive Data Fallback**: When MySQL is unavailable, the Express API returns fictive test data for development purposes.
 
 ### Authentication & Authorization
 
-**Authentication Method**: Magic Link email authentication via Supabase Auth
-- Passwordless login flow
-- Email-based one-time links
-- Session persistence with automatic token refresh
+**Authentication Method**: JWT-based username/password authentication
+- Username/password login
+- JWT tokens with 7-day expiration
+- Secure bcrypt password hashing
+- Token stored in localStorage
 
 **Security Layers**:
-1. **Client-side validation**: Email whitelist with obfuscated hashes prevents unauthorized login attempts
-2. **Server-side enforcement**: Database-level email whitelist table with triggers
-3. **Row-Level Security (RLS)**: Supabase policies enforce read/write permissions based on user roles
+1. **JWT Middleware**: Express routes protected by token verification
+2. **Admin-only registration**: Only existing admins can create new users
+3. **Role-based access**: Admin and user roles control feature access
 
 **Authorization Model**: Role-based access control (RBAC)
-- `viewer` role: Default for authenticated users, read-only access
-- `admin` role: Manual promotion required, full CRUD permissions
-- Profile system tracks user metadata and role assignments
-
-**Graceful Degradation**: When Supabase is unconfigured, the application allows unrestricted access to admin features for development purposes. This enables local testing without requiring backend setup.
+- `user` role: Default for authenticated users, read-only access
+- `admin` role: Full CRUD permissions, user management
 
 ### Application Structure
 
 **Component Organization**:
 - `/components` - Reusable UI components (MenuDrawer, MenuTable, etc.)
 - `/pages` - Route-level page components
-- `/services` - API abstraction layers (MenuService, LocalMenuService)
+- `/services` - API abstraction layer (ApiService.js only)
 - `/hooks` - Custom React hooks for shared logic
-- `/utils` - Helper functions (date manipulation, validation, storage)
+- `/utils` - Helper functions (date manipulation, validation)
 - `/contexts` - React Context providers for global state
+- `/server` - Express.js backend API
 
 **Build & Deployment Configuration**:
 - Vite with React plugin for fast HMR during development
 - Server configuration for 0.0.0.0:5000 for Replit deployment
-- Dynamic redirect URL handling using window.location.origin for environment flexibility
+- Express API on port 3001
 - ESLint for code quality with React-specific rules
 
 ### Data Flow Patterns
 
 **Menu Display Flow**:
-1. Component mounts and checks Supabase availability
-2. Loads menu data from Supabase or localStorage fallback
+1. Component mounts
+2. Calls ApiService to fetch menu data from Express API
 3. Transforms data into display format (grouped by day/meal)
 4. Renders using Ant Design Table components with custom styling
 
 **Menu Editing Flow**:
 1. Admin navigates to edit route (protected by auth check)
-2. Loads existing menu data or initializes empty structure
+2. Loads existing menu data via ApiService
 3. User modifies menu items through form inputs
-4. Changes batched and saved to Supabase/localStorage
-5. Optimistic UI updates with error rollback on failure
+4. Changes saved via API calls
+5. UI updates on success
 
 **Date & Week Management**:
 - ISO 8601 week numbering for consistent week calculations
@@ -156,27 +145,27 @@ Preferred communication style: Simple, everyday language.
 
 ### Backend Services
 
-**Supabase** (v2.80.0)
-- **Purpose**: Backend-as-a-Service providing PostgreSQL database, authentication, and real-time features
-- **Configuration**: Requires `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` environment variables
-- **Features Used**:
-  - PostgreSQL database with custom schema
-  - Magic Link email authentication
-  - Row-Level Security policies
-  - Client library for database queries
-- **Fallback**: Application functions without Supabase using localStorage
+**Express.js API** (port 3001)
+- REST API for menu and auth operations
+- MySQL database connection via mysql2 driver
+- JWT authentication middleware
+- CORS enabled for frontend access
+
+**MySQL Database**
+- Self-hosted on Datalik server
+- Tables: dishes, meals, meals_dishes, users
+- ENUMs for meal_type and dish_type
 
 ### UI & Styling
 
 **Ant Design** (v5.28.0)
 - Comprehensive React component library
-- Provides Table, Form, Button, Drawer, DatePicker, and other UI primitives
+- Provides Table, Form, Button, Drawer, DatePicker components
 - Icons from @ant-design/icons package
-- Theming through CSS-in-JS system
-- CSS isolation strategy: Component containers `.ant-picker-panel-container` use `all: revert !important` to prevent style cascade
+- French locale (fr_FR) configured
 
 **Custom CSS**
-- `styles.css` - Global application styles with CSS variables for theming
+- `styles.css` - Global application styles with CSS variables
 - `responsive.css` - Media queries for mobile optimization
 - Design system based on neutral color palette with blue/cyan accents
 
@@ -184,18 +173,22 @@ Preferred communication style: Simple, everyday language.
 
 **date-fns** (v4.1.0)
 - Date manipulation and formatting
-- Complements custom ISO week utilities
+- ISO week calculations
 - Locale-aware date displays
 
 **xlsx** (v0.18.5)
 - Excel file parsing for menu imports
 - Enables bulk menu upload from spreadsheets
-- Used in admin workflows for efficiency
 
 **React Router DOM** (v7.9.5)
 - Client-side routing with nested routes
 - Protected route patterns for admin sections
-- Programmatic navigation for auth flows
+
+**bcryptjs**
+- Password hashing for user authentication
+
+**jsonwebtoken**
+- JWT token generation and verification
 
 ### Development Tools
 
@@ -207,22 +200,17 @@ Preferred communication style: Simple, everyday language.
 **ESLint** (v9.36.0)
 - Code quality enforcement
 - React-specific linting rules
-- Hooks validation for React best practices
 
 ### Deployment Platform
 
-**Replit**
-- Development and deployment environment with live preview
-- Vite configured for 0.0.0.0:5000 binding for full Replit compatibility
-- Dynamic environment detection (dev vs production) using window.location.origin
-- Environment variables managed through Replit Secrets
-- Automatic workflow configuration via npm scripts
-- Documentation in `/docs` folder for setup
+**Target: Debian 13 (Datalik)**
+- Self-hosted at cafeteria.applications.ws
+- nginx reverse proxy configuration
+- MySQL database
+- PM2 for process management
+- Complete guide in `docs/MANUEL_INSTALLATION_DATALIK.md`
 
-### Database Configuration
-
-**PostgreSQL** (via Supabase)
-- Custom ENUM types: `meal_type` (MIDI/SOIR), `dish_type` (menu categories)
-- Foreign key relationships with CASCADE delete
-- UNIQUE constraints for data integrity
-- Prepared for future extensions (allergen tracking, nutritional info)
+**Development: Replit**
+- Vite configured for 0.0.0.0:5000 binding
+- Express API on port 3001
+- Workflows: "Start application" (frontend) and "API Express" (backend)

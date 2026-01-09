@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Modal, Progress, Spin } from 'antd';
 import AdminLayout from '../components/AdminLayout';
 import ExcelImportMenu from '../components/ExcelImportMenu';
-import { MenuService } from '../services/MenuService';
-import { LocalMenuService } from '../services/LocalMenuService';
+import ApiService from '../services/ApiService';
 
 export default function ImportMenuPage() {
   const navigate = useNavigate();
@@ -14,30 +13,24 @@ export default function ImportMenuPage() {
   const [importProgress, setImportProgress] = useState(0);
   const [totalPlats, setTotalPlats] = useState(0);
 
-  // Réinitialiser l'import et le formulaire
   const handleReset = () => {
     setPendingMenus(null);
     window.location.reload();
   };
 
-  // Prépare les menus à importer et demande confirmation
   const handleImportFromExcel = (week, menus) => {
     if (!week || !menus || menus.length === 0) {
-      alert("Aucun plat importé. Vérifiez le fichier Excel.");
+      alert("Aucun plat importe. Verifiez le fichier Excel.");
       return;
     }
     
-    // Support pour le nouveau format avec dates
     const hasNewFormat = menus.some(m => m.date);
     
     if (hasNewFormat) {
-      // Nouveau format : grouper par date et moment
-      // IMPORTANT: Seulement Lundi-Vendredi (pas Samedi/Dimanche)
       const joursSemaine = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"];
       const moments = ["Midi", "Soir"];
       const data = {};
       
-      // Fonction helper pour formater date en YYYY-MM-DD sans problème de timezone
       const formatDateLocal = (date) => {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -45,29 +38,22 @@ export default function ImportMenuPage() {
         return `${year}-${month}-${day}`;
       };
       
-      // Récupère toutes les dates uniques
       const allDates = menus.map(m => m.date ? formatDateLocal(m.date) : null).filter(Boolean);
       
-      // FILTRE: Garder seulement Lundi-Vendredi (pas Samedi/Dimanche)
       const uniqueDates = [...new Set(allDates)].sort().filter((dateStr) => {
         const [year, month, day] = dateStr.split('-').map(Number);
         const date = new Date(year, month - 1, day, 12, 0, 0);
-        const dayOfWeek = date.getDay(); // 0=Dimanche, 1=Lundi, ..., 6=Samedi
-        return dayOfWeek >= 1 && dayOfWeek <= 5; // Lundi-Vendredi seulement
+        const dayOfWeek = date.getDay();
+        return dayOfWeek >= 1 && dayOfWeek <= 5;
       });
-      
-      console.log('📅 Dates uniques trouvées (Lun-Ven seulement):', uniqueDates);
       
       moments.forEach((meal) => {
         data[meal] = {};
         uniqueDates.forEach((dateStr) => {
-          // Parser la date en restant en timezone locale
           const [year, month, day] = dateStr.split('-').map(Number);
           const date = new Date(year, month - 1, day, 12, 0, 0);
           const dayIndex = date.getDay();
-          const dayName = joursSemaine[dayIndex - 1]; // Lundi=0, ..., Vendredi=4
-          
-          console.log(`📅 ${dateStr} → jour ${dayIndex} → ${dayName}`);
+          const dayName = joursSemaine[dayIndex - 1];
           
           const plats = menus
             .filter((m) => {
@@ -81,12 +67,9 @@ export default function ImportMenuPage() {
           
           if (dayName) {
             data[meal][dayName] = plats.length > 0 ? plats.join(" / ") : "";
-            console.log(`  ${dayName} ${meal}: ${plats.length} plats`);
           }
         });
       });
-      
-      console.log('📦 Structure de données créée:', data);
       
       const menuToImport = {
         year: Number(week.split("-")[0]),
@@ -98,10 +81,8 @@ export default function ImportMenuPage() {
         originalMenus: menus
       };
       
-      console.log('📋 Menu à importer:', menuToImport);
       setPendingMenus([menuToImport]);
     } else {
-      // Ancien format : grouper par jour et moment
       const joursSemaine = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"];
       const moments = ["Midi", "Soir"];
       const data = {};
@@ -122,7 +103,7 @@ export default function ImportMenuPage() {
         .filter(Boolean);
       
       if (platsSemaine.length === 0) {
-        alert(`Semaine ${week}: Aucun plat importé.`);
+        alert(`Semaine ${week}: Aucun plat importe.`);
         return;
       }
       
@@ -139,14 +120,12 @@ export default function ImportMenuPage() {
     }
   };
 
-  // Enregistre les menus dans Supabase avec popup de progression
   const handleConfirmImport = async () => {
     if (!pendingMenus || pendingMenus.length === 0) {
-      alert("Aucun menu à importer. Veuillez d'abord importer un fichier Excel.");
+      alert("Aucun menu a importer. Veuillez d'abord importer un fichier Excel.");
       return;
     }
     
-    // Calculer le nombre total de plats
     let total = 0;
     for (const menu of pendingMenus) {
       if (menu && menu.originalMenus) {
@@ -155,7 +134,7 @@ export default function ImportMenuPage() {
     }
     
     setIsImporting(true);
-    setImportMessage('🚀 Démarrage de l\'import...');
+    setImportMessage('Demarrage de l\'import...');
     setImportProgress(0);
     setTotalPlats(total);
     
@@ -165,12 +144,12 @@ export default function ImportMenuPage() {
       
       for (const menu of pendingMenus) {
         if (menu && menu.year && menu.week_number && menu.originalMenus) {
-          setImportMessage(`📋 Traitement semaine ${menu.week_number}...`);
+          setImportMessage(`Traitement semaine ${menu.week_number}...`);
           
           for (const item of menu.originalMenus) {
             try {
               currentIndex++;
-              setImportMessage(`⏳ Enregistrement : ${item.plat}\n(${currentIndex}/${total})`);
+              setImportMessage(`Enregistrement : ${item.plat}\n(${currentIndex}/${total})`);
               
               let dateStr;
               
@@ -203,24 +182,23 @@ export default function ImportMenuPage() {
                 const mealType = item.moment.toLowerCase() === 'midi' ? 'MIDI' : 'SOIR';
                 const dishType = item.typePlat || 'AUTRE';
                 
-                const dish = await MenuService.getOrCreateDish(item.plat, dishType);
-                await MenuService.assignDishToMealByType(dateStr, mealType, dishType, dish.id);
+                const dish = await ApiService.getOrCreateDish(item.plat, dishType);
+                await ApiService.assignDishToMealByType(dateStr, mealType, dishType, dish.id);
                 
                 successPlats++;
               }
               
               setImportProgress((currentIndex / total) * 100);
             } catch (error) {
-              console.error(`⚠️ Erreur pour ${item.plat}:`, error);
+              console.error(`Erreur pour ${item.plat}:`, error);
             }
           }
         }
       }
       
-      setImportMessage(`✅ Import réussi !\n${successPlats}/${total} plats enregistrés\n\n⏳ Redirection en cours...`);
+      setImportMessage(`Import reussi !\n${successPlats}/${total} plats enregistres\n\nRedirection en cours...`);
       setImportProgress(100);
       
-      // Redirection après 2 secondes vers la page de la semaine
       setTimeout(() => {
         if (pendingMenus[0] && pendingMenus[0].week_number) {
           navigate("/week/" + pendingMenus[0].week_number);
@@ -231,20 +209,20 @@ export default function ImportMenuPage() {
         setPendingMenus(null);
       }, 2000);
     } catch (error) {
-      console.error('❌ Erreur lors de l\'import:', error);
-      setImportMessage(`❌ Erreur : ${error.message}`);
+      console.error('Erreur lors de l\'import:', error);
+      setImportMessage(`Erreur : ${error.message}`);
       setIsImporting(false);
     }
   };
 
   return (
-    <AdminLayout title="Import de menus Excel (Supabase)">
+    <AdminLayout title="Import de menus Excel">
       <div style={{ maxWidth: 600, margin: "2rem auto", padding: "2rem", background: "white", borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
-        <h2 style={{ color: "#007bff" }}>Importer des menus Excel (Supabase)</h2>
+        <h2 style={{ color: "#007bff" }}>Importer des menus Excel</h2>
         <ExcelImportMenu onImport={handleImportFromExcel} />
         {pendingMenus && (
           <div style={{ marginTop: "2rem", background: "#f8f9fa", padding: "1rem", borderRadius: 8 }}>
-            <h4>Menus à importer :</h4>
+            <h4>Menus a importer :</h4>
             {pendingMenus.map((menu, idx) => (
               <div key={idx} style={{ marginBottom: '1rem' }}>
                 <strong>Semaine {menu.week_label}</strong>
@@ -263,7 +241,7 @@ export default function ImportMenuPage() {
                         <td style={{ padding: '0.3rem', border: '1px solid #dee2e6', fontWeight: 'bold' }}>{day}</td>
                         {menu.meals.map((meal) => (
                           <td key={meal} style={{ padding: '0.3rem', border: '1px solid #dee2e6' }}>
-                            {menu.data[meal][day] || <span style={{ color: '#dc3545' }}>—</span>}
+                            {menu.data[meal][day] || <span style={{ color: '#dc3545' }}>-</span>}
                           </td>
                         ))}
                       </tr>
@@ -296,39 +274,39 @@ export default function ImportMenuPage() {
         </div>
       </div>
 
-      {/* Modal de progression de l'import */}
       <Modal
-        title="📥 Importation en cours..."
+        title="Importation en cours..."
         open={isImporting}
         closable={false}
         footer={null}
         centered
         width={400}
-        bodyStyle={{ textAlign: 'center', padding: '2rem' }}
       >
-        <div style={{ marginBottom: '2rem' }}>
-          <Spin size="large" />
-        </div>
-        
-        <div style={{ 
-          marginBottom: '1.5rem', 
-          fontSize: '1rem',
-          whiteSpace: 'pre-line',
-          lineHeight: '1.6',
-          color: '#333',
-          minHeight: '60px'
-        }}>
-          {importMessage}
-        </div>
-        
-        <Progress 
-          percent={Math.round(importProgress)} 
-          status={importProgress === 100 ? 'success' : 'active'}
-          format={percent => `${percent}%`}
-        />
-        
-        <div style={{ marginTop: '1.5rem', fontSize: '0.9rem', color: '#666' }}>
-          {totalPlats > 0 && `Total : ${totalPlats} plats`}
+        <div style={{ textAlign: 'center', padding: '2rem' }}>
+          <div style={{ marginBottom: '2rem' }}>
+            <Spin size="large" />
+          </div>
+          
+          <div style={{ 
+            marginBottom: '1.5rem', 
+            fontSize: '1rem',
+            whiteSpace: 'pre-line',
+            lineHeight: '1.6',
+            color: '#333',
+            minHeight: '60px'
+          }}>
+            {importMessage}
+          </div>
+          
+          <Progress 
+            percent={Math.round(importProgress)} 
+            status={importProgress === 100 ? 'success' : 'active'}
+            format={percent => `${percent}%`}
+          />
+          
+          <div style={{ marginTop: '1.5rem', fontSize: '0.9rem', color: '#666' }}>
+            {totalPlats > 0 && `Total : ${totalPlats} plats`}
+          </div>
         </div>
       </Modal>
     </AdminLayout>

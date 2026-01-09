@@ -1,9 +1,8 @@
 import React from "react";
 import MenuCell from "../components/MenuCell";
 import ColorLegend from "../components/ColorLegend";
-import { supabase } from "../lib/supabase";
-import { LocalMenuService } from "../services/LocalMenuService";
-import { format, getISOWeek, getYear } from "date-fns";
+import ApiService from "../services/ApiService";
+import { format, getISOWeek } from "date-fns";
 import { normalizeMenu, extractDayFromMenu } from "../utils/menuNormalizer";
 
 export default function DailyMenu(props) {
@@ -18,60 +17,25 @@ export default function DailyMenu(props) {
   React.useEffect(() => {
     async function fetchMenu() {
       setLoading(true);
-      let mealsData = [];
-      if (supabase) {
-        const { data, error } = await supabase
-          .from("meals")
-          .select(`
-            id,
-            meal_date,
-            meal_type,
-            meals_dishes (
-              dish_id,
-              position,
-              dishes (
-                id,
-                name,
-                description,
-                dish_type
-              )
-            )
-          `)
-          .eq("meal_date", date);
-        if (!error && data && data.length > 0) {
-          mealsData = data;
-        }
-      }
       
-      // Fallback localStorage si rien dans Supabase
-      if (mealsData.length === 0) {
-        const allMenus = LocalMenuService.getAllMenus();
-        const [dateYear, dateMonth, dateDay] = date.split('-').map(Number);
-        const dateObj = new Date(dateYear, dateMonth - 1, dateDay);
-        const weekNum = getISOWeek(dateObj);
-        const year = getYear(dateObj);
+      try {
+        const mealsData = await ApiService.getMenuForDate(date);
         
-        const menuSemaine = allMenus.find(menu => 
-          Number(menu.year) === year && Number(menu.week_number) === weekNum
-        );
-        
-        if (menuSemaine && menuSemaine.data) {
-          // Extraire uniquement le jour demandé du menu hebdomadaire
-          const dayMenu = extractDayFromMenu(menuSemaine, jourActuel);
+        if (mealsData && mealsData.length > 0) {
+          const [dateYear, dateMonth, dateDay] = date.split('-').map(Number);
+          const dateObj = new Date(dateYear, dateMonth - 1, dateDay);
+          const weekNum = getISOWeek(dateObj);
+          const normalized = normalizeMenu(mealsData, weekNum);
+          const dayMenu = extractDayFromMenu(normalized, jourActuel);
           setMenuData(dayMenu);
         } else {
           setMenuData(null);
         }
-      } else {
-        // IMPORTANT: Normaliser les données Supabase pour que les émojis s'affichent
-        const [dateYear, dateMonth, dateDay] = date.split('-').map(Number);
-        const dateObj = new Date(dateYear, dateMonth - 1, dateDay);
-        const weekNum = getISOWeek(dateObj);
-        const normalized = normalizeMenu(mealsData, weekNum);
-        // Extraire uniquement le jour demandé
-        const dayMenu = extractDayFromMenu(normalized, jourActuel);
-        setMenuData(dayMenu);
+      } catch (error) {
+        console.error('Erreur chargement menu:', error);
+        setMenuData(null);
       }
+      
       setLoading(false);
     }
     fetchMenu();
@@ -119,7 +83,6 @@ export default function DailyMenu(props) {
               </tfoot>
             </table>
           </div>
-          {/* Légende des émojis */}
           <ColorLegend />
         </>
       ) : (

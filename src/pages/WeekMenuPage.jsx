@@ -4,14 +4,10 @@ import PageLayout from '../components/PageLayout';
 import MenuTable from '../components/MenuTable';
 import WeekPicker from '../components/WeekPicker';
 import Footer from '../components/Footer';
-import { supabase } from '../lib/supabase';
-import { LocalMenuService } from '../services/LocalMenuService';
+import ApiService from '../services/ApiService';
 import { getISOWeek, startOfISOWeek, addDays, format } from 'date-fns';
 import { normalizeMenu, filterWeekdays } from '../utils/menuNormalizer';
 
-/**
- * WeekMenuPage - Page autonome pour afficher le menu d'une semaine
- */
 export default function WeekMenuPage() {
   const { weekNumber } = useParams();
   const currentYear = 2025;
@@ -23,58 +19,37 @@ export default function WeekMenuPage() {
     async function fetchWeekMenu() {
       setLoading(true);
       
-      // D'ABORD: Vérifier le localStorage
-      const localMenu = LocalMenuService.getMenuByWeek(currentYear, weekNum);
-      if (localMenu && localMenu.data) {
-        console.log('📦 Menu trouvé dans localStorage:', localMenu);
-        const normalized = normalizeMenu(localMenu, weekNum);
-        setMenuData(normalized);
-        setLoading(false);
-        return;
-      }
-      
-      // SINON: Essayer Supabase
-      const startDate = startOfISOWeek(new Date(currentYear, 0, 1));
-      const weekStart = addDays(startDate, (weekNum - 1) * 7);
-      const weekDates = Array.from({ length: 7 }, (_, i) => format(addDays(weekStart, i), 'yyyy-MM-dd'));
-      
-      const { data, error } = await supabase
-        .from('meals')
-        .select(`
-          id,
-          meal_date,
-          meal_type,
-          meals_dishes (
-            dish_id,
-            position,
-            dishes (
-              id,
-              name,
-              description,
-              dish_type
-            )
-          )
-        `)
-        .in('meal_date', weekDates);
+      try {
+        const meals = await ApiService.getMenuByWeek(currentYear, weekNum);
         
-      if (error || !data || data.length === 0) {
+        if (meals && meals.length > 0) {
+          const mealsWithDishes = meals.map(meal => ({
+            ...meal,
+            meals_dishes: meal.dishes ? meal.dishes.map(d => ({
+              dish_id: d.id,
+              dishes: d
+            })) : []
+          }));
+          const normalized = normalizeMenu(mealsWithDishes, weekNum);
+          setMenuData(normalized);
+        } else {
+          setMenuData(null);
+        }
+      } catch (error) {
+        console.error('Erreur chargement menu:', error);
         setMenuData(null);
-      } else {
-        const normalized = normalizeMenu(data, weekNum);
-        setMenuData(normalized);
       }
+      
       setLoading(false);
     }
     fetchWeekMenu();
   }, [currentYear, weekNum]);
 
-  // Générer le titre avec le numéro de semaine
   const weekStart = startOfISOWeek(new Date(currentYear, 0, 1));
   const weekDateStart = addDays(weekStart, (weekNum - 1) * 7);
-  const weekDateEnd = addDays(weekDateStart, 4); // Vendredi au lieu de Dimanche
+  const weekDateEnd = addDays(weekDateStart, 4);
   const weekTitle = `Menu Semaine ${weekNum} (${format(weekDateStart, 'dd/MM/yyyy')} - ${format(weekDateEnd, 'dd/MM/yyyy')})`;
   
-  // Filtrer pour afficher uniquement Lundi-Vendredi
   const filteredMenuData = filterWeekdays(menuData);
 
   return (
