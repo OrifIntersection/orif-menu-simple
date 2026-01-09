@@ -1,0 +1,113 @@
+Top — c’est **presque** parfait. Mais si tu veux être vraiment “prod-ready” (au sens où tu peux défendre ça devant un prof ou un admin), il manque 3 preuves concrètes et 2 pièges à éliminer.
+
+## 1) Preuves manquantes (à ajouter au message)
+
+Ton message dit “terminé”, mais il ne prouve pas **tout**.
+
+Ajoute ces 3 sorties (copiables, courtes) :
+
+### A) Prouver que l’API passe bien par Nginx aussi
+
+Tu as testé `localhost:3001`, mais en prod l’accès se fait via Nginx.
+
+```bash
+curl -i http://localhost/api/health
+```
+
+Attendu : `200 OK` + `{"ok":true,"db":"up"}`
+
+### B) Prouver que PM2 tourne via ecosystem
+
+```bash
+pm2 status
+```
+
+Attendu : `menu-cafet` online, restart policy, etc.
+
+### C) Prouver que HTTPS n’est pas encore en place (ou qu’il le sera)
+
+```bash
+sudo ss -lntp | grep -E ':80|:443'
+```
+
+Actuellement tu n’as que `:80` (normal avant Certbot). Ça prépare le terrain.
+
+---
+
+## 2) Piège #1 : ton endpoint health est sur `3001/api/health` (mauvaise URL avec ton montage actuel)
+
+Tu as écrit :
+
+`curl -i http://localhost:3001/api/health`
+
+Mais **ton app use** est :
+
+* `app.use('/api', menuRoutes);`
+
+Donc dans `menuRoutes`, la route doit être `router.get('/health', ...)` (pas `/api/health`).
+
+👉 Si son test fonctionne sur `3001/api/health`, c’est OK.
+Mais dans ton Nginx, tu proxifies vers `127.0.0.1:3001/api/` et donc le health doit marcher aussi via :
+
+* ✅ `http://localhost/api/health`
+
+**C’est CE test qui compte**, pas seulement 3001.
+
+---
+
+## 3) Piège #2 : `JWT_SECRET` “fallback dev”
+
+Il a écrit “JWT_SECRET avec fallback dev” précédemment. En prod, ça doit être strict :
+
+* ✅ en prod : **pas de fallback**
+* ❌ si `JWT_SECRET` manquant → **le serveur doit refuser de démarrer**
+
+Sinon tu risques une prod qui tourne avec un secret faible par défaut.
+
+👉 Check minimal à ajouter dans le backend (si pas déjà fait) :
+
+```js
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+  throw new Error("JWT_SECRET is required in production");
+}
+```
+
+---
+
+## 4) Message final amélioré (à renvoyer si tu veux une version béton)
+
+Tu peux remplacer ton dernier paragraphe “Statut” par :
+
+> Statut : **prod-ready (pré-HTTPS)**. Validations :
+>
+> * `curl http://localhost/` → 200 (React dist via Nginx)
+> * `curl http://localhost/api/health` → 200 `{ ok:true, db:up }` (API via Nginx)
+> * `pm2 status` → `menu-cafet` online (ecosystem)
+>   Prochaine étape : Certbot + redirection HTTP→HTTPS.
+
+---
+
+## 5) Prochaine action (tu peux la faire maintenant)
+
+Puisque ton HTTP est stable, tu peux lancer HTTPS :
+
+```bash
+sudo apt install -y certbot python3-certbot-nginx
+sudo certbot --nginx -d cafeteria.applications.ws
+```
+
+Et vérifier :
+
+```bash
+curl -I https://cafeteria.applications.ws/
+curl -I https://cafeteria.applications.ws/api/
+curl -i https://cafeteria.applications.ws/api/health
+```
+
+---
+
+### Ce que je veux que tu colles (2 lignes max chacune)
+
+1. `curl -i http://localhost/api/health`
+2. `pm2 status`
+   Après ça, tu peux enclencher Certbot sans stress.

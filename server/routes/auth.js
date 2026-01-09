@@ -5,6 +5,10 @@ import db from '../db.js';
 
 const router = express.Router();
 
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+  throw new Error("JWT_SECRET is required in production");
+}
+
 const JWT_SECRET = process.env.JWT_SECRET || 'menu-cafet-orif-dev-secret-2025';
 const JWT_EXPIRES_IN = '24h';
 
