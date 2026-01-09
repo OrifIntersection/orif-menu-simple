@@ -3,6 +3,15 @@ import db from '../db.js';
 
 const router = express.Router();
 
+router.get('/health', async (req, res) => {
+  try {
+    await db.query('SELECT 1');
+    return res.status(200).json({ ok: true, db: 'up' });
+  } catch (e) {
+    return res.status(200).json({ ok: true, db: 'down' });
+  }
+});
+
 const DISH_TYPES = ['ENTREE', 'PLAT', 'GARNITURE', 'LEGUME', 'DESSERT', 'AUTRE'];
 const MEAL_TYPES = ['MIDI', 'SOIR'];
 
