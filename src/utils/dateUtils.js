@@ -94,6 +94,39 @@ export function getCurrentYear() {
 }
 
 /**
+ * Obtient l'année ISO d'une date (peut différer de l'année calendaire)
+ * Par exemple, le 1er janvier 2026 peut appartenir à la semaine 1 de 2026 ou semaine 53 de 2025
+ * @param {Date} date - La date
+ * @returns {number} L'année ISO
+ */
+export function getISOWeekYear(date) {
+  const target = new Date(date.valueOf());
+  const dayNr = (date.getDay() + 6) % 7;
+  target.setDate(target.getDate() - dayNr + 3);
+  return target.getFullYear();
+}
+
+/**
+ * Obtient l'année ISO pour une semaine donnée basée sur la date actuelle
+ * Gère le cas où la semaine appartient à l'année précédente ou suivante
+ * @param {number} weekNumber - Le numéro de semaine (1-53)
+ * @returns {number} L'année ISO correspondante
+ */
+export function getYearForWeek(weekNumber) {
+  const now = new Date();
+  const currentWeek = getWeekNumber(now);
+  const currentISOYear = getISOWeekYear(now);
+  
+  if (weekNumber > 50 && currentWeek < 10) {
+    return currentISOYear - 1;
+  }
+  if (weekNumber < 10 && currentWeek > 50) {
+    return currentISOYear + 1;
+  }
+  return currentISOYear;
+}
+
+/**
  * Génère le label de semaine (ex: "4 au 10 septembre 2025")
  * @param {number} year - L'année
  * @param {number} weekNumber - Le numéro de semaine

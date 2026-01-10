@@ -5,14 +5,14 @@ import MenuTable from '../components/MenuTable';
 import WeekPicker from '../components/WeekPicker';
 import Footer from '../components/Footer';
 import ApiService from '../services/ApiService';
-import { getISOWeek } from 'date-fns';
 import { normalizeMenu, filterWeekdays } from '../utils/menuNormalizer';
+import { getYearForWeek, getCurrentWeekNumber } from '../utils/dateUtils';
 
 export default function WeekMenuPage2() {
   const { weekNumber } = useParams();
-  const currentYear = 2025;
-  const currentWeekNum = getISOWeek(new Date());
+  const currentWeekNum = getCurrentWeekNumber();
   const [selectedWeek, setSelectedWeek] = useState(weekNumber ? parseInt(weekNumber, 10) : currentWeekNum);
+  const currentYear = getYearForWeek(selectedWeek);
   const [menuData, setMenuData] = useState(null);
   const [loading, setLoading] = useState(true);
 

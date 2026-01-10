@@ -7,11 +7,12 @@ import Footer from '../components/Footer';
 import ApiService from '../services/ApiService';
 import { getISOWeek, startOfISOWeek, addDays, format } from 'date-fns';
 import { normalizeMenu, filterWeekdays } from '../utils/menuNormalizer';
+import { getYearForWeek, getCurrentWeekNumber } from '../utils/dateUtils';
 
 export default function WeekMenuPage() {
   const { weekNumber } = useParams();
-  const currentYear = 2025;
-  const weekNum = parseInt(weekNumber, 10) || getISOWeek(new Date());
+  const weekNum = parseInt(weekNumber, 10) || getCurrentWeekNumber();
+  const currentYear = getYearForWeek(weekNum);
   const [menuData, setMenuData] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
 
