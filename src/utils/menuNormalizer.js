@@ -5,7 +5,7 @@ function removeAccents(str) {
 
 // Normaliser les codes de repas Supabase vers "Midi" ou "Soir"
 function normalizeMealType(code) {
-  if (!code) return null; // Rejeter au lieu de deviner
+  if (!code) return null;
   
   const normalized = removeAccents(code.toLowerCase().trim());
   
@@ -19,17 +19,15 @@ function normalizeMealType(code) {
     'souper': 'Soir'
   };
   
-  return mealMapping[normalized] || null; // Retourne null si inconnu
+  return mealMapping[normalized] || null;
 }
 
 // Normaliser les types de plats vers les clés attendues
 function normalizeDishType(type) {
   if (!type) return 'AUTRE';
   
-  // Retirer les accents et mettre en majuscules
   const normalized = removeAccents(type.toUpperCase().trim());
   
-  // Mapping étendu des variations possibles
   const mapping = {
     'ENTREE': 'ENTREE',
     'ENTREE FROIDE': 'ENTREE',
@@ -64,7 +62,6 @@ function normalizeDishType(type) {
 export function normalizeMenu(menu, weekNumber) {
   if (!menu) return null;
   
-  // Déjà normalisé (localStorage format)
   if (menu.days && menu.data) {
     return {
       weekNumber: menu.week_number || weekNumber,
@@ -76,7 +73,6 @@ export function normalizeMenu(menu, weekNumber) {
     };
   }
   
-  // NOUVELLE STRUCTURE: Array de meals avec jointures
   if (Array.isArray(menu) && menu.length > 0 && menu[0].meal_date) {
     const days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
     const meals = ['Midi', 'Soir'];
@@ -90,10 +86,9 @@ export function normalizeMenu(menu, weekNumber) {
     });
     
     menu.forEach(mealItem => {
-      // Valider la date
       if (!mealItem.meal_date) return;
-      // Créer la date sans problème de timezone: YYYY-MM-DD
-      const [dateYear, dateMonth, dateDay] = mealItem.meal_date.split('-').map(Number);
+      const datePart = mealItem.meal_date.split('T')[0];
+      const [dateYear, dateMonth, dateDay] = datePart.split('-').map(Number);
       const date = new Date(dateYear, dateMonth - 1, dateDay);
       if (isNaN(date.getTime())) return;
       
@@ -101,15 +96,10 @@ export function normalizeMenu(menu, weekNumber) {
       const day = days[dayIndex];
       if (!day || dayIndex < 0 || dayIndex > 6) return;
       
-      // Normaliser le type de repas
       const rawMealType = mealItem.meal_type;
       const mealType = normalizeMealType(rawMealType);
-      if (!mealType) {
-        console.warn(`Type de repas inconnu ignoré: "${rawMealType}"`);
-        return;
-      }
+      if (!mealType) return;
       
-      // Traiter les plats de ce meal
       const dishes = mealItem.meals_dishes || [];
       dishes.forEach(mealDish => {
         const dish = mealDish.dishes;
@@ -129,14 +119,13 @@ export function normalizeMenu(menu, weekNumber) {
     return {
       weekNumber: weekNumber,
       weekLabel: `Semaine ${weekNumber}`,
-      year: new Date().getFullYear(),
+      year: menu[0]?.meal_date ? new Date(menu[0].meal_date).getFullYear() : new Date().getFullYear(),
       days,
       meals,
       data
     };
   }
   
-  // ANCIENNE STRUCTURE: items array (meal_items)
   if (menu.items && Array.isArray(menu.items)) {
     const days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
     const meals = ['Midi', 'Soir'];
@@ -150,41 +139,23 @@ export function normalizeMenu(menu, weekNumber) {
     });
     
     menu.items.forEach(item => {
-      // Valider la date
       if (!item.date) return;
       const date = new Date(item.date);
-      if (isNaN(date.getTime())) return; // Date invalide
+      if (isNaN(date.getTime())) return;
       
       const dayIndex = (date.getDay() + 6) % 7;
       const day = days[dayIndex];
-      
-      // Vérifier que le jour est valide
       if (!day || dayIndex < 0 || dayIndex > 6) return;
       
-      // Normaliser le type de repas (Midi/Soir)
       const rawMealType = item.meal_types?.code || item.meal_type;
       const mealType = normalizeMealType(rawMealType);
+      if (!mealType) return;
       
-      // Rejeter si le type de repas est inconnu
-      if (!mealType) {
-        console.warn(`Type de repas inconnu ignoré: "${rawMealType}"`);
-        return;
-      }
-      
-      // Normaliser le type de plat (ENTREE/PLAT/etc.)
       const rawDishType = item.dishes?.dish_type || item.dish_type || 'AUTRE';
       const dishType = normalizeDishType(rawDishType);
-      
-      // Récupérer le nom du plat
       const dishName = item.dishes?.name || item.dish_name || '';
+      if (!dishName.trim()) return;
       
-      // Ignorer les plats sans nom
-      if (!dishName.trim()) {
-        console.warn(`Plat sans nom ignoré pour ${mealType} - ${day}`);
-        return;
-      }
-      
-      // Format: "TYPE: Nom du plat" pour que les émojis s'affichent
       const dishWithType = `${dishType}: ${dishName}`;
       
       if (!data[mealType][day]) {
@@ -228,7 +199,6 @@ export function filterWeekdays(menu) {
   };
 }
 
-// Extraire un seul jour d'un menu hebdomadaire
 export function extractDayFromMenu(menu, dayName) {
   if (!menu || !menu.data) return null;
   
@@ -246,3 +216,4 @@ export function extractDayFromMenu(menu, dayName) {
     data: dayData
   };
 }
+ENDOFFILE

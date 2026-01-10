@@ -5,14 +5,16 @@ import MenuTable from '../components/MenuTable';
 import WeekPicker from '../components/WeekPicker';
 import Footer from '../components/Footer';
 import ApiService from '../services/ApiService';
-import { getISOWeek, startOfISOWeek, addDays, format } from 'date-fns';
+import { startOfISOWeek, addDays, format } from 'date-fns';
 import { normalizeMenu, filterWeekdays } from '../utils/menuNormalizer';
-import { getYearForWeek, getCurrentWeekNumber } from '../utils/dateUtils';
+import { getYearForWeek, getCurrentWeekNumber, getMondayOfWeek } from '../utils/dateUtils';
 
 export default function WeekMenuPage() {
-  const { weekNumber } = useParams();
+  const { year, weekNumber } = useParams();
+  
   const weekNum = parseInt(weekNumber, 10) || getCurrentWeekNumber();
-  const currentYear = getYearForWeek(weekNum);
+  const currentYear = year ? parseInt(year, 10) : getYearForWeek(weekNum);
+  
   const [menuData, setMenuData] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
 
@@ -46,10 +48,9 @@ export default function WeekMenuPage() {
     fetchWeekMenu();
   }, [currentYear, weekNum]);
 
-  const weekStart = startOfISOWeek(new Date(currentYear, 0, 1));
-  const weekDateStart = addDays(weekStart, (weekNum - 1) * 7);
+  const weekDateStart = getMondayOfWeek(currentYear, weekNum);
   const weekDateEnd = addDays(weekDateStart, 4);
-  const weekTitle = `Menu Semaine ${weekNum} (${format(weekDateStart, 'dd/MM/yyyy')} - ${format(weekDateEnd, 'dd/MM/yyyy')})`;
+  const weekTitle = `Menu Semaine ${weekNum} (${format(weekDateStart, 'dd/MM/yyyy')} - ${format(weekDateEnd, 'dd/MM/yyyy')}) - ${currentYear}`;
   
   const filteredMenuData = filterWeekdays(menuData);
 

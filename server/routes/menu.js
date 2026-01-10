@@ -22,7 +22,11 @@ let fictiveData = {
     { id: 3, name: 'Riz', dish_type: 'GARNITURE', created_at: new Date() },
     { id: 4, name: 'Haricots verts', dish_type: 'LEGUME', created_at: new Date() },
     { id: 5, name: 'Mousse au chocolat', dish_type: 'DESSERT', created_at: new Date() },
-    { id: 6, name: 'Pain', dish_type: 'AUTRE', created_at: new Date() }
+    { id: 6, name: 'Pain', dish_type: 'AUTRE', created_at: new Date() },
+    { id: 7, name: 'Poulet rôti', dish_type: 'PLAT', created_at: new Date() },
+    { id: 8, name: 'Carottes râpées', dish_type: 'ENTREE', created_at: new Date() },
+    { id: 9, name: 'Purée de pommes de terre', dish_type: 'GARNITURE', created_at: new Date() },
+    { id: 10, name: 'Tarte aux pommes', dish_type: 'DESSERT', created_at: new Date() }
   ],
   meals: [
     { 
@@ -31,8 +35,8 @@ let fictiveData = {
       meal_type: 'MIDI',
       created_at: new Date(),
       dishes: [
-        { id: 1, name: 'Spaghetti Bolognaise', dish_type: 'PLAT' },
         { id: 2, name: 'Salade verte', dish_type: 'ENTREE' },
+        { id: 1, name: 'Spaghetti Bolognaise', dish_type: 'PLAT' },
         { id: 3, name: 'Riz', dish_type: 'GARNITURE' }
       ]
     },
@@ -54,6 +58,123 @@ let fictiveData = {
       dishes: [
         { id: 1, name: 'Spaghetti Bolognaise', dish_type: 'PLAT' },
         { id: 6, name: 'Pain', dish_type: 'AUTRE' }
+      ]
+    },
+    { 
+      id: 4, 
+      meal_date: '2026-01-05', 
+      meal_type: 'MIDI',
+      created_at: new Date(),
+      dishes: [
+        { id: 8, name: 'Carottes râpées', dish_type: 'ENTREE' },
+        { id: 7, name: 'Poulet rôti', dish_type: 'PLAT' },
+        { id: 9, name: 'Purée de pommes de terre', dish_type: 'GARNITURE' },
+        { id: 4, name: 'Haricots verts', dish_type: 'LEGUME' },
+        { id: 10, name: 'Tarte aux pommes', dish_type: 'DESSERT' }
+      ]
+    },
+    { 
+      id: 5, 
+      meal_date: '2026-01-06', 
+      meal_type: 'MIDI',
+      created_at: new Date(),
+      dishes: [
+        { id: 2, name: 'Salade verte', dish_type: 'ENTREE' },
+        { id: 1, name: 'Spaghetti Bolognaise', dish_type: 'PLAT' },
+        { id: 3, name: 'Riz', dish_type: 'GARNITURE' },
+        { id: 5, name: 'Mousse au chocolat', dish_type: 'DESSERT' }
+      ]
+    },
+    { 
+      id: 6, 
+      meal_date: '2026-01-07', 
+      meal_type: 'MIDI',
+      created_at: new Date(),
+      dishes: [
+        { id: 8, name: 'Carottes râpées', dish_type: 'ENTREE' },
+        { id: 7, name: 'Poulet rôti', dish_type: 'PLAT' },
+        { id: 9, name: 'Purée de pommes de terre', dish_type: 'GARNITURE' },
+        { id: 10, name: 'Tarte aux pommes', dish_type: 'DESSERT' }
+      ]
+    },
+    { 
+      id: 7, 
+      meal_date: '2026-01-08', 
+      meal_type: 'MIDI',
+      created_at: new Date(),
+      dishes: [
+        { id: 2, name: 'Salade verte', dish_type: 'ENTREE' },
+        { id: 1, name: 'Spaghetti Bolognaise', dish_type: 'PLAT' },
+        { id: 4, name: 'Haricots verts', dish_type: 'LEGUME' },
+        { id: 5, name: 'Mousse au chocolat', dish_type: 'DESSERT' }
+      ]
+    },
+    { 
+      id: 8, 
+      meal_date: '2026-01-09', 
+      meal_type: 'MIDI',
+      created_at: new Date(),
+      dishes: [
+        { id: 8, name: 'Carottes râpées', dish_type: 'ENTREE' },
+        { id: 7, name: 'Poulet rôti', dish_type: 'PLAT' },
+        { id: 3, name: 'Riz', dish_type: 'GARNITURE' },
+        { id: 10, name: 'Tarte aux pommes', dish_type: 'DESSERT' }
+      ]
+    },
+    { 
+      id: 9, 
+      meal_date: '2026-01-05', 
+      meal_type: 'SOIR',
+      created_at: new Date(),
+      dishes: [
+        { id: 2, name: 'Salade verte', dish_type: 'ENTREE' },
+        { id: 1, name: 'Spaghetti Bolognaise', dish_type: 'PLAT' },
+        { id: 5, name: 'Mousse au chocolat', dish_type: 'DESSERT' }
+      ]
+    },
+    { 
+      id: 10, 
+      meal_date: '2026-01-06', 
+      meal_type: 'SOIR',
+      created_at: new Date(),
+      dishes: [
+        { id: 7, name: 'Poulet rôti', dish_type: 'PLAT' },
+        { id: 4, name: 'Haricots verts', dish_type: 'LEGUME' },
+        { id: 10, name: 'Tarte aux pommes', dish_type: 'DESSERT' }
+      ]
+    },
+    { 
+      id: 11, 
+      meal_date: '2026-01-07', 
+      meal_type: 'SOIR',
+      created_at: new Date(),
+      dishes: [
+        { id: 1, name: 'Spaghetti Bolognaise', dish_type: 'PLAT' },
+        { id: 3, name: 'Riz', dish_type: 'GARNITURE' },
+        { id: 5, name: 'Mousse au chocolat', dish_type: 'DESSERT' }
+      ]
+    },
+    { 
+      id: 12, 
+      meal_date: '2026-01-08', 
+      meal_type: 'SOIR',
+      created_at: new Date(),
+      dishes: [
+        { id: 7, name: 'Poulet rôti', dish_type: 'PLAT' },
+        { id: 9, name: 'Purée de pommes de terre', dish_type: 'GARNITURE' },
+        { id: 10, name: 'Tarte aux pommes', dish_type: 'DESSERT' }
+      ]
+    },
+    { 
+      id: 13, 
+      meal_date: '2026-01-09', 
+      meal_type: 'SOIR',
+      created_at: new Date(),
+      dishes: [
+        { id: 2, name: 'Salade verte', dish_type: 'ENTREE' },
+        { id: 1, name: 'Spaghetti Bolognaise', dish_type: 'PLAT' },
+        { id: 4, name: 'Haricots verts', dish_type: 'LEGUME' },
+        { id: 5, name: 'Mousse au chocolat', dish_type: 'DESSERT' }
       ]
     }
   ]
@@ -199,6 +320,127 @@ router.get('/meals', async (req, res) => {
   }
 });
 
+router.get('/meals/years', async (req, res) => {
+  const getFictiveYears = () => {
+    const years = [...new Set(fictiveData.meals.map(m => new Date(m.meal_date).getFullYear()))].sort((a, b) => b - a);
+    return years.length > 0 ? years : [2025, 2026];
+  };
+  
+  if (!db.isConnected()) {
+    return res.json(getFictiveYears());
+  }
+  
+  try {
+    const result = await db.query(`
+      SELECT DISTINCT YEAR(meal_date) as year FROM meals WHERE meal_date IS NOT NULL ORDER BY year DESC
+    `);
+    
+    if (!result.rows || result.rows.length === 0) {
+      return res.json(getFictiveYears());
+    }
+    
+    const years = result.rows.map(r => r.year);
+    res.json(years);
+  } catch (error) {
+    console.log('Base de données non disponible, années fictives');
+    res.json(getFictiveYears());
+  }
+});
+
+router.get('/meals/available', async (req, res) => {
+  const getFictiveWeeks = () => {
+    const fictiveWeeks = fictiveData.meals.map(m => {
+      const d = new Date(m.meal_date);
+      const year = d.getFullYear();
+      const tempDate = new Date(d.getTime());
+      tempDate.setHours(0, 0, 0, 0);
+      tempDate.setDate(tempDate.getDate() + 3 - (tempDate.getDay() + 6) % 7);
+      const week1 = new Date(tempDate.getFullYear(), 0, 4);
+      const week = 1 + Math.round(((tempDate.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+      return { year, week };
+    });
+    const uniqueWeeks = [];
+    fictiveWeeks.forEach(w => {
+      if (!uniqueWeeks.find(u => u.year === w.year && u.week === w.week)) {
+        uniqueWeeks.push(w);
+      }
+    });
+    return uniqueWeeks.length > 0 ? uniqueWeeks : [{ year: 2025, week: 2 }];
+  };
+  
+  if (!db.isConnected()) {
+    return res.json(getFictiveWeeks());
+  }
+  
+  try {
+    const result = await db.query(`
+      SELECT DISTINCT 
+        YEAR(meal_date) as year,
+        WEEK(meal_date, 3) as week
+      FROM meals 
+      WHERE meal_date IS NOT NULL
+      ORDER BY year DESC, week DESC
+    `);
+    
+    if (!result.rows || result.rows.length === 0) {
+      return res.json(getFictiveWeeks());
+    }
+    
+    res.json(result.rows);
+  } catch (error) {
+    console.log('Base de données non disponible, semaines fictives');
+    res.json(getFictiveWeeks());
+  }
+});
+
+router.get('/meals/week/:year/:week', async (req, res) => {
+  const { year, week } = req.params;
+  
+  try {
+    const monday = new Date(year, 0, 1 + (week - 1) * 7);
+    const day = monday.getDay();
+    const mondayOffset = day <= 4 ? day - 1 : day - 8;
+    monday.setDate(monday.getDate() - mondayOffset);
+    
+    const weekDates = Array.from({ length: 7 }, (_, i) => {
+      const date = new Date(monday);
+      date.setDate(monday.getDate() + i);
+      return date.toISOString().slice(0, 10);
+    });
+    
+    const mealsResult = await db.query(`
+      SELECT * FROM meals WHERE meal_date IN (?, ?, ?, ?, ?, ?, ?)
+      ORDER BY meal_date, meal_type
+    `, weekDates);
+    
+    if (mealsResult.rows.length === 0) {
+      const filtered = fictiveData.meals.filter(m => weekDates.includes(m.meal_date));
+      return res.json(filtered);
+    }
+    
+    const meals = [];
+    for (const meal of mealsResult.rows) {
+      const dishesResult = await db.query(`
+        SELECT d.id, d.name, d.dish_type 
+        FROM dishes d
+        JOIN meals_dishes md ON d.id = md.dish_id
+        WHERE md.meal_id = ?
+        ORDER BY md.position
+      `, [meal.id]);
+      
+      meals.push({
+        ...meal,
+        dishes: dishesResult.rows
+      });
+    }
+    
+    res.json(meals);
+  } catch (error) {
+    console.log('Erreur récupération semaine, données fictives utilisées');
+    res.json(fictiveData.meals);
+  }
+});
+
 router.get('/meals/:date', async (req, res) => {
   const { date } = req.params;
   
@@ -295,126 +537,6 @@ router.delete('/meals/:id', async (req, res) => {
     }
     const deleted = fictiveData.meals.splice(index, 1);
     res.json({ message: 'Repas supprimé', meal: deleted[0] });
-  }
-});
-
-router.get('/meals/years', async (req, res) => {
-  const getFictiveYears = () => {
-    const years = [...new Set(fictiveData.meals.map(m => new Date(m.meal_date).getFullYear()))].sort((a, b) => b - a);
-    return years.length > 0 ? years : [2025, 2026];
-  };
-  
-  if (!db.isConnected()) {
-    return res.json(getFictiveYears());
-  }
-  
-  try {
-    const result = await db.query(`
-      SELECT DISTINCT YEAR(meal_date) as year FROM meals ORDER BY year DESC
-    `);
-    
-    if (!result.rows || result.rows.length === 0) {
-      return res.json(getFictiveYears());
-    }
-    
-    const years = result.rows.map(r => r.year);
-    res.json(years);
-  } catch (error) {
-    console.log('Base de données non disponible, années fictives');
-    res.json(getFictiveYears());
-  }
-});
-
-router.get('/meals/available', async (req, res) => {
-  const getFictiveWeeks = () => {
-    const fictiveWeeks = fictiveData.meals.map(m => {
-      const d = new Date(m.meal_date);
-      const year = d.getFullYear();
-      const tempDate = new Date(d.getTime());
-      tempDate.setHours(0, 0, 0, 0);
-      tempDate.setDate(tempDate.getDate() + 3 - (tempDate.getDay() + 6) % 7);
-      const week1 = new Date(tempDate.getFullYear(), 0, 4);
-      const week = 1 + Math.round(((tempDate.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
-      return { year, week };
-    });
-    const uniqueWeeks = [];
-    fictiveWeeks.forEach(w => {
-      if (!uniqueWeeks.find(u => u.year === w.year && u.week === w.week)) {
-        uniqueWeeks.push(w);
-      }
-    });
-    return uniqueWeeks.length > 0 ? uniqueWeeks : [{ year: 2025, week: 2 }];
-  };
-  
-  if (!db.isConnected()) {
-    return res.json(getFictiveWeeks());
-  }
-  
-  try {
-    const result = await db.query(`
-      SELECT DISTINCT 
-        YEAR(meal_date) as year,
-        WEEK(meal_date, 1) as week
-      FROM meals 
-      ORDER BY year DESC, week DESC
-    `);
-    
-    if (!result.rows || result.rows.length === 0) {
-      return res.json(getFictiveWeeks());
-    }
-    
-    res.json(result.rows);
-  } catch (error) {
-    console.log('Base de données non disponible, semaines fictives');
-    res.json(getFictiveWeeks());
-  }
-});
-
-router.get('/meals/week/:year/:week', async (req, res) => {
-  const { year, week } = req.params;
-  
-  try {
-    const monday = new Date(year, 0, 1 + (week - 1) * 7);
-    const day = monday.getDay();
-    const mondayOffset = day <= 4 ? day - 1 : day - 8;
-    monday.setDate(monday.getDate() - mondayOffset);
-    
-    const weekDates = Array.from({ length: 7 }, (_, i) => {
-      const date = new Date(monday);
-      date.setDate(monday.getDate() + i);
-      return date.toISOString().slice(0, 10);
-    });
-    
-    const mealsResult = await db.query(`
-      SELECT * FROM meals WHERE meal_date IN (?, ?, ?, ?, ?, ?, ?)
-      ORDER BY meal_date, meal_type
-    `, weekDates);
-    
-    if (mealsResult.rows.length === 0) {
-      const filtered = fictiveData.meals.filter(m => weekDates.includes(m.meal_date));
-      return res.json(filtered);
-    }
-    
-    const meals = [];
-    for (const meal of mealsResult.rows) {
-      const dishesResult = await db.query(`
-        SELECT d.id, d.name, d.dish_type 
-        FROM dishes d
-        JOIN meals_dishes md ON d.id = md.dish_id
-        WHERE md.meal_id = ?
-        ORDER BY md.position
-      `, [meal.id]);
-      
-      meals.push({
-        ...meal,
-        dishes: dishesResult.rows
-      });
-    }
-    
-    res.json(meals);
-  } catch (error) {
-    console.log('Erreur récupération semaine, données fictives utilisées');
-    res.json(fictiveData.meals);
   }
 });
 
