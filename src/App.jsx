@@ -41,8 +41,7 @@ function HomePage() {
   React.useEffect(() => {
     async function loadAvailableWeeks() {
       try {
-        const allMenus = await ApiService.getAllMenus();
-        const weeks = allMenus.map(m => m.weekNum).sort((a, b) => b - a);
+        const weeks = await ApiService.getAvailableWeeks();
         setAvailableWeeks(weeks);
       } catch {
         setAvailableWeeks([]);
@@ -104,14 +103,17 @@ function HomePage() {
             value={selectedWeek}
             onChange={e => {
               setSelectedWeek(e.target.value);
-              if (e.target.value) navigate(`/week/${e.target.value}`);
+              if (e.target.value) {
+                const [year, week] = e.target.value.split('-');
+                navigate(`/week/${year}/${week}`);
+              }
             }}
             className="button-select"
             style={{ padding: '0.5rem 1.2rem', borderRadius: '6px', fontWeight: 'bold', minWidth: '120px', border: '2px solid #999', background: '#d0d0d0', color: '#333', cursor: 'pointer', fontSize: '1em' }}
           >
             <option value="">Menu d'autre semaine disponible</option>
-            {availableWeeks.map(week => (
-              <option key={week} value={week}>{`Semaine ${week}`}</option>
+            {availableWeeks.map(({ year, week }) => (
+              <option key={`${year}-${week}`} value={`${year}-${week}`}>{`${year} - Semaine ${week}`}</option>
             ))}
           </select>
           <div className="date-picker">
@@ -162,6 +164,7 @@ export default function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/debug" element={<AuthCallbackDebug />} />
+            <Route path="/week/:year/:weekNumber" element={<WeekMenuPage />} />
             <Route path="/week/:weekNumber" element={<WeekMenuPage />} />
             <Route path="/week2/:weekNumber" element={<WeekMenuPage2 />} />
             <Route path="/import-local" element={<ImportLocalMenuPage />} />

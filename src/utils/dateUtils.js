@@ -1,7 +1,6 @@
 /**
  * Utilitaires pour gérer les dates et les numéros de semaine
  * Basé sur la norme ISO 8601 pour les numéros de semaine
- * 
  */
 
 /**
@@ -118,10 +117,12 @@ export function getYearForWeek(weekNumber) {
   const currentWeek = getWeekNumber(now);
   const currentISOYear = getISOWeekYear(now);
   
-  if (weekNumber > 50 && currentWeek < 10) {
+  const diff = weekNumber - currentWeek;
+  
+  if (diff > 26) {
     return currentISOYear - 1;
   }
-  if (weekNumber < 10 && currentWeek > 50) {
+  if (diff < -26) {
     return currentISOYear + 1;
   }
   return currentISOYear;

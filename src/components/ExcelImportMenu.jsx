@@ -148,26 +148,37 @@ function ExcelImportMenu({ onImport }) {
         let semaine = "";
         
         if (hasNewFormat) {
-          // Pour le nouveau format, calculer la semaine à partir de la première date
-          const firstValidMenu = menus.find(m => m.date);
-          if (!firstValidMenu || !firstValidMenu.date) {
-            alert("Impossible de détecter la semaine. Aucune date valide trouvée.");
-            setLoading(false);
-            return;
+          // PRIORITE 1: Extraire année et semaine du nom de fichier (semaine_2025-48.xlsx)
+          const filenameMatch = file.name.match(/semaine[_-](\d{4})[_-](\d{1,2})/i);
+          
+          if (filenameMatch) {
+            const year = filenameMatch[1];
+            const weekNum = filenameMatch[2];
+            semaine = `${year}-${weekNum}`;
+            console.log(`📁 Année/Semaine extraite du nom de fichier: ${semaine}`);
+          } else {
+            // PRIORITE 2: Calculer depuis la première date valide du fichier
+            const firstValidMenu = menus.find(m => m.date);
+            if (!firstValidMenu || !firstValidMenu.date) {
+              alert("Impossible de détecter la semaine. Aucune date valide trouvée et nom de fichier non reconnu.\n\nNom attendu: semaine_YYYY-SS.xlsx (ex: semaine_2025-48.xlsx)");
+              setLoading(false);
+              return;
+            }
+            
+            // Calculer le numéro de semaine ISO
+            const date = firstValidMenu.date;
+            const year = date.getFullYear();
+            
+            // Calcul du numéro de semaine ISO 8601
+            const tempDate = new Date(date.getTime());
+            tempDate.setHours(0, 0, 0, 0);
+            tempDate.setDate(tempDate.getDate() + 3 - (tempDate.getDay() + 6) % 7);
+            const week1 = new Date(tempDate.getFullYear(), 0, 4);
+            const weekNum = 1 + Math.round(((tempDate.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+            
+            semaine = `${year}-${weekNum}`;
+            console.log(`📅 Année/Semaine calculée depuis les dates: ${semaine}`);
           }
-          
-          // Calculer le numéro de semaine ISO
-          const date = firstValidMenu.date;
-          const year = date.getFullYear();
-          
-          // Calcul du numéro de semaine ISO 8601
-          const tempDate = new Date(date.getTime());
-          tempDate.setHours(0, 0, 0, 0);
-          tempDate.setDate(tempDate.getDate() + 3 - (tempDate.getDay() + 6) % 7);
-          const week1 = new Date(tempDate.getFullYear(), 0, 4);
-          const weekNum = 1 + Math.round(((tempDate.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
-          
-          semaine = `${year}-${weekNum}`;
           
           // Mettre à jour tous les menus avec cette semaine
           menus.forEach(m => m.semaine = semaine);

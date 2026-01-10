@@ -181,6 +181,14 @@ class ApiService {
     return this.request(`/meals/week/${year}/${week}`);
   }
 
+  static async getAvailableYears() {
+    return this.request('/meals/years');
+  }
+
+  static async getAvailableWeeks() {
+    return this.request('/meals/available');
+  }
+
   static async getMenuForDate(date) {
     const meals = await this.request(`/meals/${date}`);
     return meals.map(meal => ({

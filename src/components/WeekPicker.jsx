@@ -1,52 +1,73 @@
-// Composant de sélection de semaine pour accéder aux menus passés
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getCurrentYear } from "../utils/dateUtils";
+import ApiService from "../services/ApiService";
+import { getCurrentWeekNumber, getISOWeekYear } from "../utils/dateUtils";
 
-/**
- * WeekPicker - Permet de sélectionner une semaine pour voir le menu de cette semaine
- */
-export default function WeekPicker() {
+export default function WeekPicker({ defaultYear, defaultWeek }) {
   const navigate = useNavigate();
-  const [selectedWeek, setSelectedWeek] = useState("");
-  const currentYear = getCurrentYear();
+  const [availableWeeks, setAvailableWeeks] = useState([]);
+  const [selectedValue, setSelectedValue] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  // Gérer le changement de semaine
-  const handleWeekChange = (e) => {
-    const weekNumber = parseInt(e.target.value);
-    setSelectedWeek(weekNumber);
+  const currentYear = getISOWeekYear(new Date());
+  const currentWeek = getCurrentWeekNumber();
+
+  useEffect(() => {
+    async function loadAvailableWeeks() {
+      try {
+        const weeks = await ApiService.getAvailableWeeks();
+        setAvailableWeeks(weeks);
+      } catch (error) {
+        console.error("Erreur chargement semaines disponibles:", error);
+        setAvailableWeeks([]);
+      }
+      setLoading(false);
+    }
+    loadAvailableWeeks();
+  }, []);
+
+  const handleChange = (e) => {
+    const value = e.target.value;
+    setSelectedValue(value);
     
-    if (weekNumber >= 1 && weekNumber <= 53) {
-      // Naviguer vers la page du menu de cette semaine
-      navigate(`/week/${weekNumber}`);
+    if (value) {
+      const [year, week] = value.split("-");
+      navigate(`/week/${year}/${week}`);
     }
   };
 
-  // Générer les options de 1 à 53
-  const weekOptions = [];
-  for (let i = 1; i <= 53; i++) {
-    weekOptions.push(
-      <option key={i} value={i}>
-        Semaine {i} - {currentYear}
-      </option>
-    );
-  }
+  const groupedByYear = {};
+  availableWeeks.forEach(({ year, week }) => {
+    if (!groupedByYear[year]) groupedByYear[year] = [];
+    groupedByYear[year].push(week);
+  });
+
+  const years = Object.keys(groupedByYear).sort((a, b) => b - a);
 
   return (
     <div className="week-picker">
       <label htmlFor="week-select" className="picker-label">
-        📆 Menu d'une semaine:
+        Menu d'autre semaine disponible
       </label>
       <select
         id="week-select"
-        value={selectedWeek}
-        onChange={handleWeekChange}
+        value={selectedValue}
+        onChange={handleChange}
         className="week-input"
+        disabled={loading}
       >
-        <option value="" disabled>
-          Le numéro de semaine doit être entre 1 et 53
+        <option value="">
+          {loading ? "Chargement..." : "Sélectionner une semaine"}
         </option>
-        {weekOptions}
+        {years.map(year => (
+          <optgroup key={year} label={`Année ${year}`}>
+            {groupedByYear[year].sort((a, b) => b - a).map(week => (
+              <option key={`${year}-${week}`} value={`${year}-${week}`}>
+                Semaine {week}
+              </option>
+            ))}
+          </optgroup>
+        ))}
       </select>
     </div>
   );

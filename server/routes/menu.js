@@ -298,6 +298,78 @@ router.delete('/meals/:id', async (req, res) => {
   }
 });
 
+router.get('/meals/years', async (req, res) => {
+  const getFictiveYears = () => {
+    const years = [...new Set(fictiveData.meals.map(m => new Date(m.meal_date).getFullYear()))].sort((a, b) => b - a);
+    return years.length > 0 ? years : [2025, 2026];
+  };
+  
+  if (!db.isConnected()) {
+    return res.json(getFictiveYears());
+  }
+  
+  try {
+    const result = await db.query(`
+      SELECT DISTINCT YEAR(meal_date) as year FROM meals ORDER BY year DESC
+    `);
+    
+    if (!result.rows || result.rows.length === 0) {
+      return res.json(getFictiveYears());
+    }
+    
+    const years = result.rows.map(r => r.year);
+    res.json(years);
+  } catch (error) {
+    console.log('Base de données non disponible, années fictives');
+    res.json(getFictiveYears());
+  }
+});
+
+router.get('/meals/available', async (req, res) => {
+  const getFictiveWeeks = () => {
+    const fictiveWeeks = fictiveData.meals.map(m => {
+      const d = new Date(m.meal_date);
+      const year = d.getFullYear();
+      const tempDate = new Date(d.getTime());
+      tempDate.setHours(0, 0, 0, 0);
+      tempDate.setDate(tempDate.getDate() + 3 - (tempDate.getDay() + 6) % 7);
+      const week1 = new Date(tempDate.getFullYear(), 0, 4);
+      const week = 1 + Math.round(((tempDate.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+      return { year, week };
+    });
+    const uniqueWeeks = [];
+    fictiveWeeks.forEach(w => {
+      if (!uniqueWeeks.find(u => u.year === w.year && u.week === w.week)) {
+        uniqueWeeks.push(w);
+      }
+    });
+    return uniqueWeeks.length > 0 ? uniqueWeeks : [{ year: 2025, week: 2 }];
+  };
+  
+  if (!db.isConnected()) {
+    return res.json(getFictiveWeeks());
+  }
+  
+  try {
+    const result = await db.query(`
+      SELECT DISTINCT 
+        YEAR(meal_date) as year,
+        WEEK(meal_date, 1) as week
+      FROM meals 
+      ORDER BY year DESC, week DESC
+    `);
+    
+    if (!result.rows || result.rows.length === 0) {
+      return res.json(getFictiveWeeks());
+    }
+    
+    res.json(result.rows);
+  } catch (error) {
+    console.log('Base de données non disponible, semaines fictives');
+    res.json(getFictiveWeeks());
+  }
+});
+
 router.get('/meals/week/:year/:week', async (req, res) => {
   const { year, week } = req.params;
   
