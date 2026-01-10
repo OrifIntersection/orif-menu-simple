@@ -8,6 +8,7 @@ import ApiService from '../services/ApiService';
 import { normalizeMenu, filterWeekdays } from '../utils/menuNormalizer';
 import { getYearForWeek, getCurrentWeekNumber } from '../utils/dateUtils';
 
+
 export default function WeekMenuPage2() {
   const { weekNumber } = useParams();
   const currentWeekNum = getCurrentWeekNumber();
